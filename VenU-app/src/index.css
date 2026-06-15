@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Enable native smooth scrolling for anchor links and set typography */
+html, body {
+	scroll-behavior: smooth;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a; /* slate-900 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b0764; /* purple-950 */
+  border-radius: 5px;
+  border: 2px solid #0f172a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b21a8; /* purple-700 */
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3b0764 #0f172a;
+}
+
+/* Responsive Authentication Panel Grid Styles */
+@media (max-width: 1023px) {
+  .hero-text-auth-open {
+    width: 0% !important;
+    opacity: 0 !important;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .auth-panel-auth-open {
+    width: 100% !important;
+  }
+}

@@ -1,0 +1,6 @@
+@VenU.Api_HostAddress = http://localhost:5150
+
+GET {{VenU.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
