@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, MapPin, Calendar, Users, Lock, Unlock, Plus, Trash2, CheckCircle, ChevronRight, ChevronLeft, Map, Ticket, Music, Trophy } from 'lucide-react';
+import TicketPreview from '../../../components/TicketPreview';
 
 const locationData = {
     "NCR": {
@@ -26,7 +27,7 @@ const locationData = {
     }
 };
 
-export default function CreateEventPanel({ currentUser }) {
+export default function CreateEventPanel({ currentUser, setActivePanel }) {
     const [currentStep, setCurrentStep] = useState(1);
     const [bannerPreview, setBannerPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +44,10 @@ export default function CreateEventPanel({ currentUser }) {
         StartTime: '',
         EndDate: '',
         EndTime: '',
+        TicketSalesStartDate: '',
+        TicketSalesStartTime: '',
+        TicketSalesEndDate: '',
+        TicketSalesEndTime: '',
         StreetAddress: '',
         Region: '',
         Province: '',
@@ -140,7 +145,7 @@ export default function CreateEventPanel({ currentUser }) {
             ...prev,
             TicketTiers: [
                 ...prev.TicketTiers,
-                { TierName: '', AllocatedSlots: 0, Price: admissionStrategy === 'Free Admission' ? 0 : '' }
+                { TierName: '', AllocatedSlots: 0, Price: admissionStrategy === 'Free Admission' ? 0 : '', ValidityScope: 'Full Event Multi-Pass (All Days)' }
             ]
         }));
     };
@@ -168,6 +173,14 @@ export default function CreateEventPanel({ currentUser }) {
                 ? new Date(`${formData.EndDate}T${formData.EndTime}`).toISOString() 
                 : new Date().toISOString();
 
+            const ticketSalesStart = formData.TicketSalesStartDate && formData.TicketSalesStartTime 
+                ? new Date(`${formData.TicketSalesStartDate}T${formData.TicketSalesStartTime}`).toISOString() 
+                : new Date().toISOString();
+            
+            const ticketSalesEnd = formData.TicketSalesEndDate && formData.TicketSalesEndTime 
+                ? new Date(`${formData.TicketSalesEndDate}T${formData.TicketSalesEndTime}`).toISOString() 
+                : new Date().toISOString();
+
             const finalCategory = formData.Category === 'Others' ? formData.CustomCategory : formData.Category;
 
             const payload = {
@@ -191,12 +204,15 @@ export default function CreateEventPanel({ currentUser }) {
                 ticketTiers: formData.TicketTiers.map(t => ({
                     tierName: t.TierName,
                     allocatedSlots: parseInt(t.AllocatedSlots) || 0,
-                    price: admissionStrategy === 'Free Admission' ? 0.00 : parseFloat(t.Price) || 0.00
-                }))
+                    price: admissionStrategy === 'Free Admission' ? 0.00 : parseFloat(t.Price) || 0.00,
+                    validityScope: t.ValidityScope || 'Full Event Multi-Pass (All Days)'
+                })),
+                ticketSalesStart: ticketSalesStart,
+                ticketSalesEnd: ticketSalesEnd
             };
 
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/events', {
+            const response = await fetch('http://localhost:5150/api/events', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -223,23 +239,33 @@ export default function CreateEventPanel({ currentUser }) {
                 <CheckCircle className="text-[#A855F7] w-24 h-24 mb-6 shadow-lg shadow-purple-500/20 rounded-full bg-white" />
                 <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Event Published!</h2>
                 <p className="text-slate-500 text-lg max-w-md mx-auto">Your event has been successfully scheduled and loaded into the platform discovery loops.</p>
-                <button 
-                    onClick={() => {
-                        setShowSuccess(false);
-                        setCurrentStep(1);
-                        setFormData({
-                            Title: '', Description: '', Category: 'Sports', CustomCategory: '', BannerFile: null, BannerUrl: '',
-                            StartDate: '', StartTime: '', EndDate: '', EndTime: '', StreetAddress: '', Barangay: '', City: '',
-                            Province: '', Region: '', ZipCode: '', Latitude: '', Longitude: '', AccessType: 'Public',
-                            VerificationCode: '', MaxCapacity: '', TicketTiers: []
-                        });
-                        setErrors({});
-                        setBannerPreview(null);
-                    }}
-                    className="mt-8 bg-[#a855f7] hover:bg-[#9333ea] text-white px-8 py-3 rounded-xl font-bold shadow-xl shadow-purple-500/20 active:scale-95 transition-all"
-                >
-                    Create Another Event
-                </button>
+                <div className="mt-8 flex items-center gap-4">
+                    <button 
+                        onClick={() => setActivePanel && setActivePanel('events')}
+                        className="bg-[#a855f7] hover:bg-[#9333ea] text-white px-8 py-3 rounded-xl font-bold shadow-xl shadow-purple-500/20 active:scale-95 transition-all"
+                    >
+                        View My Events
+                    </button>
+                    <button 
+                        onClick={() => {
+                            setShowSuccess(false);
+                            setCurrentStep(1);
+                            setFormData({
+                                Title: '', Description: '', Category: 'Sports', CustomCategory: '', BannerFile: null, BannerUrl: '',
+                                StartDate: '', StartTime: '', EndDate: '', EndTime: '', 
+                                TicketSalesStartDate: '', TicketSalesStartTime: '', TicketSalesEndDate: '', TicketSalesEndTime: '',
+                                StreetAddress: '', Barangay: '', City: '',
+                                Province: '', Region: '', ZipCode: '', Latitude: '', Longitude: '', AccessType: 'Public',
+                                VerificationCode: '', MaxCapacity: '', TicketTiers: []
+                            });
+                            setErrors({});
+                            setBannerPreview(null);
+                        }}
+                        className="border border-slate-200 hover:border-[#a855f7] text-slate-600 hover:text-[#a855f7] px-8 py-3 rounded-xl font-bold active:scale-95 transition-all"
+                    >
+                        Create Another Event
+                    </button>
+                </div>
             </div>
         );
     }
@@ -410,6 +436,34 @@ export default function CreateEventPanel({ currentUser }) {
                                     </div>
                                 </div>
 
+                                <div className="mt-6">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                                        <Calendar size={16} className="text-[#A855F7]" />
+                                        Ticketing Operational Lifecycle Window
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Ticket Sales Open Date</label>
+                                            <input type="date" name="TicketSalesStartDate" value={formData.TicketSalesStartDate} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 transition-all ${errors.TicketSalesStartDate ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 focus:border-[#A855F7]'}`} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Ticket Sales Open Time</label>
+                                            <input type="time" name="TicketSalesStartTime" value={formData.TicketSalesStartTime} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 transition-all ${errors.TicketSalesStartTime ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 focus:border-[#A855F7]'}`} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mt-2">Ticket Sales Close Date</label>
+                                            <input type="date" name="TicketSalesEndDate" value={formData.TicketSalesEndDate} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 transition-all ${errors.TicketSalesEndDate ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 focus:border-[#A855F7]'}`} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mt-2">Ticket Sales Close Time</label>
+                                            <input type="time" name="TicketSalesEndTime" value={formData.TicketSalesEndTime} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 transition-all ${errors.TicketSalesEndTime ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 focus:border-[#A855F7]'}`} />
+                                        </div>
+                                    </div>
+                                    {errors.TicketLifecycle && (
+                                        <p className="text-red-500 text-xs font-bold mt-2">* Ticket sales must conclude before the event operational window ends.</p>
+                                    )}
+                                </div>
+
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2"><MapPin size={16} className="text-[#A855F7]" /> Location Details</h3>
                                     <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
@@ -510,7 +564,15 @@ export default function CreateEventPanel({ currentUser }) {
                                             const zipValid = validateField('ZipCode', formData.ZipCode);
                                             
                                             if (sdValid && stValid && addrValid && regValid && provValid && cityValid && brgyValid && zipValid) {
-                                                setCurrentStep(3);
+                                                const evtEnd = formData.EndDate && formData.EndTime ? new Date(`${formData.EndDate}T${formData.EndTime}`) : null;
+                                                const tktEnd = formData.TicketSalesEndDate && formData.TicketSalesEndTime ? new Date(`${formData.TicketSalesEndDate}T${formData.TicketSalesEndTime}`) : null;
+                                                
+                                                if (evtEnd && tktEnd && tktEnd >= evtEnd) {
+                                                    setErrors(prev => ({ ...prev, TicketLifecycle: true }));
+                                                } else {
+                                                    setErrors(prev => { const e = {...prev}; delete e.TicketLifecycle; return e; });
+                                                    setCurrentStep(3);
+                                                }
                                             }
                                         }}
                                         className="flex-grow bg-[#A855F7] hover:bg-[#9333ea] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-lg shadow-purple-500/20"
@@ -580,29 +642,43 @@ export default function CreateEventPanel({ currentUser }) {
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dynamic Allocation Tiers Matrix</label>
                                         
                                         {formData.TicketTiers.map((tier, index) => (
-                                            <div key={index} className="flex gap-2 items-end bg-white p-3 rounded-xl border border-slate-200 relative group shadow-sm">
-                                                <div className="flex-1">
-                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tier Name</label>
-                                                    <input type="text" value={tier.TierName} onChange={(e) => updateTicketTier(index, 'TierName', e.target.value)} placeholder="e.g. VIP" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]" />
+                                            <div key={index} className="flex flex-col gap-3 bg-white p-3 rounded-xl border border-slate-200 relative group shadow-sm">
+                                                <div className="flex gap-2 items-end">
+                                                    <div className="flex-1">
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tier Name</label>
+                                                        <input type="text" value={tier.TierName} onChange={(e) => updateTicketTier(index, 'TierName', e.target.value)} placeholder="e.g. VIP" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]" />
+                                                    </div>
+                                                    <div className="w-24">
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Slots</label>
+                                                        <input type="number" value={tier.AllocatedSlots} onChange={(e) => updateTicketTier(index, 'AllocatedSlots', e.target.value)} placeholder="0" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]" />
+                                                    </div>
+                                                    <div className="w-28 relative">
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Price</label>
+                                                        {admissionStrategy === 'Free Admission' ? (
+                                                            <input type="text" value="0.00" disabled className="w-full bg-slate-50 border border-slate-200/60 rounded-lg px-2 py-2 text-sm text-slate-400 font-bold text-center cursor-not-allowed" />
+                                                        ) : (
+                                                            <div className="relative">
+                                                                <span className="absolute left-2 top-2 text-slate-400 font-bold text-sm">$</span>
+                                                                <input type="number" step="0.01" value={tier.Price} onChange={(e) => updateTicketTier(index, 'Price', e.target.value)} placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-6 pr-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <button onClick={() => removeTicketTier(index)} className="w-10 h-[38px] bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors flex items-center justify-center border border-red-100 hover:border-red-500">
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 </div>
-                                                <div className="w-24">
-                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Slots</label>
-                                                    <input type="number" value={tier.AllocatedSlots} onChange={(e) => updateTicketTier(index, 'AllocatedSlots', e.target.value)} placeholder="0" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]" />
+                                                <div className="w-full border-t border-slate-100 pt-2">
+                                                    <label className="block text-[10px] font-bold text-[#A855F7] uppercase tracking-wider mb-1">Ticket Access Validity Scope</label>
+                                                    <select 
+                                                        value={tier.ValidityScope} onChange={(e) => updateTicketTier(index, 'ValidityScope', e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]"
+                                                    >
+                                                        <option value="Full Event Multi-Pass (All Days)">Full Event Multi-Pass (All Days)</option>
+                                                        <option value="Day 1 Access Only">Day 1 Access Only</option>
+                                                        <option value="Day 2 Access Only">Day 2 Access Only</option>
+                                                        <option value="Single Session Admission">Single Session Admission</option>
+                                                    </select>
                                                 </div>
-                                                <div className="w-28 relative">
-                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Price</label>
-                                                    {admissionStrategy === 'Free Admission' ? (
-                                                        <input type="text" value="0.00" disabled className="w-full bg-slate-50 border border-slate-200/60 rounded-lg px-2 py-2 text-sm text-slate-400 font-bold text-center cursor-not-allowed" />
-                                                    ) : (
-                                                        <div className="relative">
-                                                            <span className="absolute left-2 top-2 text-slate-400 font-bold text-sm">$</span>
-                                                            <input type="number" step="0.01" value={tier.Price} onChange={(e) => updateTicketTier(index, 'Price', e.target.value)} placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-6 pr-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7]" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <button onClick={() => removeTicketTier(index)} className="w-10 h-[38px] bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors flex items-center justify-center border border-red-100 hover:border-red-500">
-                                                    <Trash2 size={16} />
-                                                </button>
                                             </div>
                                         ))}
 
@@ -638,69 +714,96 @@ export default function CreateEventPanel({ currentUser }) {
                 {/* COLUMN 2: IMMERSIVE VISUAL INTERACTION CANVAS */}
                 <div className="lg:col-span-5 hidden lg:flex flex-col justify-center items-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-8 relative border-l border-slate-800 overflow-hidden">
                     {/* Abstract Backdrop Depth */}
-                    <div className="absolute w-72 h-72 rounded-full bg-purple-600/20 blur-[80px] top-12 right-12 pointer-events-none"></div>
+                    <div className="absolute w-72 h-72 rounded-full bg-[#A855F7]/20 blur-[80px] top-12 right-12 pointer-events-none"></div>
                     <div className="absolute w-64 h-64 rounded-full bg-indigo-500/20 blur-[80px] bottom-12 left-12 pointer-events-none"></div>
 
-                    {/* The Core Graphic Layer (Human Interaction Mockup) */}
-                    <div className="w-60 h-[420px] bg-slate-900 border-[6px] border-slate-800 rounded-[36px] shadow-2xl relative rotate-3 transform transition-transform hover:rotate-0 duration-500 flex flex-col justify-between p-4 overflow-hidden mt-16 z-10">
-                        {/* Phone Screen Mockup */}
-                        <div className="flex flex-col items-center justify-center pt-10">
-                            <span className="text-3xl font-black text-white tracking-widest uppercase opacity-90 drop-shadow-lg">VENU</span>
-                            <div className="w-12 h-1 bg-slate-700 rounded-full mt-2"></div>
-                            <div className="mt-8 space-y-3 w-full px-2">
-                                <div className="h-4 w-full bg-slate-800 rounded-md"></div>
-                                <div className="h-4 w-3/4 bg-slate-800 rounded-md"></div>
-                                <div className="h-20 w-full bg-slate-800/50 rounded-xl mt-4"></div>
+                    {currentStep === 3 ? (
+                        <div className="relative z-10 w-full max-w-[320px] animate-fade-in">
+                            <h3 className="text-white font-black tracking-widest uppercase text-center mb-6 text-sm flex items-center justify-center gap-2">
+                                <Ticket size={16} className="text-[#A855F7]" /> Live Ticket Preview
+                            </h3>
+                            {/* Holographic Ticket Stub replacing old inline element */}
+                            <div className="relative transform transition-transform hover:scale-105 duration-300 shadow-[0_0_40px_rgba(168,85,247,0.3)] rounded-3xl">
+                                <TicketPreview 
+                                    themeColor="#A855F7"
+                                    eventData={{
+                                        title: formData.Title,
+                                        category: formData.Category === 'Others' ? formData.CustomCategory : formData.Category,
+                                        image: bannerPreview,
+                                        date: formData.StartDate ? new Date(formData.StartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD',
+                                        time: formData.StartTime || 'TBD',
+                                        tierName: formData.TicketTiers.length > 0 ? formData.TicketTiers[0].TierName : 'Standard',
+                                        accessType: formData.AccessType,
+                                        validityScope: formData.TicketTiers.length > 0 ? formData.TicketTiers[0].ValidityScope : null,
+                                        ticketId: "https://venu.com/preview"
+                                    }} 
+                                />
                             </div>
                         </div>
-                        <div className="w-full h-12 bg-[#A855F7] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse cursor-pointer">
-                            <span className="text-sm font-black text-white uppercase tracking-widest">Publish</span>
-                        </div>
-                    </div>
-
-                    {/* Dynamic Floating Event Artifacts Stack (Rising Cards) */}
-                    <div className="absolute inset-0 pointer-events-none">
-                        
-                        {/* Floating Card 1 */}
-                        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl absolute w-52 transition-all hover:scale-105 duration-300 top-16 left-4 -rotate-6 animate-[pulse_4s_ease-in-out_infinite] z-20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
-                                    <Music size={18} strokeWidth={2.5} />
+                    ) : (
+                        <>
+                            {/* The Core Graphic Layer (Human Interaction Mockup) */}
+                            <div className="w-60 h-[420px] bg-slate-900 border-[6px] border-slate-800 rounded-[36px] shadow-2xl relative rotate-3 transform transition-transform hover:rotate-0 duration-500 flex flex-col justify-between p-4 overflow-hidden mt-16 z-10 animate-fade-in">
+                                {/* Phone Screen Mockup */}
+                                <div className="flex flex-col items-center justify-center pt-10">
+                                    <span className="text-3xl font-black text-white tracking-widest uppercase opacity-90 drop-shadow-lg">VENU</span>
+                                    <div className="w-12 h-1 bg-slate-700 rounded-full mt-2"></div>
+                                    <div className="mt-8 space-y-3 w-full px-2">
+                                        <div className="h-4 w-full bg-slate-800 rounded-md"></div>
+                                        <div className="h-4 w-3/4 bg-slate-800 rounded-md"></div>
+                                        <div className="h-20 w-full bg-slate-800/50 rounded-xl mt-4"></div>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">New Event</span>
-                                    <span className="text-xs font-bold text-white tracking-wide">Epic Concert Live</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Floating Card 2 */}
-                        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl absolute w-52 transition-all hover:scale-105 duration-300 top-40 -right-6 rotate-6 z-20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                                    <Trophy size={18} strokeWidth={2.5} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Tournament</span>
-                                    <span className="text-xs font-bold text-white tracking-wide">Grassroots Open Active</span>
+                                <div className="w-full h-12 bg-[#A855F7] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse cursor-pointer">
+                                    <span className="text-sm font-black text-white uppercase tracking-widest">Publish</span>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Floating Card 3 */}
-                        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl absolute w-52 transition-all hover:scale-105 duration-300 bottom-36 left-2 -rotate-3 z-20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
-                                    <Unlock size={18} strokeWidth={2.5} />
+                            {/* Dynamic Floating Event Artifacts Stack (Rising Cards) */}
+                            <div className="absolute inset-0 pointer-events-none animate-fade-in">
+                                
+                                {/* Floating Card 1 */}
+                                <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl absolute w-52 transition-all hover:scale-105 duration-300 top-16 left-4 -rotate-6 animate-[pulse_4s_ease-in-out_infinite] z-20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                            <Music size={18} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">New Event</span>
+                                            <span className="text-xs font-bold text-white tracking-wide">Epic Concert Live</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Invite Only</span>
-                                    <span className="text-xs font-bold text-white tracking-wide">Access Lock Unlocked</span>
+
+                                {/* Floating Card 2 */}
+                                <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl absolute w-52 transition-all hover:scale-105 duration-300 top-40 -right-6 rotate-6 z-20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                            <Trophy size={18} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Tournament</span>
+                                            <span className="text-xs font-bold text-white tracking-wide">Grassroots Open Active</span>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Floating Card 3 */}
+                                <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl absolute w-52 transition-all hover:scale-105 duration-300 bottom-36 left-2 -rotate-3 z-20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+                                            <Unlock size={18} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Invite Only</span>
+                                            <span className="text-xs font-bold text-white tracking-wide">Access Lock Unlocked</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
-                        </div>
-
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

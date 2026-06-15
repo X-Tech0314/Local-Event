@@ -30,6 +30,12 @@ namespace VenU.Api.Models
         [Required]
         public DateTime EndDateTime { get; set; }
 
+        [Required]
+        public DateTime TicketSalesStart { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        public DateTime TicketSalesEnd { get; set; } = DateTime.UtcNow;
+
         // Cascading Location Parameters
         [Required]
         [MaxLength(255)]

@@ -61,7 +61,7 @@ export default function OrganizerDashboard() {
     const renderPanel = () => {
         switch (activePanel) {
             case 'dashboard':  return <MainDashboard currentUser={currentUser} setActivePanel={setActivePanel} />;
-            case 'events':     return <EventsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
+            case 'events':     return <EventsPanel key={Date.now()} currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'venues':     return <VenuesPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'attendees':  return <AttendeesPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'analytics':  return <AnalyticsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;

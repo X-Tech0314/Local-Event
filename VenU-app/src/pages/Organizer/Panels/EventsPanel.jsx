@@ -1,13 +1,31 @@
-import React from 'react';
-import { Calendar, Plus, Search, Filter, MapPin, Clock, ArrowRight, MoreHorizontal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Plus, Search, Filter, MapPin, Clock, ArrowRight, MoreHorizontal, AlertCircle } from 'lucide-react';
 
 export default function EventsPanel({ currentUser, setActivePanel }) {
-    const events = [
-        { name: 'Summer Tech Summit', date: 'June 20, 2026', time: '09:00 AM', venue: 'Main Hall A', status: 'Active', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80', color: 'from-purple-500 to-indigo-600', badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', dot: 'bg-emerald-500' },
-        { name: 'Beach Yoga Session', date: 'June 22, 2026', time: '06:30 AM', venue: 'Bayfront Park', status: 'Draft', image: 'https://images.unsplash.com/photo-1522845015757-50bce044e5da?w=800&q=80', color: 'from-amber-500 to-orange-600', badge: 'bg-amber-500/10 text-amber-600 border-amber-500/20', dot: 'bg-amber-500' },
-        { name: 'Jazz Night Showcase', date: 'June 24, 2026', time: '08:00 PM', venue: 'The Basement Lounge', status: 'Active', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80', color: 'from-emerald-500 to-teal-600', badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', dot: 'bg-emerald-500' },
-        { name: 'Startup Pitch Deck', date: 'July 01, 2026', time: '02:00 PM', venue: 'Silicon District Hub', status: 'Active', image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32d7?w=800&q=80', color: 'from-blue-500 to-indigo-600', badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', dot: 'bg-emerald-500' }
-    ];
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    const fetchEvents = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5150/api/events', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch events');
+            const data = await res.json();
+            setEvents(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="animate-fade-in space-y-8">
@@ -41,64 +59,93 @@ export default function EventsPanel({ currentUser, setActivePanel }) {
             </div>
 
             {/* Event Grid Deck */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((evt, i) => (
-                    <div key={i} className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col relative">
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <div className="w-10 h-10 border-4 border-[#A855F7] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            ) : error ? (
+                <div className="text-center py-20 bg-red-50 rounded-3xl border border-red-100">
+                    <AlertCircle className="mx-auto text-red-500 mb-2" size={32} />
+                    <p className="text-red-600 font-bold">{error}</p>
+                </div>
+            ) : events.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                    <Calendar className="mx-auto text-slate-300 mb-4" size={48} />
+                    <h3 className="text-lg font-bold text-slate-800">No events found</h3>
+                    <p className="text-slate-500 mb-4">You haven't created any events yet.</p>
+                    <button onClick={() => setActivePanel('create-event')} className="text-[#A855F7] font-bold hover:underline">
+                        Create your first event
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {events.map((evt) => {
+                        const evtDate = new Date(evt.startDateTime);
+                        const isUpcoming = evtDate > new Date();
+                        const status = isUpcoming ? 'Active' : 'Past';
                         
-                        {/* Event Thumbnail */}
-                        <div className="h-48 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors z-10"></div>
-                            <img src={evt.image} alt={evt.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
-                            
-                            {/* Status Badge */}
-                            <div className="absolute top-4 left-4 z-20">
-                                <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md bg-white/90 ${evt.badge.replace('bg-', 'text-').replace('/10', '')}`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${evt.dot} ${evt.status === 'Active' ? 'animate-pulse' : ''}`}></span>
-                                    {evt.status}
-                                </span>
-                            </div>
-
-                            {/* Options Button */}
-                            <button className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition">
-                                <MoreHorizontal size={16} />
-                            </button>
-                        </div>
-
-                        {/* Event Details */}
-                        <div className="p-6 flex flex-col flex-grow">
-                            <h3 className="text-xl font-black text-slate-900 leading-tight mb-4 group-hover:text-[#A855F7] transition-colors">{evt.name}</h3>
-                            
-                            <div className="space-y-3 mt-auto">
-                                <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                                    <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-[#A855F7]">
-                                        <Calendar size={14} strokeWidth={2.5} />
+                        return (
+                            <div key={evt.id} className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col relative">
+                                {/* Event Thumbnail */}
+                                <div className="h-48 relative overflow-hidden bg-slate-100">
+                                    <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors z-10"></div>
+                                    {evt.bannerUrl ? (
+                                        <img src={evt.bannerUrl} alt={evt.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-300"><Calendar size={48} /></div>
+                                    )}
+                                    
+                                    {/* Status Badge */}
+                                    <div className="absolute top-4 left-4 z-20">
+                                        <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md bg-white/90 ${status === 'Active' ? 'text-emerald-500 border-emerald-500/20' : 'text-slate-500 border-slate-200'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                                            {status}
+                                        </span>
                                     </div>
-                                    <span>{evt.date}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                                    <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-[#A855F7]">
-                                        <Clock size={14} strokeWidth={2.5} />
-                                    </div>
-                                    <span>{evt.time}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                                    <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-[#A855F7]">
-                                        <MapPin size={14} strokeWidth={2.5} />
-                                    </div>
-                                    <span>{evt.venue}</span>
-                                </div>
-                            </div>
 
-                            <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID: EVT-{1000 + i}</p>
-                                <button className="text-sm font-black text-[#A855F7] flex items-center gap-1 group-hover:gap-2 transition-all">
-                                    Manage <ArrowRight size={16} strokeWidth={3} />
-                                </button>
+                                    {/* Options Button */}
+                                    <button className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition">
+                                        <MoreHorizontal size={16} />
+                                    </button>
+                                </div>
+
+                                {/* Event Details */}
+                                <div className="p-6 flex flex-col flex-grow">
+                                    <h3 className="text-xl font-black text-slate-900 leading-tight mb-4 group-hover:text-[#A855F7] transition-colors">{evt.title}</h3>
+                                    
+                                    <div className="space-y-3 mt-auto">
+                                        <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                                            <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-[#A855F7] shrink-0">
+                                                <Calendar size={14} strokeWidth={2.5} />
+                                            </div>
+                                            <span>{evtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                                            <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-[#A855F7] shrink-0">
+                                                <Clock size={14} strokeWidth={2.5} />
+                                            </div>
+                                            <span>{evtDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                                            <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-[#A855F7] shrink-0">
+                                                <MapPin size={14} strokeWidth={2.5} />
+                                            </div>
+                                            <span className="truncate">{evt.barangay}, {evt.city}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID: {evt.id.substring(0, 8)}</p>
+                                        <button className="text-sm font-black text-[#A855F7] flex items-center gap-1 group-hover:gap-2 transition-all">
+                                            Manage <ArrowRight size={16} strokeWidth={3} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

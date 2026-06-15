@@ -42,6 +42,8 @@ namespace VenU.Api.Controllers
                 BannerUrl = dto.BannerUrl,
                 StartDateTime = dto.StartDateTime,
                 EndDateTime = dto.EndDateTime,
+                TicketSalesStart = dto.TicketSalesStart,
+                TicketSalesEnd = dto.TicketSalesEnd,
                 StreetAddress = dto.StreetAddress,
                 Barangay = dto.Barangay,
                 City = dto.City,
@@ -58,7 +60,8 @@ namespace VenU.Api.Controllers
                 {
                     TierName = t.TierName,
                     AllocatedSlots = t.AllocatedSlots,
-                    Price = t.Price
+                    Price = t.Price,
+                    ValidityScope = t.ValidityScope
                 }).ToList()
             };
 
@@ -82,6 +85,25 @@ namespace VenU.Api.Controllers
             }
 
             return Ok(evt);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> GetOrganizerEvents()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
+            {
+                return Unauthorized(new { message = "Invalid user token." });
+            }
+
+            var events = await _context.Events
+                .Include(e => e.TicketTiers)
+                .Where(e => e.OrganizerId == organizerId)
+                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync();
+
+            return Ok(events);
         }
     }
 }

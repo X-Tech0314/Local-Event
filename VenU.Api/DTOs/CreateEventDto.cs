@@ -10,6 +10,9 @@ namespace VenU.Api.DTOs
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
         
+        public DateTime TicketSalesStart { get; set; }
+        public DateTime TicketSalesEnd { get; set; }
+        
         public string StreetAddress { get; set; } = string.Empty;
         public string Barangay { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
@@ -34,5 +37,6 @@ namespace VenU.Api.DTOs
         public string TierName { get; set; } = string.Empty;
         public int AllocatedSlots { get; set; }
         public decimal Price { get; set; } = 0.00M;
+        public string ValidityScope { get; set; } = "Full Event Multi-Pass (All Days)";
     }
 }
