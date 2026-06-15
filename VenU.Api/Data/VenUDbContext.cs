@@ -12,6 +12,7 @@ namespace VenU.Api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<EventTicketTier> EventTicketTiers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +26,13 @@ namespace VenU.Api.Data
             modelBuilder.Entity<Ticket>()
                 .HasIndex(t => t.TicketCode)
                 .IsUnique();
+
+            // Cascade delete for Event -> TicketTiers
+            modelBuilder.Entity<EventTicketTier>()
+                .HasOne(t => t.Event)
+                .WithMany(e => e.TicketTiers)
+                .HasForeignKey(t => t.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
