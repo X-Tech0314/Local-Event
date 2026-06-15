@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using VenU.Api.Data;
 using VenU.Api.DTOs;
 using VenU.Api.Models;
@@ -27,8 +29,10 @@ namespace VenU.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Extract OrganizerId from claims
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+            // The JWT stores the user ID under the Sub claim (see GenerateJwtToken in AuthController)
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
             {
                 return Unauthorized(new { message = "Invalid user token." });
@@ -91,7 +95,9 @@ namespace VenU.Api.Controllers
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> GetOrganizerEvents()
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
             {
                 return Unauthorized(new { message = "Invalid user token." });
