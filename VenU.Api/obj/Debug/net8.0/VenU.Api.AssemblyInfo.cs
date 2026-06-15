@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VenU.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b244bb800da1f742d8ce8efb9d956f32acf7b958")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6f215e812bd8b6332febde4c62b8002bab3cd3c9")]
 [assembly: System.Reflection.AssemblyProductAttribute("VenU.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VenU.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

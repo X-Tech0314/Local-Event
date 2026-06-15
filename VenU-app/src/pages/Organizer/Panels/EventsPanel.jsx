@@ -12,12 +12,20 @@ export default function EventsPanel({ currentUser, setActivePanel }) {
 
     const fetchEvents = async () => {
         setLoading(true);
+        setError(null);
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Not authenticated. Please log in again.');
+                return;
+            }
             const res = await fetch('http://localhost:5150/api/events', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!res.ok) throw new Error('Failed to fetch events');
+            if (!res.ok) {
+                const errorText = await res.text().catch(() => '');
+                throw new Error(`Server returned ${res.status}: ${errorText || res.statusText}`);
+            }
             const data = await res.json();
             setEvents(data);
         } catch (err) {
