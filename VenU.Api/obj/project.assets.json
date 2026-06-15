@@ -3091,11 +3091,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\FOR CODING\\venu\\Local-EM\\VenU.Api\\VenU.Api.csproj",
+      "projectUniqueName": "C:\\FOR CODING\\new venu\\Local-Event\\VenU.Api\\VenU.Api.csproj",
       "projectName": "VenU.Api",
-      "projectPath": "C:\\FOR CODING\\venu\\Local-EM\\VenU.Api\\VenU.Api.csproj",
+      "projectPath": "C:\\FOR CODING\\new venu\\Local-Event\\VenU.Api\\VenU.Api.csproj",
       "packagesPath": "C:\\Users\\Wency\\.nuget\\packages\\",
-      "outputPath": "C:\\FOR CODING\\venu\\Local-EM\\VenU.Api\\obj\\",
+      "outputPath": "C:\\FOR CODING\\new venu\\Local-Event\\VenU.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

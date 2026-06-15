@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, User, Eye, EyeOff, Building, MapPin, ShieldAlert } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS, philippineAddressData, passwordRules } from '../../utils/constants.js';
-import { isContactValid, isEmailValid, validatePassword, isIdNumberValid } from '../../utils/validation.js';
+import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 import FileDropzone from '../common/FileDropzone.jsx';
 
 export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, createRole, setCreateRole }) {
@@ -27,9 +27,13 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   const [orgDocFile, setOrgDocFile] = useState(null);
 
   // Step 3: Address
-  const [street, setStreet] = useState('');
+  const [houseNo, setHouseNo] = useState('');
+  const [streetName, setStreetName] = useState('');
+  const [subdivision, setSubdivision] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [region, setRegion] = useState('');
   const [province, setProvince] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [city, setCity] = useState('');
   const [barangay, setBarangay] = useState('');
 
@@ -49,10 +53,11 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
 
   const isTinValid = (v) => /^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/.test(v.replace(/\s/g, ''));
 
+  const calculatedAge = calculateAge(dateOfBirth);
   const isStep1Valid =
-    firstName.trim() &&
-    lastName.trim() &&
-    position.trim() &&
+    firstName.trim() && isNameValid(firstName) &&
+    lastName.trim() && isNameValid(lastName) &&
+    dateOfBirth && calculatedAge >= 25 &&
     contactNumber.trim() && isContactValid(contactNumber) &&
     corporateEmail.trim() && isEmailValid(corporateEmail) &&
     password && Object.values(validation).every(Boolean) &&
@@ -63,7 +68,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
     (orgType === 'LGU / Barangay / SK' && councilName.trim() && orgDocFile) ||
     (orgType === 'Accredited Student Organization' && universityName.trim() && orgDocFile);
 
-  const isStep3Valid = street.trim() && region && province && city && barangay;
+  const isStep3Valid = houseNo.trim() && streetName.trim() && zipCode.trim() && region && province && city && barangay;
 
   const idRequiresBack = PHILIPPINE_GOVERNMENT_IDS.find(id => id.id === idType)?.hasBackSide;
   const isStep4Valid =
@@ -81,8 +86,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
     if (onSubmit && canSubmit) {
       onSubmit({
         role: 'Organizer',
-        personal: { firstName, lastName, position, contactNumber, email: corporateEmail, password },
-        address: { street, region, province, city, barangay },
+        personal: { firstName, lastName, position, dateOfBirth, contactNumber, email: corporateEmail, password },
+        address: { houseNo, streetName, subdivision, zipCode, region, province, city, barangay },
         orgProfile: { orgType, companyName, tinNumber, councilName, universityName, document: orgDocFile },
         idVerification: { type: idType, front: idFrontFile, back: idBackFile, selfie: selfieFile, referenceNumber: idReferenceNumber },
       });
@@ -114,7 +119,15 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
         </button>
       </div>
 
-      <form className="space-y-5" onSubmit={handleFormSubmit}>
+      <form 
+        className="space-y-5" 
+        onSubmit={handleFormSubmit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+          }
+        }}
+      >
         {/* Role Selector */}
         <div className="flex bg-slate-800/60 rounded-full p-1">
           {roles.map((r) => (
@@ -207,20 +220,44 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       placeholder="Event Director"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Contact Number</label>
-                    <input
-                      type="text"
-                      value={contactNumber}
-                      onChange={(e) => setContactNumber(e.target.value)}
-                      onBlur={() => touch('contactNumber')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                        touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
-                          ? 'border-red-500/60'
-                          : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
-                      placeholder="+639XXXXXXXXX"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-white/70 mb-1.5">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={dateOfBirth}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        onBlur={() => touch('dateOfBirth')}
+                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
+                          touched.dateOfBirth && (!dateOfBirth || calculatedAge < 25)
+                            ? 'border-red-500/60 focus:border-red-400'
+                            : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
+                      />
+                      {touched.dateOfBirth && !dateOfBirth && (
+                        <p className="text-[10px] text-red-400 mt-1 font-medium">Date of Birth is required.</p>
+                      )}
+                      {touched.dateOfBirth && dateOfBirth && calculatedAge < 25 && (
+                        <p className="text-[10px] text-red-400 mt-1 font-medium">
+                          Organizers must be at least 25 years old. (Current age: {calculatedAge})
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-white/70 mb-1.5">Contact Number</label>
+                      <input
+                        type="text"
+                        value={contactNumber}
+                        onChange={(e) => setContactNumber(e.target.value)}
+                        onBlur={() => touch('contactNumber')}
+                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
+                          touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
+                            ? 'border-red-500/60'
+                            : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
+                        placeholder="+639XXXXXXXXX"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -481,18 +518,59 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                 <MapPin className="h-4 w-4 text-[#A855F7]" /> 3. Official Base Coordinates (Address)
               </h4>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-white/70 mb-1.5">Street Address</label>
-                  <input
-                    type="text"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    onBlur={() => touch('street')}
-                    className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
-                      touched.street && !street.trim() ? 'border-red-500/60' : 'border-white/10'
-                    }`}
-                    placeholder="Unit, Building, Block & Lot No."
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">House / Unit / Block No.</label>
+                    <input
+                      type="text"
+                      value={houseNo}
+                      onChange={(e) => setHouseNo(e.target.value)}
+                      onBlur={() => touch('houseNo')}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
+                        touched.houseNo && !houseNo.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                      }`}
+                      placeholder="e.g. Blk 65 Lot 4"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Street Name</label>
+                    <input
+                      type="text"
+                      value={streetName}
+                      onChange={(e) => setStreetName(e.target.value)}
+                      onBlur={() => touch('streetName')}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
+                        touched.streetName && !streetName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                      }`}
+                      placeholder="e.g. Commonwealth Ave."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Subdivision / Building (Optional)</label>
+                    <input
+                      type="text"
+                      value={subdivision}
+                      onChange={(e) => setSubdivision(e.target.value)}
+                      className="w-full rounded-lg border border-white/10 px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 focus:border-[#A855F7]/50"
+                      placeholder="e.g. Green Meadows"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Zip Code</label>
+                    <input
+                      type="text"
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                      onBlur={() => touch('zipCode')}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
+                        touched.zipCode && !zipCode.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                      }`}
+                      placeholder="e.g. 1121"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-800">

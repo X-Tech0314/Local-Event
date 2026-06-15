@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import OrganizerRegister from './OrganizerRegister.jsx';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../utils/constants.js';
-import { isNameValid, isContactValid, isEmailValid, isAgeNumberValid, validatePassword, isIdNumberValid } from '../../utils/validation.js';
+import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 
 import PersonalDetails from './RegisterSteps/PersonalDetails.jsx';
 import AddressDetails from './RegisterSteps/AddressDetails.jsx';
@@ -13,7 +13,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [suffix, setSuffix] = useState('None');
-  const [age, setAge] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [createEmail, setCreateEmail] = useState('');
   const [createPassword, setCreatePassword] = useState('');
@@ -23,8 +23,9 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   // Address Fields
   const [houseNo, setHouseNo] = useState('');
-  const [street, setStreet] = useState('');
+  const [streetName, setStreetName] = useState('');
   const [subdivision, setSubdivision] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [region, setRegion] = useState('');
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
@@ -42,9 +43,8 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   const roles = ['Organizer', 'Attendee'];
 
-  // ─── Field-level Validators ───────────────────────────────────────────────
-  const parsedAge = parseInt(age, 10);
-  const isAgeValid = age && isAgeNumberValid(age) && (createRole === 'Organizer' ? parsedAge >= 25 : parsedAge >= 18);
+  const calculatedAge = calculateAge(dateOfBirth);
+  const isAgeValid = dateOfBirth && (createRole === 'Organizer' ? calculatedAge >= 25 : calculatedAge >= 18);
 
   // ─── Touched / Dirty State ────────────────────────────────────────────────
   const [touched, setTouched] = useState({});
@@ -64,7 +64,8 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   const isStep2Valid =
     houseNo.trim() &&
-    street.trim() &&
+    streetName.trim() &&
+    zipCode.trim() &&
     region &&
     province &&
     city &&
@@ -85,11 +86,11 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
         middleName,
         lastName,
         suffix,
-        age,
+        dateOfBirth,
         contactNumber,
         email: createEmail,
         password: createPassword,
-        address: { houseNo, street, subdivision, region, province, city, barangay },
+        address: { houseNo, streetName, subdivision, zipCode, region, province, city, barangay },
         idVerification: { type: idType, front: idFrontFile, back: idBackFile, referenceNumber: idReferenceNumber },
       });
     }
@@ -128,7 +129,15 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
         </button>
       </div>
 
-      <form className="space-y-5" onSubmit={handleFormSubmit}>
+      <form 
+        className="space-y-5" 
+        onSubmit={handleFormSubmit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+          }
+        }}
+      >
         {/* Role Selector */}
         <div className="flex bg-slate-800/60 rounded-full p-1">
           {roles.map((r) => (
@@ -178,13 +187,13 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
           
           {currentStep === 1 && (
             <PersonalDetails
-              {...{ firstName, setFirstName, middleName, setMiddleName, lastName, setLastName, suffix, setSuffix, age, setAge, contactNumber, setContactNumber, createEmail, setCreateEmail, createPassword, setCreatePassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, touched, touch, isAgeValid, validation, createRole }}
+              {...{ firstName, setFirstName, middleName, setMiddleName, lastName, setLastName, suffix, setSuffix, dateOfBirth, setDateOfBirth, contactNumber, setContactNumber, createEmail, setCreateEmail, createPassword, setCreatePassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, touched, touch, isAgeValid, validation, createRole, calculatedAge }}
             />
           )}
 
           {currentStep === 2 && (
             <AddressDetails
-              {...{ houseNo, setHouseNo, street, setStreet, subdivision, setSubdivision, region, setRegion, province, setProvince, city, setCity, barangay, setBarangay, touched, touch }}
+              {...{ houseNo, setHouseNo, streetName, setStreetName, subdivision, setSubdivision, zipCode, setZipCode, region, setRegion, province, setProvince, city, setCity, barangay, setBarangay, touched, touch }}
             />
           )}
 

@@ -3,9 +3,10 @@ import { BarChart3, TrendingUp, ArrowUpRight, Percent } from 'lucide-react';
 export default function AnalyticsPanel({ currentUser }) {
     return (
         <>
-            <div className="mb-8">
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Organizer Dashboard</p>
-                <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Analytics & Reports</h1>
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Analytics Overview</h1>
+                </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">

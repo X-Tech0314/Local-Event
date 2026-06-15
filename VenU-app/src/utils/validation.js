@@ -6,9 +6,17 @@ export const isContactValid = (v) => /^(\+639\d{9}|09\d{9})$/.test(v.replace(/\s
 
 export const isEmailValid = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
-export const isAgeNumberValid = (v) => { 
-  const n = parseInt(v, 10); 
-  return !isNaN(n) && n >= 1 && n <= 120; 
+export const calculateAge = (dobString) => {
+  if (!dobString) return 0;
+  const today = new Date();
+  const birthDate = new Date(dobString);
+  if (isNaN(birthDate.getTime())) return 0;
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
 };
 
 export const validatePassword = (pwd = '') => ({

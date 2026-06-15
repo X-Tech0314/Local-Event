@@ -25,8 +25,7 @@ export default function VenuesPanel({ currentUser }) {
         <div className="space-y-8 animate-fade-in">
             <div className="flex justify-between items-center">
                 <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Organizer Dashboard</p>
-                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Venues & Locations</h1>
+                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Venues Management</h1>
                 </div>
                 <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-purple-500/25 active:scale-95">
                     <Plus size={16} /> Add New Venue

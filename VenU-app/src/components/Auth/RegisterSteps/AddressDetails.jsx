@@ -3,8 +3,9 @@ import { philippineAddressData } from '../../../utils/constants.js';
 
 export default function AddressDetails({
   houseNo, setHouseNo,
-  street, setStreet,
+  streetName, setStreetName,
   subdivision, setSubdivision,
+  zipCode, setZipCode,
   region, setRegion,
   province, setProvince,
   city, setCity,
@@ -49,31 +50,51 @@ export default function AddressDetails({
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Street Name</label>
             <input
               type="text"
-              value={street}
-              onChange={(e) => setStreet(e.target.value)}
-              onBlur={() => touch('street')}
+              value={streetName}
+              onChange={(e) => setStreetName(e.target.value)}
+              onBlur={() => touch('streetName')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.street && !street.trim()
+                touched.streetName && !streetName.trim()
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
               }`}
               placeholder="Lily St."
             />
-            {touched.street && !street.trim() && (
+            {touched.streetName && !streetName.trim() && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Street name is required.</p>
             )}
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-white/70 mb-1.5">Subdivision / Village / Bldg. (Optional)</label>
-          <input
-            type="text"
-            value={subdivision}
-            onChange={(e) => setSubdivision(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none focus:border-[#A855F7]/50 transition-colors placeholder:text-white/25"
-            placeholder="Phase 3, Meadow Ville"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5">Subdivision / Village / Bldg. (Optional)</label>
+            <input
+              type="text"
+              value={subdivision}
+              onChange={(e) => setSubdivision(e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none focus:border-[#A855F7]/50 transition-colors placeholder:text-white/25"
+              placeholder="Phase 3, Meadow Ville"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5">Zip Code</label>
+            <input
+              type="text"
+              value={zipCode}
+              onChange={(e) => setZipCode(e.target.value)}
+              onBlur={() => touch('zipCode')}
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
+                touched.zipCode && !zipCode.trim()
+                  ? 'border-red-500/60 focus:border-red-400'
+                  : 'border-white/10 focus:border-[#A855F7]/50'
+              }`}
+              placeholder="1121"
+            />
+            {touched.zipCode && !zipCode.trim() && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">Zip Code is required.</p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

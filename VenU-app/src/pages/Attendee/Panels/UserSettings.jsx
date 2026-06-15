@@ -2,11 +2,33 @@ import React, { useState, useRef } from 'react';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../../utils/constants.js';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 export default function UserSettings({ currentUser }) {
   const [form, setForm] = useState({ ...currentUser });
   const [activeTab, setActiveTab] = useState('profile');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`http://localhost:5150/api/users/${currentUser.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setForm(prev => ({ ...prev, ...res.data }));
+        if (res.data.dateOfBirth) {
+          // ensure it's mapped properly if the date format comes back as ISO
+          setForm(prev => ({ ...prev, dateOfBirth: res.data.dateOfBirth.split('T')[0] }));
+        }
+        setIdType(res.data.idType || '');
+        setIdNumber(res.data.idReferenceNumber || '');
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+      }
+    };
+    if (currentUser?.id) fetchUser();
+  }, [currentUser]);
 
   // Toggles state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
@@ -293,8 +315,8 @@ export default function UserSettings({ currentUser }) {
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Age</label>
-                  <input type="number" className={inputCls} value={form.age} onChange={set('age')} placeholder="Age" min="1" max="120" />
+                  <label className={labelCls}>Date of Birth</label>
+                  <input type="date" className={inputCls} value={form.dateOfBirth || ''} onChange={set('dateOfBirth')} />
                 </div>
                 <div>
                   <label className={labelCls}>Contact Number</label>

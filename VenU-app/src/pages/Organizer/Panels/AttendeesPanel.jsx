@@ -4,9 +4,10 @@ import { Users, Mail, CheckCircle2, Search } from 'lucide-react';
 export default function AttendeesPanel({ currentUser }) {
     return (
         <>
-            <div className="mb-8">
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Organizer Dashboard</p>
-                <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Attendees</h1>
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Attendees Hub</h1>
+                </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

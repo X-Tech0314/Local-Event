@@ -1,14 +1,14 @@
 import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { suffixes, passwordRules } from '../../../utils/constants.js';
-import { isNameValid, isContactValid, isEmailValid, isAgeNumberValid } from '../../../utils/validation.js';
+import { isNameValid, isContactValid, isEmailValid } from '../../../utils/validation.js';
 
 export default function PersonalDetails({
   firstName, setFirstName,
   middleName, setMiddleName,
   lastName, setLastName,
   suffix, setSuffix,
-  age, setAge,
+  dateOfBirth, setDateOfBirth,
   contactNumber, setContactNumber,
   createEmail, setCreateEmail,
   createPassword, setCreatePassword,
@@ -18,7 +18,8 @@ export default function PersonalDetails({
   touched, touch,
   isAgeValid,
   validation,
-  createRole
+  createRole,
+  calculatedAge
 }) {
   return (
     <div>
@@ -104,32 +105,26 @@ export default function PersonalDetails({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-white/70 mb-1.5">Age</label>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5">Date of Birth</label>
             <input
-              type="number"
-              min="1"
-              max="120"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              onBlur={() => touch('age')}
+              type="date"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              onBlur={() => touch('dateOfBirth')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.age && (!age || !isAgeValid)
+                touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
               }`}
-              placeholder="21"
             />
-            {touched.age && !age && (
-              <p className="text-[10px] text-red-400 mt-1 font-medium">Age is required.</p>
+            {touched.dateOfBirth && !dateOfBirth && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">Date of Birth is required.</p>
             )}
-            {touched.age && age && !isAgeNumberValid(age) && (
-              <p className="text-[10px] text-red-400 mt-1 font-medium">Enter a valid age between 1 and 120.</p>
-            )}
-            {touched.age && age && isAgeNumberValid(age) && !isAgeValid && (
+            {touched.dateOfBirth && dateOfBirth && !isAgeValid && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">
                 {createRole === 'Organizer'
                   ? 'Organizers must be at least 25 years old.'
-                  : 'Attendees must be at least 18 years old.'}
+                  : 'Attendees must be at least 18 years old.'} (Current calculated age: {calculatedAge})
               </p>
             )}
           </div>

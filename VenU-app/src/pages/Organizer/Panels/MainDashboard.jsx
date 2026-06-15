@@ -57,9 +57,6 @@ export default function MainDashboard({ currentUser }) {
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">Here's what's happening across your platform today.</p>
                 </div>
-                <button className="bg-[#a855f7] hover:bg-[#9333ea] active:scale-95 text-white border border-purple-500/30 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-purple-500/20">
-                    + Create New Event
-                </button>
             </div>
 
             {/* ── Platform Summary Stats Row ────────────────────────────────── */}
@@ -156,23 +153,6 @@ export default function MainDashboard({ currentUser }) {
                         </div>
                     </div>
 
-                    {/* Quick Create Event */}
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                        <h3 className="text-sm font-semibold tracking-wide text-slate-400 uppercase mb-4">Quick Create</h3>
-                        <form className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Title</label>
-                                <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#a855f7] transition placeholder:text-slate-400" placeholder="Event Title" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Date</label>
-                                <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#a855f7] transition" />
-                            </div>
-                            <button type="submit" className="w-full bg-[#a855f7] hover:bg-[#9333ea] text-white py-2.5 rounded-xl text-sm font-semibold transition shadow-lg shadow-purple-500/20 active:scale-95">
-                                Publish Event
-                            </button>
-                        </form>
-                    </div>
                 </div>
             </div>
         </>

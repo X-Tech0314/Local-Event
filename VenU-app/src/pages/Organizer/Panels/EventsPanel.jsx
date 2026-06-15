@@ -6,12 +6,8 @@ export default function EventsPanel({ currentUser }) {
         <>
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Organizer Dashboard</p>
                     <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Events Management</h1>
                 </div>
-                <button className="bg-[#a855f7] hover:bg-[#9333ea] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95">
-                    <Plus size={16} /> Create New Event
-                </button>
             </div>
             
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">

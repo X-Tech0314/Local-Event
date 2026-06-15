@@ -176,9 +176,8 @@ export default function SettingsPanel({ currentUser }) {
     return (
         <div className="w-full max-w-6xl mx-auto">
             <div className="mb-8">
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Organizer Dashboard</p>
-                <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-900">Settings</h1>
-                <p className="text-sm text-slate-500 mt-1">Manage your organizer profile, verification, and preferences.</p>
+                <h1 className="text-2xl font-bold text-slate-900 mt-1">Settings</h1>
+                <p className="text-sm text-slate-500 mt-1">Manage your organizer profile, preferences, and security.</p>
             </div>
 
             {/* Tabs Navigation */}

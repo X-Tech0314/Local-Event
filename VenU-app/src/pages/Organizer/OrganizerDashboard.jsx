@@ -9,6 +9,7 @@ import VenuesPanel from "./Panels/VenuesPanel";
 import AttendeesPanel from "./Panels/AttendeesPanel";
 import AnalyticsPanel from "./Panels/AnalyticsPanel";
 import SettingsPanel from "./Panels/SettingsPanel";
+import CreateEventPanel from "./Panels/CreateEventPanel";
 import logo from '../../assets/venu-logo3-transparent.png';
 
 const navigationItems = [
@@ -18,6 +19,7 @@ const navigationItems = [
     { id: 'attendees', label: 'Attendees', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings',  label: 'Settings',  icon: Settings },
+    { id: 'create-event', label: 'Create Event', icon: Plus },
 ];
 
 export default function OrganizerDashboard() {
@@ -64,6 +66,7 @@ export default function OrganizerDashboard() {
             case 'attendees':  return <AttendeesPanel currentUser={currentUser} />;
             case 'analytics':  return <AnalyticsPanel currentUser={currentUser} />;
             case 'settings':   return <SettingsPanel currentUser={currentUser} />;
+            case 'create-event': return <CreateEventPanel currentUser={currentUser} />;
             default:           return <MainDashboard currentUser={currentUser} />;
         }
     };
@@ -118,12 +121,6 @@ export default function OrganizerDashboard() {
 
                 {/* Bottom Actions */}
                 <div className="space-y-3">
-                    <button
-                        onClick={() => setActivePanel('events')}
-                        className="w-full bg-[#a855f7] hover:bg-[#9333ea] active:scale-95 text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
-                    >
-                        <Plus size={18} /> Create Event
-                    </button>
                     <button 
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/5 border border-transparent hover:border-red-500/10 transition-all"
@@ -136,13 +133,7 @@ export default function OrganizerDashboard() {
             {/* ── Main Content Canvas ── */}
             <main className="flex-1 bg-[#F9F8FC] min-h-screen overflow-y-auto">
                 {/* Top Bar */}
-                <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Organizer Dashboard</p>
-                        <h1 className="text-lg font-black text-slate-900 mt-0.5 leading-tight">
-                            {navigationItems.find(n => n.id === activePanel)?.label || 'Dashboard'}
-                        </h1>
-                    </div>
+                <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-end">
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <button 

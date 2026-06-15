@@ -36,12 +36,21 @@ namespace VenU.Api.Controllers
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 Role = request.Role,
                 FirstName = request.FirstName,
+                MiddleName = request.MiddleName,
                 LastName = request.LastName,
+                Suffix = request.Suffix,
+                DateOfBirth = request.DateOfBirth,
                 ContactNumber = request.ContactNumber,
+                HouseNo = request.HouseNo,
+                StreetName = request.StreetName,
+                Subdivision = request.Subdivision,
+                ZipCode = request.ZipCode,
                 Region = request.Region,
                 Province = request.Province,
                 City = request.City,
-                Barangay = request.Barangay
+                Barangay = request.Barangay,
+                IdType = request.IdType,
+                IdReferenceNumber = request.IdReferenceNumber
             };
 
             _context.Users.Add(user);
@@ -112,12 +121,21 @@ namespace VenU.Api.Controllers
         public string Password { get; set; }
         public string Role { get; set; }
         public string FirstName { get; set; }
+        public string MiddleName { get; set; }
         public string LastName { get; set; }
+        public string Suffix { get; set; }
+        public DateTime DateOfBirth { get; set; }
         public string ContactNumber { get; set; }
+        public string HouseNo { get; set; }
+        public string StreetName { get; set; }
+        public string Subdivision { get; set; }
+        public string ZipCode { get; set; }
         public string Region { get; set; }
         public string Province { get; set; }
         public string City { get; set; }
         public string Barangay { get; set; }
+        public string IdType { get; set; }
+        public string IdReferenceNumber { get; set; }
     }
 
     public class LoginDto

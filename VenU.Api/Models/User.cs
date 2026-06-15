@@ -25,7 +25,15 @@ namespace VenU.Api.Models
         public string FirstName { get; set; }
 
         [MaxLength(50)]
+        public string MiddleName { get; set; }
+
+        [MaxLength(50)]
         public string LastName { get; set; }
+
+        [MaxLength(10)]
+        public string Suffix { get; set; }
+
+        public DateTime DateOfBirth { get; set; }
 
         [MaxLength(20)]
         public string ContactNumber { get; set; }
@@ -33,6 +41,18 @@ namespace VenU.Api.Models
         public bool IsVerified { get; set; } = false;
 
         // Location Info
+        [MaxLength(100)]
+        public string HouseNo { get; set; }
+
+        [MaxLength(100)]
+        public string StreetName { get; set; }
+
+        [MaxLength(100)]
+        public string Subdivision { get; set; }
+
+        [MaxLength(20)]
+        public string ZipCode { get; set; }
+
         [MaxLength(50)]
         public string Region { get; set; }
 
@@ -44,6 +64,17 @@ namespace VenU.Api.Models
 
         [MaxLength(50)]
         public string Barangay { get; set; }
+
+        // ID Verification
+        [MaxLength(50)]
+        public string IdType { get; set; }
+
+        [MaxLength(100)]
+        public string IdReferenceNumber { get; set; }
+
+        public string IdFrontPath { get; set; }
+        public string IdBackPath { get; set; }
+        public string SelfiePath { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
