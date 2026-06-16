@@ -94,6 +94,9 @@ namespace VenU.Api.Models
         [Column(TypeName = "decimal(9,6)")]
         public decimal? Longitude { get; set; }
 
+        [MaxLength(1024)]
+        public string MapUrl { get; set; } = string.Empty;
+
         // Privacy & Authorization Access Controls
         [Required]
         [MaxLength(10)]

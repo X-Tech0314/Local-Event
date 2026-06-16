@@ -57,7 +57,12 @@ namespace VenU.Api.Controllers
                 user.IdReferenceNumber,
                 user.IdFrontPath,
                 user.IdBackPath,
-                user.SelfiePath
+                user.SelfiePath,
+                user.Position,
+                user.OrgType,
+                user.OrgName,
+                user.TinNumber,
+                user.OrgDocumentPath
             });
         }
 
@@ -76,22 +81,30 @@ namespace VenU.Api.Controllers
                 return NotFound();
             }
 
-            user.FirstName = request.FirstName;
-            user.MiddleName = request.MiddleName;
-            user.LastName = request.LastName;
-            user.Suffix = request.Suffix;
+            user.FirstName = request.FirstName ?? "";
+            user.MiddleName = request.MiddleName ?? "";
+            user.LastName = request.LastName ?? "";
+            user.Suffix = request.Suffix ?? "";
             user.DateOfBirth = request.DateOfBirth;
-            user.ContactNumber = request.ContactNumber;
-            user.HouseNo = request.HouseNo;
-            user.StreetName = request.StreetName;
-            user.Subdivision = request.Subdivision;
-            user.ZipCode = request.ZipCode;
-            user.Region = request.Region;
-            user.Province = request.Province;
-            user.City = request.City;
-            user.Barangay = request.Barangay;
-            user.IdType = request.IdType;
-            user.IdReferenceNumber = request.IdReferenceNumber;
+            user.ContactNumber = request.ContactNumber ?? "";
+            user.HouseNo = request.HouseNo ?? "";
+            user.StreetName = request.StreetName ?? "";
+            user.Subdivision = request.Subdivision ?? "";
+            user.ZipCode = request.ZipCode ?? "";
+            user.Region = request.Region ?? "";
+            user.Province = request.Province ?? "";
+            user.City = request.City ?? "";
+            user.Barangay = request.Barangay ?? "";
+            user.IdType = request.IdType ?? "";
+            user.IdReferenceNumber = request.IdReferenceNumber ?? "";
+            user.Position = request.Position ?? "";
+            user.OrgType = request.OrgType ?? "";
+            user.OrgName = request.OrgName ?? "";
+            user.TinNumber = request.TinNumber ?? "";
+            user.IdFrontPath = request.IdFrontPath ?? "";
+            user.IdBackPath = request.IdBackPath ?? "";
+            user.SelfiePath = request.SelfiePath ?? "";
+            user.OrgDocumentPath = request.OrgDocumentPath ?? "";
 
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Profile updated successfully." });
@@ -143,21 +156,29 @@ namespace VenU.Api.Controllers
     public class UpdateProfileDto
     {
         public string FirstName { get; set; }
-        public string MiddleName { get; set; }
+        public string? MiddleName { get; set; }
         public string LastName { get; set; }
-        public string Suffix { get; set; }
+        public string? Suffix { get; set; }
         public DateTime DateOfBirth { get; set; }
-        public string ContactNumber { get; set; }
-        public string HouseNo { get; set; }
-        public string StreetName { get; set; }
-        public string Subdivision { get; set; }
-        public string ZipCode { get; set; }
-        public string Region { get; set; }
-        public string Province { get; set; }
-        public string City { get; set; }
-        public string Barangay { get; set; }
-        public string IdType { get; set; }
-        public string IdReferenceNumber { get; set; }
+        public string? ContactNumber { get; set; }
+        public string? HouseNo { get; set; }
+        public string? StreetName { get; set; }
+        public string? Subdivision { get; set; }
+        public string? ZipCode { get; set; }
+        public string? Region { get; set; }
+        public string? Province { get; set; }
+        public string? City { get; set; }
+        public string? Barangay { get; set; }
+        public string? IdType { get; set; }
+        public string? IdReferenceNumber { get; set; }
+        public string? Position { get; set; }
+        public string? OrgType { get; set; }
+        public string? OrgName { get; set; }
+        public string? TinNumber { get; set; }
+        public string? IdFrontPath { get; set; }
+        public string? IdBackPath { get; set; }
+        public string? SelfiePath { get; set; }
+        public string? OrgDocumentPath { get; set; }
     }
 
     public class UpdatePasswordDto

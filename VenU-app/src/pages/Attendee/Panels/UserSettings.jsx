@@ -5,7 +5,28 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 export default function UserSettings({ currentUser }) {
-  const [form, setForm] = useState({ ...currentUser });
+  const [form, setForm] = useState({
+    firstName: currentUser?.firstName || '',
+    middleName: currentUser?.middleName || '',
+    lastName: currentUser?.lastName || '',
+    suffix: currentUser?.suffix || '',
+    dateOfBirth: currentUser?.dateOfBirth || '',
+    contactNumber: currentUser?.contactNumber || '',
+    houseNo: currentUser?.houseNo || '',
+    streetName: currentUser?.streetName || '',
+    subdivision: currentUser?.subdivision || '',
+    zipCode: currentUser?.zipCode || '',
+    region: currentUser?.region || '',
+    province: currentUser?.province || '',
+    city: currentUser?.city || '',
+    barangay: currentUser?.barangay || '',
+    idType: currentUser?.idType || '',
+    idReferenceNumber: currentUser?.idReferenceNumber || '',
+    idFrontPath: currentUser?.idFrontPath || '',
+    idBackPath: currentUser?.idBackPath || '',
+    email: currentUser?.email || '',
+    ...currentUser
+  });
   const [activeTab, setActiveTab] = useState('profile');
   const navigate = useNavigate();
 
@@ -23,6 +44,8 @@ export default function UserSettings({ currentUser }) {
         }
         setIdType(res.data.idType || '');
         setIdNumber(res.data.idReferenceNumber || '');
+        if (res.data.idFrontPath) setIdFront(res.data.idFrontPath);
+        if (res.data.idBackPath) setIdBack(res.data.idBackPath);
       } catch (err) {
         if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
           console.warn('Backend unavailable, using local mock data.');
@@ -105,6 +128,51 @@ export default function UserSettings({ currentUser }) {
         return;
       }
       alert('Failed to delete account: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const uploadFile = async (file) => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return res.data.url;
+  };
+
+  const handleIdUpload = async (e, setter, formField) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const url = await uploadFile(file);
+        setter(url);
+        setForm(prev => ({ ...prev, [formField]: url }));
+      } catch (err) {
+        alert('Failed to upload file: ' + err.message);
+      }
+    }
+  };
+
+  const handleSaveVerification = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const updatedForm = {
+        ...form,
+        idType: idType,
+        idReferenceNumber: idNumber
+      };
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, updatedForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Verification details saved successfully!');
+      localStorage.setItem('user', JSON.stringify(updatedForm));
+      setForm(updatedForm);
+    } catch (err) {
+      alert('Failed to save verification details: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -357,11 +425,15 @@ export default function UserSettings({ currentUser }) {
                 </div>
                 <div>
                   <label className={labelCls}>Street Name</label>
-                  <input className={inputCls} value={form.street} onChange={set('street')} placeholder="Lily St." />
+                  <input className={inputCls} value={form.streetName || ''} onChange={set('streetName')} placeholder="Lily St." />
                 </div>
                 <div>
                   <label className={labelCls}>Subdivision / Village (Optional)</label>
-                  <input className={inputCls} value={form.subdivision} onChange={set('subdivision')} placeholder="Phase 3, Meadow Ville" />
+                  <input className={inputCls} value={form.subdivision || ''} onChange={set('subdivision')} placeholder="Phase 3, Meadow Ville" />
+                </div>
+                <div>
+                  <label className={labelCls}>ZIP Code</label>
+                  <input className={inputCls} value={form.zipCode || ''} onChange={set('zipCode')} placeholder="e.g. 1100" />
                 </div>
                 <div>
                   <label className={labelCls}>Region</label>
@@ -404,7 +476,7 @@ export default function UserSettings({ currentUser }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelCls}>Verified ID Type</label>
-                  <select value={idType} onChange={(e) => setIdType(e.target.value)} className={inputCls}>
+                  <select value={idType} onChange={(e) => { setIdType(e.target.value); setForm(prev => ({ ...prev, idType: e.target.value })); }} className={inputCls}>
                     <option value="">Select ID Type</option>
                     {PHILIPPINE_GOVERNMENT_IDS.map(id => (
                       <option key={id.id} value={id.id}>{id.name}</option>
@@ -413,7 +485,7 @@ export default function UserSettings({ currentUser }) {
                 </div>
                 <div>
                   <label className={labelCls}>ID Reference / Serial Number</label>
-                  <input className={inputCls} value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder="e.g. P1234567A" />
+                  <input className={inputCls} value={idNumber} onChange={(e) => { setIdNumber(e.target.value); setForm(prev => ({ ...prev, idReferenceNumber: e.target.value })); }} placeholder="e.g. P1234567A" />
                 </div>
               </div>
               <div className="flex flex-col gap-4 mt-5">
@@ -425,7 +497,7 @@ export default function UserSettings({ currentUser }) {
                       <p className="text-xs text-slate-500">{idFront ? 'Uploaded' : 'No document uploaded'}</p>
                     </div>
                   </div>
-                  <input type="file" accept="image/*,application/pdf" className="hidden" ref={frontInputRef} onChange={(e) => e.target.files[0] && setIdFront(URL.createObjectURL(e.target.files[0]))} />
+                  <input type="file" accept="image/*,application/pdf" className="hidden" ref={frontInputRef} onChange={(e) => handleIdUpload(e, setIdFront, 'idFrontPath')} />
                   <div className="flex gap-2">
                     {idFront && <button onClick={() => window.open(idFront, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
                     <button onClick={() => frontInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
@@ -441,7 +513,7 @@ export default function UserSettings({ currentUser }) {
                         <p className="text-xs text-slate-500">{idBack ? 'Uploaded' : 'No document uploaded'}</p>
                       </div>
                     </div>
-                    <input type="file" accept="image/*,application/pdf" className="hidden" ref={backInputRef} onChange={(e) => e.target.files[0] && setIdBack(URL.createObjectURL(e.target.files[0]))} />
+                    <input type="file" accept="image/*,application/pdf" className="hidden" ref={backInputRef} onChange={(e) => handleIdUpload(e, setIdBack, 'idBackPath')} />
                     <div className="flex gap-2">
                       {idBack && <button onClick={() => window.open(idBack, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
                       <button onClick={() => backInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
@@ -449,7 +521,7 @@ export default function UserSettings({ currentUser }) {
                   </div>
                 )}
               </div>
-              <SaveBtn label="Save Verification Details" onClick={() => alert('Identity Verification Status Saved.')} />
+              <SaveBtn label="Save Verification Details" onClick={handleSaveVerification} />
             </Section>
 
             {/* Accessibility & Statutory Discounts */}

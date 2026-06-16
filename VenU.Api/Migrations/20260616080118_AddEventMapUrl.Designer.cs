@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VenU.Api.Data;
 
@@ -10,9 +11,11 @@ using VenU.Api.Data;
 namespace VenU.Api.Migrations
 {
     [DbContext(typeof(VenUDbContext))]
-    partial class VenUDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616080118_AddEventMapUrl")]
+    partial class AddEventMapUrl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -308,24 +311,9 @@ namespace VenU.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("OrgDocumentPath")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OrgName")
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
-
-                    b.Property<string>("OrgType")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<string>("Position")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Province")
                         .IsRequired()
@@ -360,10 +348,6 @@ namespace VenU.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("varchar(10)");
-
-                    b.Property<string>("TinNumber")
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ZipCode")
                         .IsRequired()

@@ -22,6 +22,7 @@ namespace VenU.Api.DTOs
         
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
+        public string? MapUrl { get; set; }
         
         // Venue Directory Properties
         public string VenueSourcingMode { get; set; } = "registered";

@@ -281,7 +281,34 @@ export default function LandingPage() {
               try {
                 const role = data.role || createRole || 'Attendee';
                 const p = role === 'Organizer' ? data.personal : data;
-                const payload = { email: p?.email || '', password: p?.password || '', role, firstName: p?.firstName || '', lastName: p?.lastName || '', contactNumber: p?.contactNumber || '', region: data.address?.region || '', province: data.address?.province || '', city: data.address?.city || '', barangay: data.address?.barangay || '' };
+                const addr = data.address || {};
+                const idVer = data.idVerification || {};
+
+                const payload = { 
+                  email: p?.email || '', 
+                  password: p?.password || '', 
+                  role, 
+                  firstName: p?.firstName || '', 
+                  middleName: p?.middleName || '',
+                  lastName: p?.lastName || '', 
+                  suffix: p?.suffix || '',
+                  dateOfBirth: p?.dateOfBirth ? new Date(p.dateOfBirth).toISOString() : new Date().toISOString(),
+                  contactNumber: p?.contactNumber || '', 
+                  houseNo: addr.houseNo || '',
+                  streetName: addr.streetName || '',
+                  subdivision: addr.subdivision || '',
+                  zipCode: addr.zipCode || '',
+                  region: addr.region || '', 
+                  province: addr.province || '', 
+                  city: addr.city || '', 
+                  barangay: addr.barangay || '',
+                  idType: idVer.type || '',
+                  idReferenceNumber: idVer.referenceNumber || '',
+                  position: p?.position || '',
+                  orgType: data.orgProfile?.orgType || '',
+                  orgName: data.orgProfile?.companyName || data.orgProfile?.councilName || data.orgProfile?.universityName || '',
+                  tinNumber: data.orgProfile?.tinNumber || ''
+                };
 
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, payload);
                 setShowSuccessAnim(true);

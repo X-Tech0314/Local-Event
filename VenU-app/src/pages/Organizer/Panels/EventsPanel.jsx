@@ -189,11 +189,21 @@ export default function EventsPanel({ currentUser, setActivePanel }) {
                                             <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 mt-0.5">
                                                 <MapPin size={14} strokeWidth={2.5} />
                                             </div>
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col flex-1 min-w-0">
                                                 <span className="font-bold text-slate-800 dark:text-slate-200">{venueDisplay}</span>
                                                 <span className="text-xs text-slate-500 line-clamp-1">{fullAddress}</span>
                                                 {microLocation && (
                                                     <span className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold mt-0.5">{microLocation}</span>
+                                                )}
+                                                {evt.mapUrl && (
+                                                    <a 
+                                                        href={evt.mapUrl} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-800 font-bold underline mt-1 flex items-center gap-1 w-max"
+                                                    >
+                                                        🗺️ View Map Location
+                                                    </a>
                                                 )}
                                             </div>
                                         </div>

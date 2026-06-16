@@ -1,14 +1,55 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User, Camera, KeyRound, Eye, EyeOff, Building2, MapPin, FileText, UploadCloud, CheckCircle2, Shield, Bell, AlertTriangle } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../../utils/constants.js';
+import axios from 'axios';
 
 export default function SettingsPanel({ currentUser }) {
     const [activeTab, setActiveTab] = useState('profile');
     
+    const [form, setForm] = useState({
+        firstName: currentUser?.firstName || '',
+        lastName: currentUser?.lastName || '',
+        email: currentUser?.email || '',
+        position: '',
+        contactNumber: '',
+        orgType: 'LGU / Barangay / SK',
+        orgName: '',
+        idType: '',
+        idReferenceNumber: '',
+        ...currentUser
+    });
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setForm(prev => ({ ...prev, ...res.data }));
+                if (res.data.idFrontPath) setIdFront(res.data.idFrontPath);
+                if (res.data.idBackPath) setIdBack(res.data.idBackPath);
+                if (res.data.selfiePath) setIdSelfie(res.data.selfiePath);
+                if (res.data.orgDocumentPath) setOathDoc(res.data.orgDocumentPath);
+            } catch (err) {
+                console.error("Failed to fetch user data:", err);
+            }
+        };
+        if (currentUser?.id) {
+            fetchUser();
+        }
+    }, [currentUser]);
+
+    const set = (field) => (e) => {
+        setForm(prev => ({ ...prev, [field]: e.target.value }));
+    };
+
     // Profile state
     const [profileImage, setProfileImage] = useState(null);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
     // Document state
     const [oathDoc, setOathDoc] = useState(null);
@@ -44,18 +85,91 @@ export default function SettingsPanel({ currentUser }) {
     const backRef = useRef(null);
     const selfieRef = useRef(null);
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) setProfileImage(URL.createObjectURL(file));
+    const uploadFile = async (file) => {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formData, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return res.data.url;
     };
 
-    const handleFileChange = (e, setter) => {
+    const handleImageChange = async (e) => {
         const file = e.target.files[0];
-        if (file) setter(URL.createObjectURL(file));
+        if (file) {
+            try {
+                const url = await uploadFile(file);
+                setProfileImage(url);
+            } catch (err) {
+                alert("Failed to upload profile image: " + err.message);
+            }
+        }
     };
 
-    const handleSave = () => {
-        alert("Successfully saved!");
+    const handleFileChange = async (e, setter, formField) => {
+        const file = e.target.files[0];
+        if (file) {
+            try {
+                const url = await uploadFile(file);
+                setter(url);
+                if (formField) {
+                    setForm(prev => ({ ...prev, [formField]: url }));
+                }
+            } catch (err) {
+                alert("Failed to upload document: " + err.message);
+            }
+        }
+    };
+
+    const handleSave = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, form, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("Profile updated successfully!");
+            const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+            localStorage.setItem('user', JSON.stringify({
+                ...localUser,
+                ...form,
+                FirstName: form.firstName,
+                LastName: form.lastName,
+                ContactNumber: form.contactNumber,
+                Region: form.region,
+                Province: form.province,
+                City: form.city,
+                Barangay: form.barangay
+            }));
+        } catch (err) {
+            alert("Failed to update profile: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleUpdatePassword = async () => {
+        if (!newPassword) {
+            alert("Please enter a new password.");
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}/password`, { newPassword }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("Password updated successfully!");
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err) {
+            alert("Failed to update password: " + (err.response?.data?.message || err.message));
+        }
     };
 
     const handlePrintTranscript = () => {
@@ -145,9 +259,9 @@ export default function SettingsPanel({ currentUser }) {
         </div>
     );
 
-    const SaveBtn = ({ label }) => (
+    const SaveBtn = ({ label, onClick }) => (
         <div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-800">
-            <button onClick={handleSave} className="w-full md:w-auto px-8 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-sm transition-all active:scale-95">
+            <button onClick={onClick || handleSave} className="w-full md:w-auto px-8 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-sm transition-all active:scale-95">
                 {label}
             </button>
         </div>
@@ -225,23 +339,23 @@ export default function SettingsPanel({ currentUser }) {
                                 <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className={labelCls}>First Name</label>
-                                        <input type="text" defaultValue={currentUser?.firstName || ''} className={inputCls} />
+                                        <input type="text" value={form.firstName || ''} onChange={set('firstName')} className={inputCls} />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Last Name</label>
-                                        <input type="text" defaultValue={currentUser?.lastName || ''} className={inputCls} />
+                                        <input type="text" value={form.lastName || ''} onChange={set('lastName')} className={inputCls} />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Role / Title</label>
-                                        <input type="text" placeholder="e.g. Organizer" className={inputCls} />
+                                        <input type="text" value={form.position || ''} onChange={set('position')} placeholder="e.g. Organizer" className={inputCls} />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Contact Number</label>
-                                        <input type="text" placeholder="+63 9XX XXX XXXX" className={inputCls} />
+                                        <input type="text" value={form.contactNumber || ''} onChange={set('contactNumber')} placeholder="+63 9XX XXX XXXX" className={inputCls} />
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Email Address</label>
-                                        <input type="email" defaultValue={currentUser?.email || ''} className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-400 dark:text-slate-600 cursor-not-allowed select-none" disabled />
+                                        <input type="email" value={form.email || ''} className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-400 dark:text-slate-600 cursor-not-allowed select-none" disabled />
                                     </div>
                                 </div>
                             </div>
@@ -252,16 +366,15 @@ export default function SettingsPanel({ currentUser }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div>
                                     <label className={labelCls}>Organization Type</label>
-                                    <select className={`${inputCls} appearance-none cursor-pointer`}>
-                                        <option>LGU / Barangay / SK</option>
-                                        <option>Corporate / Business</option>
-                                        <option>Non-Profit Organization</option>
-                                        <option>Independent / Freelance</option>
+                                    <select value={form.orgType || 'LGU / Barangay / SK'} onChange={set('orgType')} className={`${inputCls} appearance-none cursor-pointer`}>
+                                        <option value="LGU / Barangay / SK">LGU / Barangay / SK</option>
+                                        <option value="Commercial/Private Business">Commercial/Private Business</option>
+                                        <option value="Accredited Student Organization">Accredited Student Organization</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className={labelCls}>Organization Name</label>
-                                    <input type="text" placeholder="e.g. Genesis Events Corp." className={inputCls} />
+                                    <input type="text" value={form.orgName || ''} onChange={set('orgName')} placeholder="e.g. Genesis Events Corp." className={inputCls} />
                                 </div>
                             </div>
                             <div>
@@ -283,7 +396,7 @@ export default function SettingsPanel({ currentUser }) {
                                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">PDF, JPG, or PNG under 5MB</p>
                                         </>
                                     )}
-                                    <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc)} className="hidden" accept="image/*,.pdf" />
+                                    <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc, 'orgDocumentPath')} className="hidden" accept="image/*,.pdf" />
                                 </div>
                             </div>
                             <SaveBtn label="Update Organization" />
@@ -297,32 +410,33 @@ export default function SettingsPanel({ currentUser }) {
                         <Section title="Identity Verification" icon={FileText}>
                             <div className="mb-6">
                                 <label className={labelCls}>Government ID Type</label>
-                                <select className={`${inputCls} appearance-none cursor-pointer`}>
+                                <select value={form.idType || ''} onChange={set('idType')} className={`${inputCls} appearance-none cursor-pointer`}>
+                                    <option value="">Choose ID Type</option>
                                     {PHILIPPINE_GOVERNMENT_IDS.map(id => (
-                                        <option key={id.id} value={id.name}>{id.name}</option>
+                                        <option key={id.id} value={id.id}>{id.name}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="mb-8">
                                 <label className={labelCls}>ID Number</label>
-                                <input type="text" placeholder="e.g. A000-1234-5678" className={`${inputCls} font-mono tracking-widest`} />
+                                <input type="text" value={form.idReferenceNumber || ''} onChange={set('idReferenceNumber')} placeholder="e.g. A000-1234-5678" className={`${inputCls} font-mono tracking-widest`} />
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div onClick={() => frontRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all overflow-hidden p-2">
                                     {idFront ? <img src={idFront} alt="Front ID" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Upload Front Side</p>}
-                                    <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront)} className="hidden" accept="image/*" />
+                                    <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront, 'idFrontPath')} className="hidden" accept="image/*" />
                                 </div>
                                 <div onClick={() => backRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all overflow-hidden p-2">
                                     {idBack ? <img src={idBack} alt="Back ID" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Upload Back Side</p>}
-                                    <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack)} className="hidden" accept="image/*" />
+                                    <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack, 'idBackPath')} className="hidden" accept="image/*" />
                                 </div>
                             </div>
                             
                             <div className="mb-6">
                                 <div onClick={() => selfieRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all overflow-hidden p-2">
                                     {idSelfie ? <img src={idSelfie} alt="Selfie" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Upload Selfie with ID</p>}
-                                    <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie)} className="hidden" accept="image/*" />
+                                    <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie, 'selfiePath')} className="hidden" accept="image/*" />
                                 </div>
                             </div>
                             <SaveBtn label="Submit Verification" />
@@ -422,7 +536,7 @@ export default function SettingsPanel({ currentUser }) {
                                 <div>
                                     <label className={labelCls}>New Password (Min 8 chars)</label>
                                     <div className="relative">
-                                        <input type={showNewPassword ? "text" : "password"} placeholder="••••••••" className={inputCls} />
+                                        <input type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className={inputCls} />
                                         <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                                             {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
@@ -431,14 +545,14 @@ export default function SettingsPanel({ currentUser }) {
                                 <div>
                                     <label className={labelCls}>Verify Password</label>
                                     <div className="relative">
-                                        <input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" className={inputCls} />
+                                        <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className={inputCls} />
                                         <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            <SaveBtn label="Update Password" />
+                            <SaveBtn label="Update Password" onClick={handleUpdatePassword} />
                         </Section>
 
                         <Section title="Security Features">

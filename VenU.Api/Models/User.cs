@@ -76,6 +76,21 @@ namespace VenU.Api.Models
         public string IdBackPath { get; set; }
         public string SelfiePath { get; set; }
 
+        // Organizer specific details
+        [MaxLength(100)]
+        public string? Position { get; set; }
+
+        [MaxLength(50)]
+        public string? OrgType { get; set; }
+
+        [MaxLength(150)]
+        public string? OrgName { get; set; }
+
+        [MaxLength(30)]
+        public string? TinNumber { get; set; }
+
+        public string? OrgDocumentPath { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

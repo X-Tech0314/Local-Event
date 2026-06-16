@@ -68,6 +68,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
         ZipCode: '',
         Latitude: '',
         Longitude: '',
+        MapUrl: '',
         VenueName: '',
         RegisterVenueToDB: false,
         VenueType: 'Mall / Commercial Complex',
@@ -257,6 +258,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                 zipCode: formData.ZipCode,
                 latitude: formData.Latitude ? parseFloat(formData.Latitude) : null,
                 longitude: formData.Longitude ? parseFloat(formData.Longitude) : null,
+                mapUrl: formData.MapUrl || '',
                 venueSourcingMode: venueSourcingMode,
                 venueId: venueSourcingMode === 'registered' ? selectedVenueId : null,
                 venueName: formData.VenueName || '',
@@ -351,7 +353,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                                 StartDate: '', StartTime: '', EndDate: '', EndTime: '',
                                 TicketSalesStartDate: '', TicketSalesStartTime: '', TicketSalesEndDate: '', TicketSalesEndTime: '',
                                 StreetAddress: '', Barangay: '', City: '',
-                                Province: '', Region: '', ZipCode: '', Latitude: '', Longitude: '', AccessType: 'Public',
+                                Province: '', Region: '', ZipCode: '', Latitude: '', Longitude: '', MapUrl: '', AccessType: 'Public',
                                 VerificationCode: '', MaxCapacity: '', TicketTiers: []
                             });
                             setErrors({});
@@ -582,13 +584,28 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                                             const stValid = validateField('StartTime', formData.StartTime);
 
                                             if (sdValid && stValid) {
+                                                const startD = new Date(formData.StartDate);
+                                                const minD = new Date('2026-06-16');
+                                                startD.setHours(0,0,0,0);
+                                                minD.setHours(0,0,0,0);
+
+                                                if (startD < minD) {
+                                                    setErrors(prev => ({ ...prev, StartDate: '* Event start date cannot be before June 16, 2026' }));
+                                                    return;
+                                                }
+
                                                 const evtEnd = formData.EndDate && formData.EndTime ? new Date(`${formData.EndDate}T${formData.EndTime}`) : null;
                                                 const tktEnd = formData.TicketSalesEndDate && formData.TicketSalesEndTime ? new Date(`${formData.TicketSalesEndDate}T${formData.TicketSalesEndTime}`) : null;
 
                                                 if (evtEnd && tktEnd && tktEnd >= evtEnd) {
                                                     setErrors(prev => ({ ...prev, TicketLifecycle: true }));
                                                 } else {
-                                                    setErrors(prev => { const e = { ...prev }; delete e.TicketLifecycle; return e; });
+                                                    setErrors(prev => { 
+                                                        const e = { ...prev }; 
+                                                        delete e.TicketLifecycle; 
+                                                        delete e.StartDate; 
+                                                        return e; 
+                                                    });
                                                     setCurrentStep(3);
                                                 }
                                             }
@@ -809,11 +826,15 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                                             </div>
                                         </div>
 
-                                        <div className="pt-2">
+                                        <div className="pt-2 flex gap-4">
                                             <div className="w-1/3">
                                                 <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Postal / ZIP Code</label>
                                                 <input type="text" name="ZipCode" value={formData.ZipCode} onChange={handleInputChange} onBlur={handleBlur} maxLength={4} placeholder="1103" className={`w-full bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 ${errors.ZipCode ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-purple-500'}`} />
                                                 {errors.ZipCode && <p className="text-red-500 text-[10px] mt-1">{errors.ZipCode}</p>}
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Map / Location URL (Google Maps or Waze Link)</label>
+                                                <input type="text" name="MapUrl" value={formData.MapUrl} onChange={handleInputChange} placeholder="https://maps.google.com/?q=..." className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-500" />
                                             </div>
                                         </div>
                                     </div>

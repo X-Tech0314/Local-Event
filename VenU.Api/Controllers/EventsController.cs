@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using VenU.Api.Data;
@@ -14,14 +15,16 @@ namespace VenU.Api.Controllers
     public class EventsController : ControllerBase
     {
         private readonly VenUDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public EventsController(VenUDbContext context)
+        public EventsController(VenUDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         [HttpPost("upload")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> UploadBanner(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -29,7 +32,11 @@ namespace VenU.Api.Controllers
                 return BadRequest("No file uploaded.");
             }
 
-            var wwwrootPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot");
+            var wwwrootPath = _env.WebRootPath;
+            if (string.IsNullOrEmpty(wwwrootPath))
+            {
+                wwwrootPath = System.IO.Path.Combine(_env.ContentRootPath, "wwwroot");
+            }
             var uploadsPath = System.IO.Path.Combine(wwwrootPath, "uploads");
             
             if (!System.IO.Directory.Exists(uploadsPath))
@@ -59,6 +66,13 @@ namespace VenU.Api.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            // Date validation
+            var minStartDate = new DateTime(2026, 6, 16);
+            if (dto.StartDateTime.Date < minStartDate.Date)
+            {
+                return BadRequest("The event start date cannot be before June 16, 2026.");
             }
 
             // The JWT stores the user ID under the Sub claim (see GenerateJwtToken in AuthController)
@@ -134,6 +148,7 @@ namespace VenU.Api.Controllers
                 ZipCode = dto.ZipCode ?? "",
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
+                MapUrl = dto.MapUrl ?? "",
                 AccessType = dto.AccessType ?? "Public",
                 VerificationCode = dto.VerificationCode ?? "",
                 MaxCapacity = dto.MaxCapacity,

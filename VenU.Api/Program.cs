@@ -4,6 +4,40 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using VenU.Api.Data;
 
+// Load environment variables from .env if present
+var currentDir = Directory.GetCurrentDirectory();
+var envPath = Path.Combine(currentDir, ".env");
+if (!File.Exists(envPath))
+{
+    envPath = Path.Combine(currentDir, "..", ".env");
+}
+if (!File.Exists(envPath))
+{
+    envPath = Path.Combine(currentDir, "..", "VenU-app", ".env");
+}
+
+if (File.Exists(envPath))
+{
+    foreach (var line in File.ReadAllLines(envPath))
+    {
+        var trimmedLine = line.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith("#"))
+            continue;
+
+        var parts = trimmedLine.Split('=', 2);
+        if (parts.Length == 2)
+        {
+            var key = parts[0].Trim();
+            var val = parts[1].Trim();
+            if ((val.StartsWith("\"") && val.EndsWith("\"")) || (val.StartsWith("'") && val.EndsWith("'")))
+            {
+                val = val.Substring(1, val.Length - 2);
+            }
+            Environment.SetEnvironmentVariable(key, val);
+        }
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
