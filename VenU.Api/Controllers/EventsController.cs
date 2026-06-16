@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using VenU.Api.Data;
 using VenU.Api.DTOs;
 using VenU.Api.Models;
@@ -16,11 +19,13 @@ namespace VenU.Api.Controllers
     {
         private readonly VenUDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IConfiguration _config;
 
-        public EventsController(VenUDbContext context, IWebHostEnvironment env)
+        public EventsController(VenUDbContext context, IWebHostEnvironment env, IConfiguration config)
         {
             _context = context;
             _env = env;
+            _config = config;
         }
 
         [HttpPost("upload")]
@@ -30,6 +35,49 @@ namespace VenU.Api.Controllers
             if (file == null || file.Length == 0)
             {
                 return BadRequest("No file uploaded.");
+            }
+
+            // Check if Cloudinary credentials are set and not placeholder values
+            var cloudName = _config["Cloudinary:CloudName"];
+            var apiKey = _config["Cloudinary:ApiKey"];
+            var apiSecret = _config["Cloudinary:ApiSecret"];
+
+            bool useCloudinary = !string.IsNullOrEmpty(cloudName) && 
+                                 !string.IsNullOrEmpty(apiKey) && 
+                                 !string.IsNullOrEmpty(apiSecret) &&
+                                 cloudName != "your_cloud_name_here" &&
+                                 apiKey != "your_api_key_here" &&
+                                 apiSecret != "your_api_secret_here" &&
+                                 !cloudName.Contains("placeholder") &&
+                                 !cloudName.StartsWith("your_");
+
+            if (useCloudinary)
+            {
+                try
+                {
+                    var account = new Account(cloudName, apiKey, apiSecret);
+                    var cloudinary = new Cloudinary(account);
+
+                    using var stream = file.OpenReadStream();
+                    var uploadParams = new ImageUploadParams()
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        Folder = "venu_uploads"
+                    };
+
+                    var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                    if (uploadResult.Error != null)
+                    {
+                        return BadRequest($"Cloudinary upload error: {uploadResult.Error.Message}");
+                    }
+
+                    return Ok(new { url = uploadResult.SecureUrl.ToString() });
+                }
+                catch (Exception ex)
+                {
+                    // If Cloudinary fails, we can fall back to local upload as a safety net
+                    Console.WriteLine($"Cloudinary upload failed, falling back to local: {ex.Message}");
+                }
             }
 
             var wwwrootPath = _env.WebRootPath;
