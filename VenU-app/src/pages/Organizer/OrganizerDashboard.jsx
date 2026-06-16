@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, MapPin, Users, BarChart3, Settings, Plus, LogOut, Bell } from 'lucide-react';
+import { LayoutDashboard, Calendar, MapPin, Users, BarChart3, Settings, Plus, LogOut, Bell, Moon, Sun } from 'lucide-react';
+import { useTheme } from '../../ThemeContext.jsx';
 
 // Panel File Imports
 import MainDashboard from "./Panels/MainDashboard";
@@ -24,6 +25,7 @@ const navigationItems = [
 
 export default function OrganizerDashboard() {
     const navigate = useNavigate();
+    const { darkMode, toggleDarkMode } = useTheme();
     const [activePanel, setActivePanel] = useState('dashboard');
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([
@@ -72,7 +74,7 @@ export default function OrganizerDashboard() {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#F9F8FC] font-sans">
+        <div className="flex min-h-screen bg-[#faf9f6] dark:bg-slate-950 font-sans">
 
             {/* Fixed Dark Sidebar */}
             <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
@@ -133,9 +135,9 @@ export default function OrganizerDashboard() {
             </aside>
 
             {/* ── Main Content Canvas ── */}
-            <main className="flex-1 bg-[#F9F8FC] min-h-screen overflow-y-auto ml-64">
+            <main className="flex-1 bg-[#faf9f6] dark:bg-slate-950 min-h-screen overflow-y-auto ml-64">
                 {/* Top Bar */}
-                <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-end">
+                <div className="sticky top-0 z-30 bg-[#faf9f6]/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 px-8 py-4 flex items-center justify-end">
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <button 
@@ -198,6 +200,15 @@ export default function OrganizerDashboard() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Dark Mode Toggle */}
+                        <button
+                            onClick={toggleDarkMode}
+                            className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-500 hover:border-[#A855F7]/50 hover:text-[#A855F7] transition-all duration-300"
+                            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
                     </div>
                 </div>
 

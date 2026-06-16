@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
 /* Enable native smooth scrolling for anchor links and set typography */
 html, body {
 	scroll-behavior: smooth;
