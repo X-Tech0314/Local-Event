@@ -13,7 +13,7 @@ export default function UserSettings({ currentUser }) {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:5150/api/users/${currentUser.id}`, {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setForm(prev => ({ ...prev, ...res.data }));
@@ -44,7 +44,7 @@ export default function UserSettings({ currentUser }) {
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5150/api/users/${currentUser.id}`, form, {
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, form, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Profile updated successfully!');
@@ -61,7 +61,7 @@ export default function UserSettings({ currentUser }) {
     }
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5150/api/users/${currentUser.id}/password`, { newPassword }, {
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}/password`, { newPassword }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Password updated successfully!');
@@ -75,7 +75,7 @@ export default function UserSettings({ currentUser }) {
   const handleDeleteAccount = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5150/api/users/${currentUser.id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       localStorage.removeItem('token');

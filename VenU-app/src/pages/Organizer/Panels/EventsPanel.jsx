@@ -19,7 +19,7 @@ export default function EventsPanel({ currentUser, setActivePanel }) {
                 setError('Not authenticated. Please log in again.');
                 return;
             }
-            const res = await fetch('http://localhost:5150/api/events', {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/events`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) {

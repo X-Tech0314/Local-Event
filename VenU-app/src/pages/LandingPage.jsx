@@ -255,7 +255,7 @@ export default function LandingPage() {
             setCreateRole={setCreateRole}
             onLoginSubmit={async (data) => {
               try {
-                const response = await axios.post('http://localhost:5150/api/auth/login', {
+                const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
                   email: data.email,
                   password: data.password
                 });
@@ -305,7 +305,7 @@ export default function LandingPage() {
                   };
                 }
 
-                await axios.post('http://localhost:5150/api/auth/register', payload);
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, payload);
                 setShowSuccessAnim(true);
                 setTimeout(() => {
                   setShowSuccessAnim(false);
