@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, MapPin, Calendar, Users, Lock, Unlock, Plus, Trash2, CheckCircle, ChevronRight, ChevronLeft, Map, Ticket, Music, Trophy, Star, Search, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Image as ImageIcon, MapPin, Calendar, Clock, Users, Lock, Unlock, Plus, Trash2, CheckCircle, ChevronRight, ChevronLeft, Map, Ticket, Music, Trophy, Star, Search, X } from 'lucide-react';
 import TicketPreview from '../../../components/TicketPreview';
 
 const locationData = {
@@ -27,7 +27,7 @@ const locationData = {
  }
 };
 
-export default function CreateEventPanel({ currentUser, setActivePanel }) {
+export default function CreateEventPanel({ currentUser, setActivePanel, editEvent, setEditEvent }) {
  const [currentStep, setCurrentStep] = useState(1);
  const [bannerPreview, setBannerPreview] = useState(null);
  const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,11 +80,87 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  AccessType: 'Public',
  VerificationCode: '',
  MaxCapacity: '',
+ RequiresTicket: true,
+ DailyStartTime: '',
+ DailyEndTime: '',
  TicketTiers: []
  });
 
  const [errors, setErrors] = useState({});
  const [admissionStrategy, setAdmissionStrategy] = useState('Paid Admission');
+
+ useEffect(() => {
+  if (editEvent) {
+   const sDate = editEvent.startDateTime ? new Date(editEvent.startDateTime) : null;
+   const eDate = editEvent.endDateTime ? new Date(editEvent.endDateTime) : null;
+   const tsStart = editEvent.ticketSalesStart ? new Date(editEvent.ticketSalesStart) : null;
+   const tsEnd = editEvent.ticketSalesEnd ? new Date(editEvent.ticketSalesEnd) : null;
+
+   const isValidDate = (d) => d instanceof Date && !isNaN(d);
+   const toDateString = (d) => isValidDate(d) ? d.toISOString().split('T')[0] : '';
+   const toTimeString = (d) => isValidDate(d) ? d.toTimeString().slice(0,5) : '';
+   const stdCats = ['Sports', 'Music', 'Arts', 'Food', 'Business', 'Education', 'Gaming', 'Technology'];
+
+   setFormData({
+    Title: editEvent.title || '',
+    Description: editEvent.description || '',
+    Category: stdCats.includes(editEvent.category) ? editEvent.category : 'Others',
+    CustomCategory: !stdCats.includes(editEvent.category) ? (editEvent.category || '') : '',
+    BannerFile: null,
+    BannerUrl: editEvent.bannerUrl || '',
+    StartDate: toDateString(sDate),
+    StartTime: toTimeString(sDate),
+    EndDate: toDateString(eDate),
+    EndTime: toTimeString(eDate),
+    TicketSalesStartDate: toDateString(tsStart),
+    TicketSalesStartTime: toTimeString(tsStart),
+    TicketSalesEndDate: toDateString(tsEnd),
+    TicketSalesEndTime: toTimeString(tsEnd),
+    StreetAddress: editEvent.streetAddress === 'N/A' ? '' : (editEvent.streetAddress || ''),
+    Region: editEvent.region || '',
+    Province: editEvent.province || '',
+    City: editEvent.city || '',
+    Barangay: editEvent.barangay || '',
+    ZipCode: editEvent.zipCode || '',
+    Latitude: editEvent.latitude || '',
+    Longitude: editEvent.longitude || '',
+    MapUrl: editEvent.mapUrl || '',
+    VenueName: editEvent.venueName || '',
+    RegisterVenueToDB: false,
+    VenueType: editEvent.venueType || 'Mall / Commercial Complex',
+    FloorLevel: editEvent.floorLevel || '',
+    WingSection: editEvent.wingSection || '',
+    BoothNumber: editEvent.boothNumber || '',
+    ProximityAnchor: editEvent.proximityAnchor || '',
+    LogisticsNotes: editEvent.logisticsNotes || '',
+    AccessType: editEvent.accessType || 'Public',
+    VerificationCode: editEvent.verificationCode || '',
+    MaxCapacity: editEvent.maxCapacity || '',
+    RequiresTicket: editEvent.requiresTicket !== undefined ? editEvent.requiresTicket : true,
+    DailyStartTime: editEvent.dailyStartTime ? String(editEvent.dailyStartTime).slice(0,5) : '',
+    DailyEndTime: editEvent.dailyEndTime ? String(editEvent.dailyEndTime).slice(0,5) : '',
+    TicketTiers: Array.isArray(editEvent.ticketTiers) ? editEvent.ticketTiers.map(t => ({
+     TierName: t.tierName || '',
+     OnlineSlots: t.onlineSlots || 0,
+     F2FSlots: t.f2fSlots || 0,
+     Price: t.price || 0,
+     ValidityScope: t.validityScope || ''
+    })) : []
+   });
+   setBannerPreview(editEvent.bannerUrl || null);
+   if (editEvent.venueId) {
+    setVenueSourcingMode('registered');
+    setSelectedVenueId(editEvent.venueId);
+   } else {
+    setVenueSourcingMode('custom');
+   }
+   if (editEvent.ticketTiers && editEvent.ticketTiers.some(t => t.price === 0)) {
+    setAdmissionStrategy('Free Admission');
+   } else {
+    setAdmissionStrategy('Paid Admission');
+   }
+  }
+ }, [editEvent]);
 
  const fileInputRef = useRef(null);
 
@@ -272,25 +348,34 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  accessType: formData.AccessType,
  verificationCode: formData.AccessType === 'Private' ? (formData.VerificationCode || '') : '',
  maxCapacity: parseInt(formData.MaxCapacity) || 0,
- ticketTiers: formData.TicketTiers.map(t => ({
+ requiresTicket: formData.RequiresTicket,
+ dailyStartTime: formData.DailyStartTime || null,
+ dailyEndTime: formData.DailyEndTime || null,
+ ticketTiers: formData.RequiresTicket ? formData.TicketTiers.map(t => ({
  tierName: t.TierName,
  onlineSlots: parseInt(t.OnlineSlots) || 0,
  f2fSlots: parseInt(t.F2FSlots) || 0,
  price: admissionStrategy === 'Free Admission' ? 0.00 : parseFloat(t.Price) || 0.00,
  validityScope: t.ValidityScope || 'Full Event Multi-Pass (All Days)'
- })),
+ })) : [],
  ticketSalesStart: ticketSalesStart,
  ticketSalesEnd: ticketSalesEnd
  };
 
- const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events`, {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'Authorization': `Bearer ${token}`
- },
- body: JSON.stringify(payload)
- });
+  const url = editEvent 
+   ? `${import.meta.env.VITE_API_URL}/api/events/${editEvent.id}` 
+   : `${import.meta.env.VITE_API_URL}/api/events`;
+
+  const method = editEvent ? 'PUT' : 'POST';
+
+  const response = await fetch(url, {
+  method: method,
+  headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify(payload)
+  });
 
  if (response.ok) {
  setShowSuccess(true);
@@ -333,36 +418,41 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  <div className="absolute -bottom-10 -left-10 text-8xl opacity-10 transform -rotate-12 pointer-events-none">⭐</div>
 
  <CheckCircle className="text-emerald-400 w-24 h-24 mb-6 mx-auto" />
- <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 dark:text-white mb-4 ">Congratulations on your event!</h2>
- <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-lg mx-auto">Your event has been successfully published to the platform. We wish you the best of luck with your community gathering!</p>
+ <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 dark:text-white mb-4 ">{editEvent ? 'Event Updated Successfully!' : 'Congratulations on your event!'}</h2>
+ <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-lg mx-auto">{editEvent ? 'Your event changes have been successfully saved.' : 'Your event has been successfully published to the platform. We wish you the best of luck with your community gathering!'}</p>
  </div>
 
  <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
  <button
- onClick={() => setActivePanel && setActivePanel('events')}
+ onClick={() => {
+  if (setEditEvent) setEditEvent(null);
+  if (setActivePanel) setActivePanel('events');
+ }}
  className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white px-8 py-4 rounded font-semibold active:scale-95 transition-all tracking-wider text-sm"
  >
  Go to Events Directory
  </button>
- <button
- onClick={() => {
- setShowSuccess(false);
- setCurrentStep(1);
- setFormData({
- Title: '', Description: '', Category: 'Sports', CustomCategory: '', BannerFile: null, BannerUrl: '',
- StartDate: '', StartTime: '', EndDate: '', EndTime: '',
- TicketSalesStartDate: '', TicketSalesStartTime: '', TicketSalesEndDate: '', TicketSalesEndTime: '',
- StreetAddress: '', Barangay: '', City: '',
- Province: '', Region: '', ZipCode: '', Latitude: '', Longitude: '', MapUrl: '', AccessType: 'Public',
- VerificationCode: '', MaxCapacity: '', TicketTiers: []
- });
- setErrors({});
- setBannerPreview(null);
- }}
- className="border border-slate-200 dark:border-slate-700 hover:border-purple-700 dark:border-purple-500 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 dark:hover:text-slate-500 px-8 py-3 rounded font-bold active:scale-95 transition-all"
- >
- Create Another Event
- </button>
+ {!editEvent && (
+  <button
+  onClick={() => {
+  setShowSuccess(false);
+  setCurrentStep(1);
+  setFormData({
+  Title: '', Description: '', Category: 'Sports', CustomCategory: '', BannerFile: null, BannerUrl: '',
+  StartDate: '', StartTime: '', EndDate: '', EndTime: '',
+  TicketSalesStartDate: '', TicketSalesStartTime: '', TicketSalesEndDate: '', TicketSalesEndTime: '',
+  StreetAddress: '', Barangay: '', City: '',
+  Province: '', Region: '', ZipCode: '', Latitude: '', Longitude: '', MapUrl: '', AccessType: 'Public',
+  VerificationCode: '', MaxCapacity: '', TicketTiers: [], RequiresTicket: true, DailyStartTime: '', DailyEndTime: ''
+  });
+  setErrors({});
+  setBannerPreview(null);
+  }}
+  className="border border-slate-200 dark:border-slate-700 hover:border-purple-700 dark:border-purple-500 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 dark:hover:text-slate-500 px-8 py-3 rounded font-bold active:scale-95 transition-all"
+  >
+  Create Another Event
+  </button>
+ )}
  </div>
  </div>
  );
@@ -370,16 +460,16 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
 
  const availableRegions = Object.keys(locationData);
  const availableProvinces = formData.Region ? Object.keys(locationData[formData.Region] || {}) : [];
- const availableCities = formData.Province && formData.Region ? Object.keys(locationData[formData.Region][formData.Province] || {}) : [];
- const availableBarangays = formData.City && formData.Province && formData.Region ? (locationData[formData.Region][formData.Province][formData.City] || []) : [];
+ const availableCities = formData.Province && formData.Region ? Object.keys(locationData[formData.Region]?.[formData.Province] || {}) : [];
+ const availableBarangays = formData.City && formData.Province && formData.Region ? (locationData[formData.Region]?.[formData.Province]?.[formData.City] || []) : [];
 
  return (
  <div className="w-full max-w-7xl mx-auto pb-10">
  {/* Global Horizontal Progress Header */}
- <div className="mb-8">
- <h1 className="text-3xl font-semibold text-slate-900 dark:text-white ">Create New Event</h1>
- <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Publish a new community event to your audience.</p>
- </div>
+  <div className="mb-8">
+  <h1 className="text-3xl font-semibold text-slate-900 dark:text-white ">{editEvent ? 'Edit Event' : 'Create New Event'}</h1>
+  <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">{editEvent ? 'Update your community event details.' : 'Publish a new community event to your audience.'}</p>
+  </div>
 
  {/* Split Screen Wrapper Grid */}
  <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[85vh] gap-0 bg-white dark:bg-slate-800 overflow-hidden rounded border border-slate-200 dark:border-slate-800 ">
@@ -415,8 +505,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  <div className={`h-px flex-1 mx-2 transition-colors duration-500 ${currentStep >= 4 ? 'bg-slate-900/50 dark:bg-white/50' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
 
  <div className="flex items-center gap-2 z-10">
- <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 4 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 scale-110 ring-4 ring-slate-900/10 dark:ring-white/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
- 4
+ <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 4 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 scale-110 ring-4 ring-slate-900/10 dark:ring-white/10' : currentStep > 4 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+ {currentStep > 4 ? <CheckCircle size={14} /> : 4}
  </div>
  <span className={`hidden sm:block font-bold text-xs tracking-wide transition-colors ${currentStep === 4 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>Ticketing</span>
  </div>
@@ -519,7 +609,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  {currentStep === 2 && (
  <div className="space-y-6 animate-fade-in">
  <div>
- <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2"><Calendar size={16} className="text-slate-800 dark:text-slate-200 " /> Event Schedule</h3>
+ <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2"><Calendar size={16} className="text-slate-800 dark:text-slate-200 " /> Event Duration (Date Range)</h3>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800 p-5 rounded border border-slate-200 dark:border-slate-700">
  <div className="space-y-2">
  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">Start Date</label>
@@ -527,16 +617,23 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  {errors.StartDate && <p className="text-red-500 text-[10px]">{errors.StartDate}</p>}
  </div>
  <div className="space-y-2">
- <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">Start Time</label>
+ <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">End Date</label>
+ <input type="date" name="EndDate" value={formData.EndDate} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white dark:bg-slate-800 border rounded px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 transition-all ${errors.EndDate ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-purple-700 dark:border-purple-500'}`} />
+ </div>
+ </div>
+ </div>
+
+ <div className="mt-6">
+ <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2"><Clock size={16} className="text-slate-800 dark:text-slate-200" /> Daily Operating Hours</h3>
+ <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 ml-6">Set the opening and closing time applied each day of the event.</p>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800 p-5 rounded border border-slate-200 dark:border-slate-700">
+ <div className="space-y-2">
+ <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">Daily Open Time</label>
  <input type="time" name="StartTime" value={formData.StartTime} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white dark:bg-slate-800 border rounded px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 transition-all ${errors.StartTime ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-purple-700 dark:border-purple-500'}`} />
  {errors.StartTime && <p className="text-red-500 text-[10px]">{errors.StartTime}</p>}
  </div>
  <div className="space-y-2">
- <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider mt-2">End Date</label>
- <input type="date" name="EndDate" value={formData.EndDate} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white dark:bg-slate-800 border rounded px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 transition-all ${errors.EndDate ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-purple-700 dark:border-purple-500'}`} />
- </div>
- <div className="space-y-2">
- <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider mt-2">End Time</label>
+ <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">Daily Close Time</label>
  <input type="time" name="EndTime" value={formData.EndTime} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white dark:bg-slate-800 border rounded px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 transition-all ${errors.EndTime ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-purple-700 dark:border-purple-500'}`} />
  </div>
  </div>
@@ -871,6 +968,27 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  {/* STEP 4: Ticketing Inventory, Tiers & Access Gates */}
  {currentStep === 4 && (
  <div className="space-y-6 animate-fade-in">
+
+ {/* Requires Ticket Toggle */}
+ <div className="bg-slate-50 dark:bg-slate-800 p-5 rounded border border-slate-200 dark:border-slate-700">
+ <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2"><Ticket size={16} className="text-slate-800 dark:text-slate-200" /> Admission Type</h3>
+ <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">Does this event require attendees to purchase or claim a ticket to enter?</p>
+ <div className="flex bg-slate-200/50 dark:bg-slate-700/50 p-1 rounded max-w-sm">
+ <button
+ onClick={() => setFormData(prev => ({ ...prev, RequiresTicket: true }))}
+ className={`flex-1 py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${formData.RequiresTicket ? 'bg-purple-700 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'}`}
+ >
+ <Ticket size={14} /> Ticketed Event
+ </button>
+ <button
+ onClick={() => setFormData(prev => ({ ...prev, RequiresTicket: false, TicketTiers: [] }))}
+ className={`flex-1 py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${!formData.RequiresTicket ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'}`}
+ >
+ <Users size={14} /> Free / Walk-in
+ </button>
+ </div>
+ </div>
+
  <div className="bg-slate-50 dark:bg-slate-800 p-5 rounded border border-slate-200 dark:border-slate-700">
  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><Lock size={16} className="text-slate-800 dark:text-slate-200 " /> Privacy & Access Status</h3>
 
@@ -984,11 +1102,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  onClick={handleSubmit} disabled={isSubmitting}
  className="flex-grow bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 py-3 rounded font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/30 border border-purple-400 dark:border-purple-600"
  >
- {isSubmitting ? (
- <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
- ) : (
- <>Publish Event <CheckCircle size={18} /></>
- )}
+ {isSubmitting ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Processing...</> : <>{editEvent ? 'Update Event' : 'Publish Event'} <CheckCircle size={18} /></>}
  </button>
  </div>
  </div>
@@ -1012,7 +1126,11 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  title: formData.Title,
  category: formData.Category === 'Others' ? formData.CustomCategory : formData.Category,
  image: bannerPreview,
- date: formData.StartDate ? new Date(formData.StartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD',
+ date: (() => {
+   if (!formData.StartDate) return 'TBD';
+   const d = new Date(formData.StartDate);
+   return isNaN(d.getTime()) ? 'TBD' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+ })(),
  time: formData.StartTime || 'TBD',
  tierName: formData.TicketTiers.length > 0 ? formData.TicketTiers[0].TierName : 'Standard',
  accessType: formData.AccessType,

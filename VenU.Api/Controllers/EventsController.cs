@@ -179,6 +179,10 @@ namespace VenU.Api.Controllers
                 EndDateTime = dto.EndDateTime,
                 TicketSalesStart = dto.TicketSalesStart,
                 TicketSalesEnd = dto.TicketSalesEnd,
+                RequiresTicket = dto.RequiresTicket,
+                DailyStartTime = dto.DailyStartTime,
+                DailyEndTime = dto.DailyEndTime,
+                Status = dto.Status ?? "Published",
                 
                 VenueId = finalVenueId,
                 VenueName = dto.VenueName ?? "",
@@ -253,6 +257,101 @@ namespace VenU.Api.Controllers
                 .ToListAsync();
 
             return Ok(events);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> UpdateEvent(Guid id, [FromBody] CreateEventDto dto)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
+            {
+                return Unauthorized(new { message = "Invalid user token." });
+            }
+
+            var evt = await _context.Events
+                .Include(e => e.TicketTiers)
+                .FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+
+            if (evt == null)
+            {
+                return NotFound("Event not found or you do not have permission to edit it.");
+            }
+
+            evt.Title = dto.Title ?? evt.Title;
+            evt.Description = dto.Description ?? evt.Description;
+            evt.Category = dto.Category ?? evt.Category;
+            evt.BannerUrl = dto.BannerUrl ?? evt.BannerUrl;
+            evt.StartDateTime = dto.StartDateTime;
+            evt.EndDateTime = dto.EndDateTime;
+            evt.TicketSalesStart = dto.TicketSalesStart;
+            evt.TicketSalesEnd = dto.TicketSalesEnd;
+            evt.RequiresTicket = dto.RequiresTicket;
+            evt.DailyStartTime = dto.DailyStartTime;
+            evt.DailyEndTime = dto.DailyEndTime;
+            evt.Status = dto.Status ?? evt.Status;
+
+            evt.StreetAddress = dto.StreetAddress ?? evt.StreetAddress;
+            evt.Barangay = dto.Barangay ?? evt.Barangay;
+            evt.City = dto.City ?? evt.City;
+            evt.Province = dto.Province ?? evt.Province;
+            evt.Region = dto.Region ?? evt.Region;
+            evt.ZipCode = dto.ZipCode ?? evt.ZipCode;
+            evt.Latitude = dto.Latitude ?? evt.Latitude;
+            evt.Longitude = dto.Longitude ?? evt.Longitude;
+            evt.MapUrl = dto.MapUrl ?? evt.MapUrl;
+
+            evt.VenueName = dto.VenueName ?? evt.VenueName;
+            evt.VenueType = dto.VenueType ?? evt.VenueType;
+            evt.FloorLevel = dto.FloorLevel ?? evt.FloorLevel;
+            evt.WingSection = dto.WingSection ?? evt.WingSection;
+            evt.BoothNumber = dto.BoothNumber ?? evt.BoothNumber;
+            evt.ProximityAnchor = dto.ProximityAnchor ?? evt.ProximityAnchor;
+            evt.LogisticsNotes = dto.LogisticsNotes ?? evt.LogisticsNotes;
+            evt.MaxCapacity = dto.MaxCapacity;
+            
+            // Re-create ticket tiers
+            _context.EventTicketTiers.RemoveRange(evt.TicketTiers);
+            if (dto.RequiresTicket)
+            {
+                evt.TicketTiers = dto.TicketTiers.Select(t => new EventTicketTier
+                {
+                    TierName = t.TierName ?? "",
+                    OnlineSlots = t.OnlineSlots,
+                    F2FSlots = t.F2FSlots,
+                    Price = t.Price,
+                    ValidityScope = t.ValidityScope ?? "Full Event Multi-Pass (All Days)"
+                }).ToList();
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(evt);
+        }
+
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> UpdateEventStatus(Guid id, [FromBody] UpdateStatusDto dto)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
+            {
+                return Unauthorized(new { message = "Invalid user token." });
+            }
+
+            var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+            if (evt == null)
+            {
+                return NotFound("Event not found or you do not have permission to edit it.");
+            }
+
+            evt.Status = dto.Status;
+            await _context.SaveChangesAsync();
+            
+            return Ok(evt);
         }
     }
 }

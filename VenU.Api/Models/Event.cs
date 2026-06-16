@@ -36,6 +36,16 @@ namespace VenU.Api.Models
         [Required]
         public DateTime TicketSalesEnd { get; set; } = DateTime.UtcNow;
 
+        // Management & Schedule add-ons
+        [Required]
+        [MaxLength(20)]
+        public string Status { get; set; } = "Published"; // Published, Done, Full, Discontinued, Rescheduled
+
+        public bool RequiresTicket { get; set; } = true;
+
+        public TimeSpan? DailyStartTime { get; set; }
+        public TimeSpan? DailyEndTime { get; set; }
+
         // Cascading Location Parameters
         public Guid? VenueId { get; set; }
         [ForeignKey("VenueId")]

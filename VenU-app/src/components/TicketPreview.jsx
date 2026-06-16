@@ -1,9 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 
 export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  // If no ticket tiers exist, fallback to a single default tier for the preview
+  const tiers = eventData?.ticketTiers && eventData.ticketTiers.length > 0 
+    ? eventData.ticketTiers 
+    : [{ TierName: eventData?.tierName || 'Standard', ValidityScope: eventData?.validityScope }];
+
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev + 1) % tiers.length);
+  };
+
   return (
-    <div className="relative w-80 h-[480px] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between select-none">
+    <div className="relative w-80 h-[480px] select-none" onClick={handleNext}>
+      {tiers.map((tier, index) => {
+        // Calculate stacking order
+        const distance = (index - activeIndex + tiers.length) % tiers.length;
+        
+        // Only show top 3 cards to prevent performance issues and visual clutter
+        if (distance > 2) return null;
+
+        const isTop = distance === 0;
+        const translateY = distance * 20; // Move down 20px per card
+        const scale = 1 - (distance * 0.05); // Shrink 5% per card
+        const zIndex = 30 - distance;
+        const opacity = 1 - (distance * 0.2);
+
+        return (
+          <div 
+            key={index}
+            className="absolute top-0 left-0 w-80 h-[480px] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between transition-all duration-500 ease-in-out cursor-pointer"
+            style={{
+              transform: `translateY(${translateY}px) scale(${scale})`,
+              zIndex: zIndex,
+              opacity: opacity
+            }}
+          >
       
       {/* Top Section: Event Banner & Image */}
       <div className="relative w-full h-44 bg-slate-900 overflow-hidden">
@@ -87,7 +121,7 @@ export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
           </div>
         </div>
 
-        {/* Footer: Dynamic Ticket Tier Label */}
+         {/* Footer: Dynamic Ticket Tier Label */}
         <div className="text-center mt-2">
           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
             {eventData?.accessType || 'Public Admission'}
@@ -96,21 +130,35 @@ export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
             className="text-base font-black uppercase tracking-widest transition-colors duration-300"
             style={{ color: themeColor }}
           >
-            {eventData?.tierName || 'Standard'}
+            {tier.TierName || tier.tierName || 'Standard'}
           </p>
-          {eventData?.validityScope && (
+          {(tier.ValidityScope || tier.validityScope) && (
               <div className="inline-block px-3 py-1 bg-slate-100 rounded-full mt-1">
                   <span className="text-slate-600 font-black text-[10px] uppercase tracking-widest">
                       🎟️ {
-                          eventData.validityScope === 'Full Event Multi-Pass (All Days)' ? 'FULL TOUR PASS' :
-                          eventData.validityScope === 'Day 1 Access Only' ? 'DAY 1 PASS' :
-                          eventData.validityScope === 'Day 2 Access Only' ? 'DAY 2 PASS' : 'SINGLE SESSION'
+                          (tier.ValidityScope || tier.validityScope) === 'Full Event Multi-Pass (All Days)' ? 'FULL TOUR PASS' :
+                          (tier.ValidityScope || tier.validityScope) === 'Day 1 Access Only' ? 'DAY 1 PASS' :
+                          (tier.ValidityScope || tier.validityScope) === 'Day 2 Access Only' ? 'DAY 2 PASS' : 'SINGLE SESSION'
                       }
                   </span>
               </div>
           )}
         </div>
       </div>
+    </div>
+        );
+      })}
+      
+      {tiers.length > 1 && (
+        <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-1.5 z-40">
+          {tiers.map((_, i) => (
+            <div 
+              key={i} 
+              className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-6 bg-purple-500' : 'w-1.5 bg-slate-300'}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

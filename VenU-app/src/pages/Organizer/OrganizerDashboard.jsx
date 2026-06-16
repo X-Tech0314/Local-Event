@@ -27,6 +27,7 @@ export default function OrganizerDashboard() {
     const navigate = useNavigate();
     const { darkMode, toggleDarkMode } = useTheme();
     const [activePanel, setActivePanel] = useState('dashboard');
+    const [editEvent, setEditEvent] = useState(null);
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([
         { id: 1, title: 'Welcome to VenU Organizer!', message: 'Start creating your first event today.', read: false, time: '2m ago' },
@@ -63,12 +64,12 @@ export default function OrganizerDashboard() {
     const renderPanel = () => {
         switch (activePanel) {
             case 'dashboard':  return <MainDashboard currentUser={currentUser} setActivePanel={setActivePanel} />;
-            case 'events':     return <EventsPanel key={Date.now()} currentUser={currentUser} setActivePanel={setActivePanel} />;
+            case 'events':     return <EventsPanel key={Date.now()} currentUser={currentUser} setActivePanel={setActivePanel} setEditEvent={setEditEvent} />;
             case 'venues':     return <VenuesPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'attendees':  return <AttendeesPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'analytics':  return <AnalyticsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'settings':   return <SettingsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
-            case 'create-event': return <CreateEventPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
+            case 'create-event': return <CreateEventPanel currentUser={currentUser} setActivePanel={setActivePanel} editEvent={editEvent} setEditEvent={setEditEvent} />;
             default:           return <MainDashboard currentUser={currentUser} setActivePanel={setActivePanel} />;
         }
     };
@@ -103,7 +104,10 @@ export default function OrganizerDashboard() {
                             return (
                                 <button
                                     key={id}
-                                    onClick={() => setActivePanel(id)}
+                                    onClick={() => {
+                                        setEditEvent(null);
+                                        setActivePanel(id);
+                                    }}
                                     className={`w-full flex items-center gap-3 rounded px-4 py-3 text-sm font-medium transition-colors ${
                                         isActive 
                                             ? 'bg-purple-700 dark:bg-purple-500 text-white' 

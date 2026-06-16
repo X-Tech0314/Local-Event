@@ -13,6 +13,11 @@ namespace VenU.Api.DTOs
         public DateTime TicketSalesStart { get; set; }
         public DateTime TicketSalesEnd { get; set; }
         
+        public bool RequiresTicket { get; set; } = true;
+        public TimeSpan? DailyStartTime { get; set; }
+        public TimeSpan? DailyEndTime { get; set; }
+        public string Status { get; set; } = "Published";
+        
         public string StreetAddress { get; set; } = string.Empty;
         public string Barangay { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
@@ -52,5 +57,10 @@ namespace VenU.Api.DTOs
         public int F2FSlots { get; set; }
         public decimal Price { get; set; } = 0.00M;
         public string ValidityScope { get; set; } = "Full Event Multi-Pass (All Days)";
+    }
+
+    public class UpdateStatusDto
+    {
+        public string Status { get; set; } = string.Empty;
     }
 }
