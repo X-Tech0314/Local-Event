@@ -24,6 +24,10 @@ export default function UserSettings({ currentUser }) {
         setIdType(res.data.idType || '');
         setIdNumber(res.data.idReferenceNumber || '');
       } catch (err) {
+        if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+          console.warn('Backend unavailable, using local mock data.');
+          return; // just keep the current user state which we seeded from form state init
+        }
         console.error('Failed to fetch user data:', err);
       }
     };
@@ -50,6 +54,11 @@ export default function UserSettings({ currentUser }) {
       alert('Profile updated successfully!');
       localStorage.setItem('user', JSON.stringify(form));
     } catch (err) {
+      if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        alert('Profile updated locally (Backend offline).');
+        localStorage.setItem('user', JSON.stringify(form));
+        return;
+      }
       alert('Failed to update profile: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -68,6 +77,12 @@ export default function UserSettings({ currentUser }) {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
+      if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        alert('Password update simulated (Backend offline).');
+        setNewPassword('');
+        setConfirmPassword('');
+        return;
+      }
       alert('Failed to update password: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -82,6 +97,13 @@ export default function UserSettings({ currentUser }) {
       localStorage.removeItem('user');
       navigate('/');
     } catch (err) {
+      if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        alert('Account deletion simulated (Backend offline).');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+        return;
+      }
       alert('Failed to delete account: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -202,7 +224,7 @@ export default function UserSettings({ currentUser }) {
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const inputCls = "w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-purple-400 transition bg-slate-50 focus:bg-white";
+  const inputCls = "w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-900 dark:focus:border-white transition bg-slate-50 focus:bg-white dark:bg-slate-900 dark:text-white dark:border-slate-700 dark:focus:bg-slate-800";
   const labelCls = "block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5";
 
   const Section = ({ title, children, className = "" }) => (
@@ -220,9 +242,9 @@ export default function UserSettings({ currentUser }) {
       </div>
       <button
         onClick={() => !locked && onChange(!enabled)}
-        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-[#A855F7]' : 'bg-slate-300'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-slate-900 dark:bg-white' : 'bg-slate-300 dark:bg-slate-600'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <div className={`w-4 h-4 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5 shadow-[0_0_8px_rgba(168,85,247,0.6)]' : 'translate-x-0'}`} />
+        <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-900 transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   );
@@ -235,7 +257,7 @@ export default function UserSettings({ currentUser }) {
   ];
 
   const SaveBtn = ({ label, onClick }) => (
-    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded-xl bg-[#A855F7] hover:bg-[#9333EA] text-white font-bold text-sm shadow-md transition-all active:scale-95">
+    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-bold text-sm transition-all active:scale-95">
       {label}
     </button>
   );
@@ -255,8 +277,8 @@ export default function UserSettings({ currentUser }) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
-                ? 'border-[#A855F7] text-[#A855F7]'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
           >
             {tab.label}
@@ -272,13 +294,13 @@ export default function UserSettings({ currentUser }) {
             {/* Profile Image Management */}
             <Section title="Profile Image Management">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-white text-3xl shadow-lg shrink-0 overflow-hidden">
+                <div className="w-24 h-24 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center font-bold text-white dark:text-slate-900 text-3xl shrink-0 overflow-hidden">
                   {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : form.firstName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="text-center sm:text-left">
                   <div className="flex flex-wrap justify-center sm:justify-start gap-3 mb-2">
                     <input type="file" accept="image/*" className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }} />
-                    <button onClick={() => photoInputRef.current?.click()} className="bg-[#A855F7] text-white hover:bg-[#9333EA] transition-all px-4 py-2 rounded-xl text-sm font-medium shadow-sm active:scale-95">
+                    <button onClick={() => photoInputRef.current?.click()} className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-all px-4 py-2 rounded-xl text-sm font-medium active:scale-95">
                       Change Photo
                     </button>
                     <button onClick={() => setProfilePhoto(null)} className="border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all px-4 py-2 rounded-xl text-sm font-medium active:scale-95">
@@ -405,7 +427,7 @@ export default function UserSettings({ currentUser }) {
                   </div>
                   <input type="file" accept="image/*,application/pdf" className="hidden" ref={frontInputRef} onChange={(e) => e.target.files[0] && setIdFront(URL.createObjectURL(e.target.files[0]))} />
                   <div className="flex gap-2">
-                    {idFront && <button onClick={() => window.open(idFront, '_blank')} className="text-sm font-medium text-[#A855F7] hover:underline">View</button>}
+                    {idFront && <button onClick={() => window.open(idFront, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
                     <button onClick={() => frontInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
                   </div>
                 </div>
@@ -421,7 +443,7 @@ export default function UserSettings({ currentUser }) {
                     </div>
                     <input type="file" accept="image/*,application/pdf" className="hidden" ref={backInputRef} onChange={(e) => e.target.files[0] && setIdBack(URL.createObjectURL(e.target.files[0]))} />
                     <div className="flex gap-2">
-                      {idBack && <button onClick={() => window.open(idBack, '_blank')} className="text-sm font-medium text-[#A855F7] hover:underline">View</button>}
+                      {idBack && <button onClick={() => window.open(idBack, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
                       <button onClick={() => backInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
                     </div>
                   </div>
@@ -466,7 +488,7 @@ export default function UserSettings({ currentUser }) {
                 ))}
               </div>
               <div className="flex justify-center mt-6 pt-4 border-t border-slate-100">
-                <button onClick={handleAddWallet} className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-[#A855F7] hover:bg-purple-50 hover:border-purple-300 transition-all flex items-center justify-center gap-1">
+                <button onClick={handleAddWallet} className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-1">
                   + Link New Payment Method
                 </button>
               </div>
@@ -538,7 +560,7 @@ export default function UserSettings({ currentUser }) {
               <div className="pt-4 mt-2">
                 <p className="text-sm font-semibold text-slate-800">Login Session Management</p>
                 <p className="text-xs text-slate-500 mt-1">Current Active Session: <span className="font-medium text-slate-700">Antigravity IDE Workspace Client</span></p>
-                <button className="text-xs font-medium text-[#A855F7] hover:text-[#9333EA] hover:underline mt-2 transition-all">
+                <button className="text-xs font-medium text-slate-900 hover:text-slate-700 hover:underline mt-2 transition-all">
                   Log out of all other devices
                 </button>
               </div>
@@ -597,7 +619,7 @@ export default function UserSettings({ currentUser }) {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all shadow-lg shadow-red-500/20"
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
               >
                 Yes, Delete
               </button>
@@ -626,7 +648,7 @@ export default function UserSettings({ currentUser }) {
                   setWallets(wallets.filter(w => w.id !== walletToUnlink.id));
                   setWalletToUnlink(null);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all shadow-lg shadow-red-500/20"
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
               >
                 Yes, Unlink
               </button>
@@ -709,7 +731,7 @@ export default function UserSettings({ currentUser }) {
               </button>
               <button
                 onClick={submitNewWallet}
-                className="flex-1 py-2.5 rounded-xl bg-[#A855F7] hover:bg-[#9333EA] text-white font-semibold text-sm transition-all shadow-lg shadow-purple-500/20"
+                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-semibold text-sm transition-all"
               >
                 Save Payment Method
               </button>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   LayoutDashboard, MapPin, Ticket, Settings, Search, Lock,
   Tag, CheckCircle2, X, ChevronRight, Calendar, Clock,
-  CreditCard, Smartphone, Star, User, Bell, LogOut, QrCode, Shield, ArrowRight, Music
+  CreditCard, Smartphone, Star, User, Bell, LogOut, QrCode, Shield, ArrowRight, Music, Moon, Sun
 } from 'lucide-react';
 import logo from "../../assets/venu-logo3-transparent.png";
 import { useNavigate } from 'react-router-dom';
@@ -110,7 +110,7 @@ function EventCard({ event, onSelect }) {
   return (
     <div
       onClick={() => onSelect(event)}
-      className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative flex flex-col h-full"
+      className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative flex flex-col h-full"
     >
       {/* Immersive Image Header */}
       <div className="h-56 relative overflow-hidden">
@@ -134,7 +134,7 @@ function EventCard({ event, onSelect }) {
       </div>
 
       {/* Card Details */}
-      <div className="p-6 flex flex-col flex-grow relative bg-white">
+      <div className="p-6 flex flex-col flex-grow relative bg-white dark:bg-slate-800">
         <div className="absolute -top-8 right-6 z-20">
             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${event.color} flex flex-col items-center justify-center text-white font-black shadow-lg shadow-black/20 group-hover:-translate-y-1 transition-transform`}>
                 <span className="text-[10px] tracking-widest opacity-80 uppercase leading-none">{new Date(event.date).toLocaleString('en-us', { month: 'short' })}</span>
@@ -142,21 +142,21 @@ function EventCard({ event, onSelect }) {
             </div>
         </div>
 
-        <h4 className="font-black text-slate-900 text-xl leading-tight group-hover:text-[#A855F7] transition-colors pr-16 mb-4">
+        <h4 className="font-black text-slate-900 dark:text-white text-xl leading-tight group-hover:text-[#A855F7] transition-colors pr-16 mb-4">
           {event.title}
         </h4>
         
         <div className="space-y-3 mt-auto mb-6">
-          <p className="text-sm font-medium text-slate-600 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-50 text-[#A855F7] group-hover:bg-purple-50 transition-colors"><MapPin size={14} /></div> {event.barangay}
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[#A855F7] group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30 transition-colors"><MapPin size={14} /></div> {event.barangay}
           </p>
-          <p className="text-sm font-medium text-slate-600 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-50 text-[#A855F7] group-hover:bg-purple-50 transition-colors"><Clock size={14} /></div> {event.time}
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[#A855F7] group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30 transition-colors"><Clock size={14} /></div> {event.time}
           </p>
         </div>
         
-        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
+        <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
           <span className="text-sm font-black text-[#A855F7] flex items-center gap-1 group-hover:gap-2 transition-all">
             Get Tickets <ChevronRight size={16} strokeWidth={3} />
           </span>
@@ -187,23 +187,21 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
       {/* Dark Blur Backdrop */}
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity" onClick={onClose} />
 
-      {/* Dark VIP Drawer Panel */}
-      <div className="w-full max-w-md bg-slate-900 h-full shadow-2xl border-l border-slate-800 flex flex-col animate-slide-in-right relative z-10 overflow-hidden">
-        {/* Glow Effects */}
-        <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${event.color} opacity-20 blur-[100px] pointer-events-none rounded-full`}></div>
+      {/* Drawer Panel */}
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col animate-slide-in-right relative z-10 overflow-hidden">
         
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 flex items-start justify-between relative z-10 bg-slate-900/50 backdrop-blur-md">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between relative z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
           <div className="pr-8">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest mb-3 border border-white/10">
                 <Ticket size={10} /> Secure Checkout
             </span>
-            <h2 className="text-2xl font-black text-white leading-tight">{event.title}</h2>
-            <p className="text-sm font-medium text-slate-400 mt-2 flex items-center gap-1.5">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{event.title}</h2>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5">
               <MapPin size={14} /> {event.barangay}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5 shadow-sm">
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700 shadow-sm">
             <X size={18} strokeWidth={2.5} />
           </button>
         </div>
@@ -212,17 +210,17 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
         <div className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10 custom-scrollbar">
           {/* Tier Selector */}
           <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Select Admission Tier</p>
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Select Admission Tier</p>
             <div className="space-y-3">
               {event.ticketTiers.map((tier) => (
-                <label key={tier} className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedTier === tier ? `border-[#A855F7] bg-[#A855F7]/10` : 'border-slate-800 bg-slate-800/50 hover:border-slate-700 hover:bg-slate-800'}`}>
+                <label key={tier} className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedTier === tier ? `border-purple-500 bg-purple-50 dark:bg-purple-900/10` : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}>
                   <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === tier ? 'border-[#A855F7]' : 'border-slate-600'}`}>
-                        {selectedTier === tier && <div className="w-2.5 h-2.5 rounded-full bg-[#A855F7]" />}
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === tier ? 'border-purple-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                        {selectedTier === tier && <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />}
                     </div>
-                    <span className={`text-sm font-bold ${selectedTier === tier ? 'text-white' : 'text-slate-300'}`}>{tier}</span>
+                    <span className={`text-sm font-bold ${selectedTier === tier ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{tier}</span>
                   </div>
-                  {event.isPaid && <span className={`font-black ${selectedTier === tier ? 'text-[#A855F7]' : 'text-slate-500'}`}>₱{event.price}</span>}
+                  {event.isPaid && <span className={`font-black ${selectedTier === tier ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'}`}>₱{event.price}</span>}
                 </label>
               ))}
             </div>
@@ -230,9 +228,9 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
           {/* FLOW 1: Private — Access Code Gate */}
           {event.accessType === 'Private' && (
-            <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Shield size={12} className="text-[#A855F7]" /> Cryptographic Verification
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <Shield size={14} className="text-purple-500" /> Pass Verification
               </p>
               <div className="relative">
                 <input
@@ -240,19 +238,19 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   placeholder="ENTER ACCESS CODE"
-                  className={`w-full bg-slate-900 border-2 rounded-xl px-4 py-4 text-center font-black tracking-[0.2em] uppercase text-white outline-none transition-all placeholder:text-slate-600 ${accessCode && !codeMatches
-                    ? 'border-red-500/50 focus:border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                  className={`w-full bg-white dark:bg-slate-900 border-2 rounded-xl px-4 py-4 text-center font-bold tracking-[0.1em] uppercase text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 ${accessCode && !codeMatches
+                    ? 'border-red-400 focus:border-red-500'
                     : codeMatches
-                      ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)] text-emerald-400'
-                      : 'border-slate-700 focus:border-[#A855F7] focus:shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                      : 'border-slate-200 dark:border-slate-700 focus:border-purple-500'
                     }`}
                 />
               </div>
               {accessCode && !codeMatches && (
-                <p className="text-xs text-red-400 mt-3 font-bold text-center animate-pulse">ACCESS DENIED. INVALID HASH.</p>
+                <p className="text-xs text-red-500 mt-3 font-semibold text-center">Invalid Pass Code.</p>
               )}
               {codeMatches && (
-                <p className="text-xs text-emerald-400 mt-3 font-bold text-center">ACCESS GRANTED. YOU ARE ON THE LIST.</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-3 font-semibold text-center">Code verified. You're on the list.</p>
               )}
             </div>
           )}
@@ -260,35 +258,35 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
           {/* FLOW 2: Paid — Payment Method */}
           {event.isPaid && (
             <div>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <CreditCard size={12} className="text-[#A855F7]" /> Payment Pipeline
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <CreditCard size={14} className="text-purple-500" /> Payment Method
               </p>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {[
                   { id: 'gcash', label: 'GCash', icon: '📱', color: 'blue' },
                   { id: 'gotyme', label: 'GoTyme', icon: '🏦', color: 'indigo' },
                 ].map((method) => (
-                  <label key={method.id} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === method.id ? 'border-[#A855F7] bg-[#A855F7]/10' : 'border-slate-800 bg-slate-800/50 hover:border-slate-700 hover:bg-slate-800'}`}>
+                  <label key={method.id} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === method.id ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'}`}>
                     <input type="radio" name="payment" checked={paymentMethod === method.id} onChange={() => setPaymentMethod(method.id)} className="hidden" />
                     <span className="text-2xl">{method.icon}</span>
-                    <span className={`text-xs font-black uppercase tracking-wider ${paymentMethod === method.id ? 'text-white' : 'text-slate-400'}`}>{method.label}</span>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${paymentMethod === method.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{method.label}</span>
                   </label>
                 ))}
               </div>
 
               {/* Price Summary */}
-              <div className="bg-black/40 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm">
-                <div className="flex justify-between text-sm text-slate-400 mb-3 font-medium">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
                   <span>Subtotal</span>
                   <span>₱{event.price.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm text-slate-400 mb-4 font-medium">
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-4 font-medium">
                   <span>Platform Fee</span>
                   <span>₱0.00</span>
                 </div>
-                <div className="border-t border-slate-800 pt-4 flex justify-between items-end">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Due</span>
-                  <span className="text-2xl font-black text-white">₱{event.price.toLocaleString()}</span>
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4 flex justify-between items-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Due</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white">₱{event.price.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -296,33 +294,33 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
           {/* FLOW 3: Free Public */}
           {!event.isPaid && event.accessType === 'Public' && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 text-center shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-              <CheckCircle2 className="text-emerald-400 mx-auto mb-3" size={36} strokeWidth={2.5} />
-              <p className="text-lg font-black text-emerald-400 mb-1">Free Admission Guaranteed</p>
-              <p className="text-xs font-medium text-emerald-400/70">No financial routing required. Claim your pass directly.</p>
+            <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-6 text-center shadow-sm">
+              <CheckCircle2 className="text-emerald-500 dark:text-emerald-400 mx-auto mb-3" size={36} strokeWidth={2.5} />
+              <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400 mb-1">Free Admission Guaranteed</p>
+              <p className="text-sm font-medium text-emerald-600/70 dark:text-emerald-400/70">No payment required. Claim your pass directly.</p>
             </div>
           )}
         </div>
 
         {/* Footer CTA */}
-        <div className="p-6 border-t border-slate-800 bg-slate-900/90 backdrop-blur-md relative z-20">
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md relative z-20">
           {event.accessType === 'Private' ? (
             <button
               disabled={!codeMatches}
               onClick={handleCheckout}
-              className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${codeMatches
-                ? 'bg-[#A855F7] hover:bg-[#9333EA] text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] active:scale-95'
-                : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+              className={`w-full py-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${codeMatches
+                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'
+                : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
                 }`}
             >
-              {codeMatches ? 'Confirm VIP Registration' : 'Awaiting Cryptographic Hash'}
+              {codeMatches ? 'Confirm Registration' : 'Enter Access Code'}
             </button>
           ) : event.isPaid ? (
-            <button onClick={handleCheckout} className="w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest bg-[#A855F7] hover:bg-[#9333EA] text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button onClick={handleCheckout} className="w-full py-4 rounded-xl text-sm font-bold uppercase tracking-wide bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2">
               <Lock size={16} /> Authorize Payment
             </button>
           ) : (
-            <button onClick={handleCheckout} className="w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-slate-900 shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button onClick={handleCheckout} className="w-full py-4 rounded-xl text-sm font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2">
               <SparklesIcon /> Claim Free Pass
             </button>
           )}
@@ -336,14 +334,11 @@ function SparklesIcon() {
     return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
 }
 
-// ── Holographic Ticket Modal ──────────────────────────────────────────────────
+// ── Ticket Modal ──────────────────────────────────────────────────
 function TicketModal({ ticket, onClose }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm animate-scale-in relative group perspective-1000">
-        
-        {/* Glow backdrop behind ticket */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${ticket.event.color} opacity-40 blur-[40px] rounded-[40px] transition-all duration-500`}></div>
 
         <div className="bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 transform transition-transform duration-500 preserve-3d">
             
@@ -369,17 +364,15 @@ function TicketModal({ ticket, onClose }) {
             {/* Body */}
             <div className="p-8 pt-6 flex flex-col items-center bg-white relative">
                 {/* QR Code Container */}
-                <div className="w-40 h-40 bg-white border border-slate-100 shadow-[0_0_30px_rgba(0,0,0,0.05)] rounded-2xl p-4 mb-6 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5"></div>
+                <div className="w-40 h-40 bg-white border border-slate-200 shadow-sm rounded-2xl p-4 mb-6 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-slate-50"></div>
                     <div className="relative z-10 w-full h-full">
                         <QrMockup />
                     </div>
-                    {/* Scanning Laser Line */}
-                    <div className="absolute top-0 left-0 w-full h-0.5 bg-[#A855F7] shadow-[0_0_10px_rgba(168,85,247,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
                 </div>
 
                 <div className="text-center w-full mb-6">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Pass Identity String</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Ticket ID</p>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 font-mono font-black text-slate-900 tracking-widest text-sm shadow-inner">
                         {ticket.ticketId}
                     </div>
@@ -416,8 +409,11 @@ function TicketModal({ ticket, onClose }) {
 // ── Settings Panel ────────────────────────────────────────────────────────────
 // Settings are handled by the imported UserSettings component.
 
+import { useTheme } from '../../ThemeContext';
+
 // ── Main Attendee Dashboard ───────────────────────────────────────────────────
 export default function AttendeeDashboard() {
+  const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [search, setSearch] = useState('');
@@ -471,7 +467,7 @@ export default function AttendeeDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F9F8FC] font-sans">
+    <div className="flex min-h-screen bg-[#F9F8FC] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
 
       {/* ── Fixed Premium Dark Sidebar ──────────────────────────────────────────── */}
       <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
@@ -532,12 +528,18 @@ export default function AttendeeDashboard() {
       <main className="ml-64 flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
         
         {/* Top Notification Bar (Replicated from Organizer) */}
-        <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-end">
+        <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-end">
             <div className="flex items-center gap-3">
+                <button 
+                    onClick={toggleDarkMode}
+                    className="relative p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-300 hover:border-[#A855F7]/50 hover:text-[#A855F7] transition-all duration-300"
+                >
+                    {darkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
+                </button>
                 <div className="relative">
                     <button 
                         onClick={() => setShowNotifications(!showNotifications)}
-                        className={`relative p-3 rounded-2xl bg-white border transition-all duration-300 ${showNotifications ? 'border-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.3)] text-[#A855F7]' : 'border-slate-100 shadow-sm text-slate-400 hover:border-[#A855F7]/50 hover:text-[#A855F7]'}`}
+                        className={`relative p-3 rounded-2xl bg-white dark:bg-slate-800 border transition-all duration-300 ${showNotifications ? 'border-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.3)] text-[#A855F7]' : 'border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-300 hover:border-[#A855F7]/50 hover:text-[#A855F7]'}`}
                     >
                         <Bell size={18} strokeWidth={2.5} className={unreadCount > 0 ? 'animate-[wiggle_2s_ease-in-out_infinite]' : ''} />
                         {unreadCount > 0 && (
@@ -550,10 +552,10 @@ export default function AttendeeDashboard() {
 
                     {/* Notifications Dropdown */}
                     {showNotifications && (
-                        <div className="absolute top-full right-0 mt-4 w-[360px] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-100/50 z-50 overflow-hidden animate-fade-in origin-top-right">
-                            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+                        <div className="absolute top-full right-0 mt-4 w-[360px] bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-100/50 dark:border-slate-700/50 z-50 overflow-hidden animate-fade-in origin-top-right">
+                            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Notifications</h3>
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Notifications</h3>
                                     {unreadCount > 0 && (
                                         <span className="bg-[#A855F7] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>
                                     )}
@@ -598,24 +600,21 @@ export default function AttendeeDashboard() {
             {activeTab === 'dashboard' && (
             <div className="animate-fade-in">
                 {/* Header Canvas */}
-                <div className="bg-slate-900 rounded-3xl p-10 relative overflow-hidden mb-12 shadow-xl border border-slate-800">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#A855F7]/30 blur-[100px] pointer-events-none rounded-full transform translate-x-1/3 -translate-y-1/3"></div>
-                    <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/20 blur-[100px] pointer-events-none rounded-full transform -translate-x-1/3 translate-y-1/3"></div>
+                <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-10 relative overflow-hidden mb-12 shadow-md border border-slate-800">
                     
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                         <div className="text-center md:text-left">
-                            <p className="text-[10px] text-[#A855F7] uppercase tracking-[0.2em] font-black mb-2 flex items-center gap-2 justify-center md:justify-start">
-                                <SparklesIcon /> Discovery Matrix Active
+                            <p className="text-xs text-purple-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
+                                <SparklesIcon /> Explore Events
                             </p>
                             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                                Find your next <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A855F7] to-indigo-400">experience.</span>
+                                Find your next <span className="text-purple-400">experience.</span>
                             </h1>
                         </div>
 
                         {/* Floating Command Palette Search */}
                         <div className="w-full md:w-[450px] relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-r from-[#A855F7] to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-                            <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-2 flex items-center shadow-2xl">
+                            <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2 flex items-center shadow-lg">
                                 <div className="p-3 text-white/50">
                                     <Search size={20} strokeWidth={2.5} />
                                 </div>
@@ -637,25 +636,25 @@ export default function AttendeeDashboard() {
                 {/* Proximity Scope Label */}
                 <div className="flex items-center justify-between mb-8 px-2">
                 <div>
-                    <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-[#A855F7] animate-pulse"></div> {scope}
                     </h2>
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#A855F7] bg-purple-50 border border-purple-100 px-4 py-1.5 rounded-full shadow-sm">
-                    {filtered.length} signal{filtered.length !== 1 ? 's' : ''} detected
+                <span className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 px-4 py-1.5 rounded-full shadow-sm">
+                    {filtered.length} event{filtered.length !== 1 ? 's' : ''} found
                 </span>
                 </div>
 
                 {/* Event Grid */}
                 {filtered.length === 0 ? (
-                <div className="text-center py-32 bg-white border border-slate-100 rounded-3xl shadow-sm relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-slate-50/50 group-hover:bg-purple-50/30 transition-colors duration-500"></div>
+                <div className="text-center py-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-slate-50/50 dark:bg-slate-800/50 group-hover:bg-purple-50/30 transition-colors duration-500"></div>
                     <div className="relative z-10">
-                        <div className="w-24 h-24 bg-white shadow-xl border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                        <div className="w-24 h-24 bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-500">
                             <Search size={32} strokeWidth={2.5} />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900">Void Sector Detected</h3>
-                        <p className="text-sm font-medium text-slate-500 mt-2 max-w-sm mx-auto">No events match your current query parameters. Broaden your search criteria.</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">No events found</h3>
+                        <p className="text-sm font-medium text-slate-500 mt-2 max-w-sm mx-auto">No events match your current query. Try adjusting your filters.</p>
                     </div>
                 </div>
                 ) : (
@@ -672,20 +671,20 @@ export default function AttendeeDashboard() {
             {activeTab === 'mytickets' && (
             <div className="animate-fade-in max-w-4xl mx-auto">
                 <div className="mb-10 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-[#A855F7] to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/30 text-white transform rotate-3 hover:rotate-0 transition-transform cursor-pointer">
+                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
                         <Ticket size={28} strokeWidth={2.5} />
                     </div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Encrypted Wallet</h1>
-                    <p className="text-sm font-medium text-slate-500 mt-2">Your secured admission passes and cryptographic hashes.</p>
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">My Tickets</h1>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Your purchased and saved event tickets.</p>
                 </div>
 
-                <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-16 text-center relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent group-hover:via-[#A855F7] transition-colors duration-500"></div>
-                    <QrCode className="mx-auto text-slate-200 mb-6 group-hover:text-[#A855F7]/30 transition-colors duration-500" size={64} strokeWidth={1} />
-                    <h3 className="text-xl font-black text-slate-800">Wallet Empty</h3>
-                    <p className="text-sm font-medium text-slate-400 mt-2 mb-8 max-w-sm mx-auto">You haven't acquired any event access passes yet. Begin discovery to fill your wallet.</p>
-                    <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold transition shadow-xl active:scale-95 flex items-center gap-2 mx-auto">
-                        <Search size={16} /> Initiate Discovery
+                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-3xl p-16 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500 transition-colors duration-500"></div>
+                    <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800 transition-colors duration-500" size={64} strokeWidth={1} />
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Tickets Yet</h3>
+                    <p className="text-sm font-medium text-slate-400 mt-2 mb-8 max-w-sm mx-auto">You haven't purchased any tickets yet. Browse events to find something you like.</p>
+                    <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
+                        <Search size={16} /> Explore Events
                     </button>
                 </div>
             </div>
@@ -695,19 +694,18 @@ export default function AttendeeDashboard() {
             {activeTab === 'map' && (
             <div className="animate-fade-in">
                 <div className="flex items-center gap-4 mb-8">
-                    <div className="p-3 bg-purple-50 text-[#A855F7] rounded-2xl">
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-2xl">
                         <MapPin size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Global Radar</h1>
-                        <p className="text-sm font-medium text-slate-500 mt-1">Geospatial overview of active event deployments.</p>
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Locations</h1>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Explore events happening around you on the map.</p>
                     </div>
                 </div>
 
                 <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#A855F7] to-indigo-500 rounded-[2rem] blur-[20px] opacity-20 transform -translate-y-2"></div>
-                    <div className="bg-white border-2 border-slate-100 shadow-xl rounded-[2rem] overflow-hidden relative z-10 p-3">
-                        <div className="h-[600px] w-full rounded-[1.5rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-3xl overflow-hidden relative z-10 p-2">
+                        <div className="h-[600px] w-full rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-700">
                             <MapContainer center={[14.3296, 120.9367]} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
                             <TileLayer
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'

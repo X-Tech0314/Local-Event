@@ -133,34 +133,34 @@ export default function SettingsPanel({ currentUser }) {
         setShowAddWalletModal(false);
     };
 
-    const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#A855F7] focus:ring-2 focus:ring-[#A855F7]/20 focus:bg-white transition-all font-medium";
-    const labelCls = "block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2";
+    const inputCls = "w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:bg-white dark:focus:bg-slate-900 transition-all font-medium";
+    const labelCls = "block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2";
 
     const Section = ({ title, children, className = "", icon: Icon }) => (
-        <div className={`bg-white border border-slate-100 shadow-sm rounded-3xl p-8 mb-6 ${className}`}>
-            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2">
-                {Icon && <div className="p-2 rounded-xl bg-purple-50 text-[#A855F7]"><Icon size={18} strokeWidth={2.5} /></div>} {title}
+        <div className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-3xl p-8 mb-6 ${className}`}>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+                {Icon && <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"><Icon size={18} strokeWidth={2.5} /></div>} {title}
             </h3>
             {children}
         </div>
     );
 
     const SaveBtn = ({ label }) => (
-        <div className="pt-6 mt-6 border-t border-slate-100">
-            <button onClick={handleSave} className="w-full md:w-auto px-8 py-3 rounded-xl bg-[#A855F7] hover:bg-[#9333EA] text-white font-bold text-sm shadow-lg shadow-purple-500/30 transition-all active:scale-95">
+        <div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-800">
+            <button onClick={handleSave} className="w-full md:w-auto px-8 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-sm transition-all active:scale-95">
                 {label}
             </button>
         </div>
     );
 
     const ToggleSwitch = ({ label, description, enabled, onChange }) => (
-        <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-0 group cursor-pointer" onClick={() => onChange(!enabled)}>
+        <div className="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 last:border-0 group cursor-pointer" onClick={() => onChange(!enabled)}>
             <div className="pr-4">
-                <p className={`text-sm font-black transition-colors ${enabled ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-800'}`}>{label}</p>
+                <p className={`text-sm font-bold transition-colors ${enabled ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300'}`}>{label}</p>
                 {description && <p className="text-xs font-medium text-slate-500 mt-1">{description}</p>}
             </div>
             <div
-                className={`w-12 h-7 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-[#A855F7] shadow-inner' : 'bg-slate-200 border border-slate-300'}`}
+                className={`w-12 h-7 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600'}`}
             >
                 <div className={`w-5 h-5 rounded-full bg-white transition-all transform shadow-sm ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
             </div>
@@ -178,19 +178,19 @@ export default function SettingsPanel({ currentUser }) {
         <div className="animate-fade-in space-y-8 pb-10">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black tracking-tight text-slate-900">Platform Settings</h1>
-                <p className="text-slate-500 font-medium mt-1">Configure your deployment preferences and security parameters.</p>
+                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Platform Settings</h1>
+                <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Configure your account preferences and security.</p>
             </div>
 
             {/* Premium Pill Tabs */}
-            <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto flex gap-2">
+            <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto flex gap-2">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`px-6 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex-1 text-center ${activeTab === tab.id
-                            ? 'bg-[#A855F7] text-white shadow-md'
-                            : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                            ? 'bg-purple-600 text-white shadow-sm'
+                            : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                     >
                         {tab.label}
@@ -202,14 +202,14 @@ export default function SettingsPanel({ currentUser }) {
                 {/* ── PROFILE & IDENTITY TAB ── */}
                 {activeTab === 'profile' && (
                     <div className="animate-fade-in space-y-6">
-                        <Section title="Base Identification" icon={User}>
+                        <Section title="Basic Information" icon={User}>
                             <div className="flex flex-col md:flex-row gap-8 items-start">
                                 <div className="flex flex-col items-center gap-4">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-full">
-                                        Avatar Sync
+                                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center w-full">
+                                        Profile Picture
                                     </label>
                                     <div className="relative group w-32 h-32">
-                                        <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-[#A855F7] to-indigo-600 flex items-center justify-center font-black text-white text-4xl overflow-hidden shadow-xl border-4 border-white transform transition-transform group-hover:scale-105">
+                                        <div className="w-32 h-32 rounded-3xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black text-slate-400 dark:text-slate-600 text-4xl overflow-hidden shadow-sm border border-slate-300 dark:border-slate-700 transform transition-transform group-hover:scale-105">
                                             {profileImage ? (
                                                 <img src={profileImage} alt="Preview" className="w-full h-full object-cover" />
                                             ) : (
@@ -224,34 +224,34 @@ export default function SettingsPanel({ currentUser }) {
                                 </div>
                                 <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className={labelCls}>Legal First Name</label>
+                                        <label className={labelCls}>First Name</label>
                                         <input type="text" defaultValue={currentUser?.firstName || ''} className={inputCls} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Legal Last Name</label>
+                                        <label className={labelCls}>Last Name</label>
                                         <input type="text" defaultValue={currentUser?.lastName || ''} className={inputCls} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Official Designation</label>
-                                        <input type="text" placeholder="e.g. Master Organizer" className={inputCls} />
+                                        <label className={labelCls}>Role / Title</label>
+                                        <input type="text" placeholder="e.g. Organizer" className={inputCls} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Secure Contact Line</label>
+                                        <label className={labelCls}>Contact Number</label>
                                         <input type="text" placeholder="+63 9XX XXX XXXX" className={inputCls} />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Immutable Registry Email</label>
-                                        <input type="email" defaultValue={currentUser?.email || ''} className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-400 cursor-not-allowed select-none" disabled />
+                                        <label className={labelCls}>Email Address</label>
+                                        <input type="email" defaultValue={currentUser?.email || ''} className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-400 dark:text-slate-600 cursor-not-allowed select-none" disabled />
                                     </div>
                                 </div>
                             </div>
-                            <SaveBtn label="Sync Personal Identity" />
+                            <SaveBtn label="Save Profile" />
                         </Section>
 
-                        <Section title="Corporate Base / Entity Setup" icon={Building2}>
+                        <Section title="Organization Details" icon={Building2}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div>
-                                    <label className={labelCls}>Entity Structure</label>
+                                    <label className={labelCls}>Organization Type</label>
                                     <select className={`${inputCls} appearance-none cursor-pointer`}>
                                         <option>LGU / Barangay / SK</option>
                                         <option>Corporate / Business</option>
@@ -260,33 +260,33 @@ export default function SettingsPanel({ currentUser }) {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Registered Entity Name</label>
+                                    <label className={labelCls}>Organization Name</label>
                                     <input type="text" placeholder="e.g. Genesis Events Corp." className={inputCls} />
                                 </div>
                             </div>
                             <div>
-                                <label className={labelCls}>Base Operation Documents (Oath / Permit)</label>
-                                <div onClick={() => oathRef.current.click()} className="border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A855F7]/40 hover:bg-[#A855F7]/5 transition-all group">
+                                <label className={labelCls}>Business Permit / Document</label>
+                                <div onClick={() => oathRef.current.click()} className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all group">
                                     {oathDoc ? (
                                         <div className="flex flex-col items-center">
-                                            <div className="p-4 bg-emerald-100 text-emerald-600 rounded-full mb-3">
+                                            <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full mb-3">
                                                 <CheckCircle2 size={32} strokeWidth={2.5} />
                                             </div>
-                                            <p className="text-sm font-black text-slate-800">Document Uploaded Successfully</p>
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white">Document Uploaded</p>
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="p-4 bg-white shadow-sm border border-slate-100 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                                                <UploadCloud size={32} className="text-[#A855F7]" />
+                                            <div className="p-4 bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                                                <UploadCloud size={32} className="text-purple-600 dark:text-purple-400" />
                                             </div>
-                                            <p className="text-sm font-black text-slate-800 mb-1">Inject Permit Document Here</p>
-                                            <p className="text-xs font-medium text-slate-400">PDF, JPG, or PNG under 5MB</p>
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Upload Document</p>
+                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">PDF, JPG, or PNG under 5MB</p>
                                         </>
                                     )}
                                     <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc)} className="hidden" accept="image/*,.pdf" />
                                 </div>
                             </div>
-                            <SaveBtn label="Update Corporate Base" />
+                            <SaveBtn label="Update Organization" />
                         </Section>
                     </div>
                 )}
@@ -294,9 +294,9 @@ export default function SettingsPanel({ currentUser }) {
                 {/* ── BILLING & VERIFICATION TAB ── */}
                 {activeTab === 'verification' && (
                     <div className="animate-fade-in space-y-6">
-                        <Section title="KYC Verification Matrix" icon={FileText}>
+                        <Section title="Identity Verification" icon={FileText}>
                             <div className="mb-6">
-                                <label className={labelCls}>Authorized Government ID Selection</label>
+                                <label className={labelCls}>Government ID Type</label>
                                 <select className={`${inputCls} appearance-none cursor-pointer`}>
                                     {PHILIPPINE_GOVERNMENT_IDS.map(id => (
                                         <option key={id.id} value={id.name}>{id.name}</option>
@@ -304,62 +304,62 @@ export default function SettingsPanel({ currentUser }) {
                                 </select>
                             </div>
                             <div className="mb-8">
-                                <label className={labelCls}>Unique ID Reference Node</label>
+                                <label className={labelCls}>ID Number</label>
                                 <input type="text" placeholder="e.g. A000-1234-5678" className={`${inputCls} font-mono tracking-widest`} />
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div onClick={() => frontRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A855F7]/40 hover:bg-[#A855F7]/5 transition-all overflow-hidden p-2">
-                                    {idFront ? <img src={idFront} alt="Front ID" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-black uppercase tracking-widest text-slate-500">Scan ID Front Side</p>}
+                                <div onClick={() => frontRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all overflow-hidden p-2">
+                                    {idFront ? <img src={idFront} alt="Front ID" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Upload Front Side</p>}
                                     <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront)} className="hidden" accept="image/*" />
                                 </div>
-                                <div onClick={() => backRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A855F7]/40 hover:bg-[#A855F7]/5 transition-all overflow-hidden p-2">
-                                    {idBack ? <img src={idBack} alt="Back ID" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-black uppercase tracking-widest text-slate-500">Scan ID Back Side</p>}
+                                <div onClick={() => backRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all overflow-hidden p-2">
+                                    {idBack ? <img src={idBack} alt="Back ID" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Upload Back Side</p>}
                                     <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack)} className="hidden" accept="image/*" />
                                 </div>
                             </div>
                             
                             <div className="mb-6">
-                                <div onClick={() => selfieRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A855F7]/40 hover:bg-[#A855F7]/5 transition-all overflow-hidden p-2">
-                                    {idSelfie ? <img src={idSelfie} alt="Selfie" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-black uppercase tracking-widest text-slate-500">Live Liveness Check (Selfie + ID)</p>}
+                                <div onClick={() => selfieRef.current.click()} className="h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all overflow-hidden p-2">
+                                    {idSelfie ? <img src={idSelfie} alt="Selfie" className="w-full h-full object-contain rounded-xl" /> : <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Upload Selfie with ID</p>}
                                     <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie)} className="hidden" accept="image/*" />
                                 </div>
                             </div>
-                            <SaveBtn label="Transmit KYC Data" />
+                            <SaveBtn label="Submit Verification" />
                         </Section>
 
-                        <Section title="Payout Pipelines (Wallets & Banks)" icon={Shield}>
+                        <Section title="Payout Methods" icon={Shield}>
                             {wallets.length === 0 ? (
-                                <div className="text-center py-12 px-6 bg-slate-50 border border-slate-200 rounded-2xl">
-                                    <Shield size={48} className="mx-auto text-slate-300 mb-4" strokeWidth={1} />
-                                    <p className="text-lg font-black text-slate-900 mb-2">No Payout Pipelines Established</p>
-                                    <p className="text-sm font-medium text-slate-500 mb-6 max-w-sm mx-auto">You must link a verified payout source to intercept ticketing revenue.</p>
-                                    <button onClick={() => setShowAddWalletModal(true)} className="bg-white border border-slate-200 text-[#A855F7] font-bold px-8 py-3 rounded-xl shadow-sm hover:border-[#A855F7]/40 hover:shadow-md transition-all active:scale-95">
-                                        + Establish Pipeline
+                                <div className="text-center py-12 px-6 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
+                                    <Shield size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" strokeWidth={1} />
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Payout Methods Linked</p>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">Link a verified bank account or e-wallet to receive ticket sales payouts.</p>
+                                    <button onClick={() => setShowAddWalletModal(true)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-purple-600 dark:text-purple-400 font-bold px-8 py-3 rounded-xl shadow-sm hover:border-purple-500 transition-all active:scale-95">
+                                        + Add Payout Method
                                     </button>
                                 </div>
                             ) : (
                                 <div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                                         {wallets.map(wallet => (
-                                            <div key={wallet.id} className="border border-slate-200 rounded-2xl p-5 flex items-center justify-between hover:border-[#A855F7]/40 hover:shadow-lg transition-all group bg-white">
+                                            <div key={wallet.id} className="border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex items-center justify-between hover:border-purple-500 hover:shadow-sm transition-all group bg-white dark:bg-slate-900">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-xl ${wallet.bg} flex items-center justify-center font-black text-lg ${wallet.text} shadow-sm group-hover:scale-110 transition-transform`}>
+                                                    <div className={`w-12 h-12 rounded-xl ${wallet.bg} flex items-center justify-center font-bold text-lg ${wallet.text} shadow-sm group-hover:scale-110 transition-transform`}>
                                                         {wallet.icon}
                                                     </div>
                                                     <div>
-                                                        <p className="font-black text-slate-900 leading-tight">{wallet.name}</p>
-                                                        <p className="text-xs font-bold text-slate-500 font-mono mt-1">{wallet.value}</p>
+                                                        <p className="font-bold text-slate-900 dark:text-white leading-tight">{wallet.name}</p>
+                                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono mt-1">{wallet.value}</p>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => setWalletToUnlink(wallet)} className="text-xs font-bold text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+                                                <button onClick={() => setWalletToUnlink(wallet)} className="text-xs font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
                                                     Unlink
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
-                                    <button onClick={() => setShowAddWalletModal(true)} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-500 hover:text-[#A855F7] hover:bg-[#A855F7]/5 hover:border-[#A855F7]/40 transition-all">
-                                        + Establish Additional Pipeline
+                                    <button onClick={() => setShowAddWalletModal(true)} className="w-full py-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 hover:border-purple-500/50 transition-all">
+                                        + Add Another Method
                                     </button>
                                 </div>
                             )}
@@ -367,44 +367,43 @@ export default function SettingsPanel({ currentUser }) {
                     </div>
                 )}
 
-                {/* ── COMMUNICATION HUB TAB (NOTICEABLE REDESIGN) ── */}
+                {/* ── COMMUNICATION HUB TAB ── */}
                 {activeTab === 'notifications' && (
                     <div className="animate-fade-in space-y-6">
                         {/* High-Notice Banner */}
-                        <div className="bg-gradient-to-br from-[#A855F7] to-indigo-600 rounded-3xl p-8 shadow-xl text-white relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[50px] rounded-full pointer-events-none transform translate-x-1/3 -translate-y-1/3"></div>
+                        <div className="bg-purple-600 rounded-3xl p-8 shadow-sm text-white relative overflow-hidden">
                             <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-                                <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner border border-white/20">
-                                    <Bell size={32} strokeWidth={2.5} className="animate-[wiggle_1s_ease-in-out_infinite]" />
+                                <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl shadow-sm border border-white/20">
+                                    <Bell size={32} strokeWidth={2.5} />
                                 </div>
                                 <div className="text-center md:text-left">
-                                    <h2 className="text-2xl font-black tracking-tight mb-2">Communication Array is Active</h2>
-                                    <p className="text-sm font-medium text-purple-100 max-w-lg">Customize how and when you intercept system critical alerts, financial disbursements, and platform updates. Ensure your primary channel remains unmuted.</p>
+                                    <h2 className="text-2xl font-bold tracking-tight mb-2">Notifications Enabled</h2>
+                                    <p className="text-sm font-medium text-purple-100 max-w-lg">Customize how you receive system alerts, payouts, and updates.</p>
                                 </div>
                             </div>
                         </div>
 
                         <Section title="Communication Preferences">
                             <div className="space-y-2">
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#A855F7]/30 transition-colors">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
                                     <ToggleSwitch 
-                                        label="System Email Intel" 
+                                        label="Email Notifications" 
                                         description="Receive standard system logs: ticket sales, platform announcements, and schedule updates."
                                         enabled={emailAlerts} 
                                         onChange={setEmailAlerts} 
                                     />
                                 </div>
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#A855F7]/30 transition-colors">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
                                     <ToggleSwitch 
-                                        label="Critical SMS Override" 
-                                        description="Direct text dispatches for urgent payout failures, security breaches, or immediate action."
+                                        label="SMS Alerts" 
+                                        description="Direct text alerts for urgent payout failures, security breaches, or immediate action."
                                         enabled={smsAlerts} 
                                         onChange={setSmsAlerts} 
                                     />
                                 </div>
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#A855F7]/30 transition-colors">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
                                     <ToggleSwitch 
-                                        label="Marketing & Intel Briefs" 
+                                        label="Marketing & Promos" 
                                         description="Receive VenU organizer strategy guides, promotional offers, and newsletters."
                                         enabled={marketingAlerts} 
                                         onChange={setMarketingAlerts} 
@@ -418,86 +417,84 @@ export default function SettingsPanel({ currentUser }) {
                 {/* ── SECURITY & ACCESS TAB ── */}
                 {activeTab === 'security' && (
                     <div className="animate-fade-in space-y-6">
-                        <Section title="Cryptographic Access" icon={KeyRound}>
+                        <Section title="Password & Security" icon={KeyRound}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label className={labelCls}>New Encryption Key (Min 8 chars)</label>
+                                    <label className={labelCls}>New Password (Min 8 chars)</label>
                                     <div className="relative">
                                         <input type={showNewPassword ? "text" : "password"} placeholder="••••••••" className={inputCls} />
-                                        <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#A855F7] transition-colors">
+                                        <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                                             {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Verify Encryption Key</label>
+                                    <label className={labelCls}>Verify Password</label>
                                     <div className="relative">
                                         <input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" className={inputCls} />
-                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#A855F7] transition-colors">
+                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            <SaveBtn label="Flash New Key" />
+                            <SaveBtn label="Update Password" />
                         </Section>
 
-                        <Section title="Account Security Protocols">
-                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                        <Section title="Security Features">
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 mb-6">
                                 <ToggleSwitch
-                                    label="Two-Factor Authentication (2FA) Protocol"
-                                    description="Mandate a secondary cryptographic handshake during sign-in procedures."
+                                    label="Two-Factor Authentication (2FA)"
+                                    description="Require a secondary code during sign-in."
                                     enabled={twoFactorEnabled}
                                     onChange={setTwoFactorEnabled}
                                 />
                             </div>
                             
-                            <div className="p-6 border border-slate-100 rounded-2xl">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Live Session Nodes</p>
-                                <p className="text-sm font-bold text-slate-900 mb-4">Current Node: <span className="text-[#A855F7]">Antigravity IDE Workspace Client</span></p>
-                                <button onClick={() => alert("Successfully severed all external connections")} className="px-6 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition-colors active:scale-95">
-                                    Sever All Other Node Connections
+                            <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Active Sessions</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white mb-4">Current Session: <span className="text-purple-600 dark:text-purple-400">Windows (Browser)</span></p>
+                                <button onClick={() => alert("Successfully signed out of all other sessions")} className="px-6 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95">
+                                    Sign Out All Other Sessions
                                 </button>
                             </div>
                         </Section>
 
-                        <Section title="Data Governance & Transcripts">
-                            <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-inner mb-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-[#A855F7]/20 blur-2xl rounded-full"></div>
+                        <Section title="Data & Privacy">
+                            <div className="bg-slate-900 dark:bg-slate-950 text-white p-6 rounded-2xl shadow-sm mb-6 relative overflow-hidden">
                                 <p className="text-sm font-medium text-slate-300 relative z-10">
-                                    Your data traces are handled strictly compliant with the <strong className="text-white">Philippine Data Privacy Act of 2012 (NPC)</strong>. You retain sovereign control over your metadata transcripts and cached KYC documents.
+                                    Your data traces are handled securely and compliant with the <strong className="text-white">Philippine Data Privacy Act of 2012 (NPC)</strong>. You retain control over your data.
                                 </p>
                             </div>
                             
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                                 <div className="flex-1">
                                     <ToggleSwitch
-                                        label="Purge Decentralized Cache Post-Event"
-                                        description="Automatically obliterate document traces from server nodes 30 days after an event finishes."
+                                        label="Auto-delete Documents Post-Event"
+                                        description="Automatically delete uploaded ID and permit documents 30 days after an event finishes."
                                         enabled={purgeCache}
                                         onChange={setPurgeCache}
                                     />
                                 </div>
-                                <button onClick={handlePrintTranscript} className="border-2 border-[#A855F7] text-[#A855F7] font-black text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-[#A855F7]/10 transition-all active:scale-95 whitespace-nowrap">
-                                    Export Metadata
+                                <button onClick={handlePrintTranscript} className="border-2 border-purple-600 text-purple-600 dark:text-purple-400 font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all active:scale-95 whitespace-nowrap">
+                                    Export Data
                                 </button>
                             </div>
                         </Section>
 
                         {/* Completely Isolated Danger Zone */}
-                        <div className="mt-12 bg-red-50/50 border border-red-200 rounded-3xl p-8 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors pointer-events-none"></div>
+                        <div className="mt-12 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-3xl p-8 relative overflow-hidden group">
                             <div className="flex items-start gap-4 relative z-10">
-                                <div className="p-3 bg-red-100 text-red-600 rounded-xl">
+                                <div className="p-3 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl">
                                     <AlertTriangle size={24} strokeWidth={2.5} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-red-700 mb-2">Nuclear Option: Permanent Deletion</h3>
-                                    <p className="text-sm font-medium text-red-900/70 mb-6 max-w-xl">
-                                        Executing this protocol will permanently eradicate your organizer account, active deployments, and ticketing revenue history. This action is irreversible.
+                                    <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-2">Delete Account</h3>
+                                    <p className="text-sm font-medium text-red-900/70 dark:text-red-400/70 mb-6 max-w-xl">
+                                        Permanently delete your account, events, and all data. This action is irreversible.
                                     </p>
-                                    <button onClick={() => setShowDangerModal(true)} className="bg-red-600 hover:bg-red-700 text-white font-black text-sm px-8 py-3 rounded-xl shadow-lg shadow-red-500/30 transition-all active:scale-95">
-                                        Initiate Self-Destruct Sequence
+                                    <button onClick={() => setShowDangerModal(true)} className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-8 py-3 rounded-xl shadow-sm transition-all active:scale-95">
+                                        Delete Account
                                     </button>
                                 </div>
                             </div>
@@ -509,15 +506,15 @@ export default function SettingsPanel({ currentUser }) {
             {/* Modals */}
             {showDangerModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-8 text-center animate-scale-in border border-slate-100">
-                        <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6 border border-red-100 text-red-600">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm w-full max-w-md overflow-hidden p-8 text-center animate-scale-in border border-slate-200 dark:border-slate-800">
+                        <div className="w-20 h-20 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-6 border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400">
                             <AlertTriangle size={32} strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-3">Authorize Deletion?</h2>
-                        <p className="text-sm font-medium text-slate-500 mb-8">Are you absolute sure you want to permanently erase your existence from the VenU network?</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Delete Account?</h2>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">Are you absolute sure you want to permanently delete your account?</p>
                         <div className="flex gap-4">
-                            <button onClick={() => setShowDangerModal(false)} className="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all active:scale-95">Abort</button>
-                            <button onClick={() => alert("Deletion Sequence Activated.")} className="flex-1 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all shadow-lg shadow-red-500/30 active:scale-95">Confirm Erase</button>
+                            <button onClick={() => setShowDangerModal(false)} className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95">Cancel</button>
+                            <button onClick={() => alert("Account Deletion Initiated.")} className="flex-1 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all shadow-sm active:scale-95">Confirm Delete</button>
                         </div>
                     </div>
                 </div>
@@ -525,15 +522,15 @@ export default function SettingsPanel({ currentUser }) {
 
             {walletToUnlink && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center animate-scale-in border border-slate-100">
-                        <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6 border border-red-100 text-red-500">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm w-full max-w-sm overflow-hidden p-8 text-center animate-scale-in border border-slate-200 dark:border-slate-800">
+                        <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-6 border border-red-100 dark:border-red-900/50 text-red-500 dark:text-red-400">
                             <Shield size={24} strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-xl font-black text-slate-900 mb-2">Sever Pipeline?</h2>
-                        <p className="text-sm font-medium text-slate-500 mb-8">Are you sure you want to sever your connection to <strong>{walletToUnlink.name}</strong> ending in <strong className="font-mono">{walletToUnlink.value.slice(-4)}</strong>?</p>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Unlink Method?</h2>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">Are you sure you want to unlink <strong>{walletToUnlink.name}</strong> ending in <strong className="font-mono">{walletToUnlink.value.slice(-4)}</strong>?</p>
                         <div className="flex gap-3">
-                            <button onClick={() => setWalletToUnlink(null)} className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all active:scale-95">Cancel</button>
-                            <button onClick={() => { setWallets(wallets.filter(w => w.id !== walletToUnlink.id)); setWalletToUnlink(null); }} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all shadow-lg shadow-red-500/30 active:scale-95">Sever Link</button>
+                            <button onClick={() => setWalletToUnlink(null)} className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95">Cancel</button>
+                            <button onClick={() => { setWallets(wallets.filter(w => w.id !== walletToUnlink.id)); setWalletToUnlink(null); }} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all shadow-sm active:scale-95">Unlink</button>
                         </div>
                     </div>
                 </div>
@@ -541,13 +538,13 @@ export default function SettingsPanel({ currentUser }) {
 
             {showAddWalletModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden p-8 animate-scale-in border border-slate-100">
-                        <h2 className="text-2xl font-black text-slate-900 mb-2">Establish Pipeline</h2>
-                        <p className="text-sm font-medium text-slate-500 mb-8">Input secure routing parameters for financial disbursements.</p>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm w-full max-w-lg overflow-hidden p-8 animate-scale-in border border-slate-200 dark:border-slate-800">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Add Payout Method</h2>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">Enter the details for your payout method.</p>
                         
                         <div className="space-y-5 text-left">
                             <div>
-                                <label className={labelCls}>Routing Infrastructure</label>
+                                <label className={labelCls}>Method Type</label>
                                 <select className={`${inputCls} appearance-none cursor-pointer`} value={walletForm.type} onChange={(e) => setWalletForm({ ...walletForm, type: e.target.value, provider: e.target.value === 'ewallet' ? 'GCash' : e.target.value === 'bank' ? 'BDO Unibank' : 'Visa' })}>
                                     <option value="ewallet">Mobile E-Wallet</option>
                                     <option value="bank">Traditional Bank Transfer</option>
@@ -555,7 +552,7 @@ export default function SettingsPanel({ currentUser }) {
                                 </select>
                             </div>
                             <div>
-                                <label className={labelCls}>Institution / Node</label>
+                                <label className={labelCls}>Provider / Bank</label>
                                 {walletForm.type === 'ewallet' ? (
                                     <select className={`${inputCls} appearance-none cursor-pointer`} value={walletForm.provider} onChange={(e) => setWalletForm({ ...walletForm, provider: e.target.value })}>
                                         <option value="GCash">GCash</option>
@@ -579,23 +576,23 @@ export default function SettingsPanel({ currentUser }) {
                                 )}
                             </div>
                             <div>
-                                <label className={labelCls}>Verified Legal Name</label>
+                                <label className={labelCls}>Account Name</label>
                                 <input type="text" className={inputCls} placeholder="JUAN DELA CRUZ" value={walletForm.accountName} onChange={(e) => setWalletForm({ ...walletForm, accountName: e.target.value.toUpperCase() })} />
                             </div>
                             <div>
-                                <label className={labelCls}>{walletForm.type === 'ewallet' ? 'Mobile MSISDN' : walletForm.type === 'bank' ? 'Account Identifier' : '16-Digit Card Vector'}</label>
+                                <label className={labelCls}>{walletForm.type === 'ewallet' ? 'Mobile Number' : walletForm.type === 'bank' ? 'Account Number' : 'Card Number'}</label>
                                 <input type="text" className={`${inputCls} font-mono`} placeholder={walletForm.type === 'ewallet' ? '09XXXXXXXXX' : walletForm.type === 'card' ? '0000 0000 0000 0000' : '0000000000'} value={walletForm.accountNumber} onChange={(e) => setWalletForm({ ...walletForm, accountNumber: e.target.value })} />
                             </div>
                             {walletForm.type === 'card' && (
                                 <div className="grid grid-cols-2 gap-5">
-                                    <div><label className={labelCls}>Expiration Matrix</label><input type="text" className={`${inputCls} font-mono`} placeholder="MM/YY" value={walletForm.expiry} onChange={(e) => setWalletForm({ ...walletForm, expiry: e.target.value })} /></div>
-                                    <div><label className={labelCls}>Security Crypt (CVV)</label><input type="text" className={`${inputCls} font-mono`} placeholder="123" value={walletForm.cvv} onChange={(e) => setWalletForm({ ...walletForm, cvv: e.target.value })} /></div>
+                                    <div><label className={labelCls}>Expiry</label><input type="text" className={`${inputCls} font-mono`} placeholder="MM/YY" value={walletForm.expiry} onChange={(e) => setWalletForm({ ...walletForm, expiry: e.target.value })} /></div>
+                                    <div><label className={labelCls}>CVV</label><input type="text" className={`${inputCls} font-mono`} placeholder="123" value={walletForm.cvv} onChange={(e) => setWalletForm({ ...walletForm, cvv: e.target.value })} /></div>
                                 </div>
                             )}
                         </div>
-                        <div className="flex gap-4 mt-10 border-t border-slate-100 pt-6">
-                            <button onClick={() => { setShowAddWalletModal(false); setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' }); }} className="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all active:scale-95">Abort Request</button>
-                            <button onClick={submitNewWallet} className="flex-1 py-3.5 rounded-xl bg-[#A855F7] hover:bg-[#9333EA] text-white font-bold text-sm transition-all shadow-lg shadow-purple-500/30 active:scale-95">Establish Route</button>
+                        <div className="flex gap-4 mt-10 border-t border-slate-200 dark:border-slate-800 pt-6">
+                            <button onClick={() => { setShowAddWalletModal(false); setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' }); }} className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95">Cancel</button>
+                            <button onClick={submitNewWallet} className="flex-1 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition-all shadow-sm active:scale-95">Save Method</button>
                         </div>
                     </div>
                 </div>

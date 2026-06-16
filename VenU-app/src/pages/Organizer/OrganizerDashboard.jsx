@@ -81,18 +81,18 @@ export default function OrganizerDashboard() {
                 <div className="flex flex-col gap-8">
                     {/* Brand */}
                     <div className="flex items-center gap-2 select-none px-2 mb-2">
-                        <img src={logo} alt="VenU Logo" className="h-8 w-auto drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-                        <span className="text-xl font-black tracking-tight text-white drop-shadow-md">VenU</span>
+                        <img src={logo} alt="VenU Logo" className="h-8 w-auto drop-shadow-sm" />
+                        <span className="text-xl font-black tracking-tight text-white drop-shadow-sm">VenU</span>
                     </div>
 
                     {/* User Profile Overview */}
-                    <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shadow-inner">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#A855F7] to-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_10px_rgba(168,85,247,0.5)] shrink-0 border border-white/10">
+                    <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-3 rounded-2xl shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center font-bold text-white text-sm shrink-0">
                             {currentUser.firstName.charAt(0)}
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-bold text-white leading-tight truncate">{currentUser.firstName} {currentUser.lastName}</p>
-                            <p className="text-[10px] font-black text-[#A855F7] uppercase tracking-widest mt-1">Organizer Node</p>
+                            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mt-1">Organizer Account</p>
                         </div>
                     </div>
 
@@ -106,13 +106,13 @@ export default function OrganizerDashboard() {
                                     onClick={() => setActivePanel(id)}
                                     className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 ${
                                         isActive 
-                                            ? 'bg-gradient-to-r from-[#A855F7] to-indigo-600 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-white/10' 
+                                            ? 'bg-purple-600 text-white shadow-sm border border-transparent' 
                                             : 'text-slate-400 hover:bg-slate-900 hover:text-white border border-transparent'
                                     }`}
                                 >
                                     <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
                                     <span className="tracking-wide">{label}</span>
-                                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_5px_rgba(255,255,255,0.8)]" />}
+                                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
                                 </button>
                             );
                         })}
@@ -142,7 +142,7 @@ export default function OrganizerDashboard() {
                         <div className="relative">
                             <button 
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className={`relative p-3 rounded-2xl bg-white border transition-all duration-300 ${showNotifications ? 'border-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.3)] text-[#A855F7]' : 'border-slate-100 shadow-sm text-slate-400 hover:border-[#A855F7]/50 hover:text-[#A855F7]'}`}
+                                className={`relative p-3 rounded-2xl bg-white dark:bg-slate-900 border transition-all duration-300 ${showNotifications ? 'border-purple-500 text-purple-600 dark:text-purple-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 shadow-sm text-slate-500 dark:text-slate-400 hover:border-purple-200 dark:hover:border-slate-600 hover:text-purple-600 dark:hover:text-purple-400'}`}
                             >
                                 <Bell size={18} className={unreadCount > 0 ? 'animate-[wiggle_2s_ease-in-out_infinite]' : ''} />
                                 {unreadCount > 0 && (
@@ -155,16 +155,16 @@ export default function OrganizerDashboard() {
 
                             {/* Notifications Dropdown */}
                             {showNotifications && (
-                                <div className="absolute top-full right-0 mt-4 w-[360px] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-100/50 z-50 overflow-hidden animate-fade-in origin-top-right">
-                                    <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+                                <div className="absolute top-full right-0 mt-4 w-[360px] bg-white dark:bg-slate-900 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-800 z-50 overflow-hidden animate-fade-in origin-top-right">
+                                    <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                                         <div className="flex items-center gap-2">
-                                            <h3 className="text-sm font-black text-slate-900 tracking-tight">Notifications</h3>
+                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Notifications</h3>
                                             {unreadCount > 0 && (
-                                                <span className="bg-[#A855F7] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>
+                                                <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>
                                             )}
                                         </div>
                                         {unreadCount > 0 && (
-                                            <button onClick={markAllRead} className="text-xs font-bold text-[#A855F7] hover:text-purple-700 transition-colors">
+                                            <button onClick={markAllRead} className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 transition-colors">
                                                 Mark all read
                                             </button>
                                         )}
@@ -172,29 +172,29 @@ export default function OrganizerDashboard() {
                                     <div className="max-h-80 overflow-y-auto">
                                         {notifications.length === 0 ? (
                                             <div className="p-8 text-center">
-                                                <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-300">
+                                                <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto mb-3 text-slate-400">
                                                     <Bell size={20} />
                                                 </div>
-                                                <p className="text-sm font-bold text-slate-400">All caught up!</p>
+                                                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">All caught up!</p>
                                             </div>
                                         ) : (
                                             notifications.map(notif => (
-                                                <div key={notif.id} className={`p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                                                <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
                                                     {!notif.read && (
-                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#A855F7] rounded-r-md"></div>
+                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-r-md"></div>
                                                     )}
                                                     <div className="flex justify-between items-start mb-1.5 pl-2">
-                                                        <h4 className={`text-sm font-black ${notif.read ? 'text-slate-600' : 'text-slate-900'}`}>{notif.title}</h4>
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{notif.time}</span>
+                                                        <h4 className={`text-sm font-bold ${notif.read ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>{notif.title}</h4>
+                                                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{notif.time}</span>
                                                     </div>
-                                                    <p className="text-xs text-slate-500 leading-relaxed font-medium pl-2">{notif.message}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium pl-2">{notif.message}</p>
                                                 </div>
                                             ))
                                         )}
                                     </div>
-                                    <div className="p-3 border-t border-slate-100 bg-slate-50/50 text-center">
-                                        <button onClick={() => { setShowNotifications(false); setActivePanel('settings'); }} className="text-xs font-black text-slate-500 uppercase tracking-widest hover:text-[#A855F7] transition-colors">
-                                            View Communication Hub
+                                    <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-center">
+                                        <button onClick={() => { setShowNotifications(false); setActivePanel('settings'); }} className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                            View All Notifications
                                         </button>
                                     </div>
                                 </div>

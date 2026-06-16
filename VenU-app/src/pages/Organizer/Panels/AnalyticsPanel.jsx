@@ -14,7 +14,7 @@ export default function AnalyticsPanel({ currentUser }) {
                     <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 transition-all shadow-sm active:scale-95">
                         <Calendar size={16} /> Last 30 Days
                     </button>
-                    <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#A855F7] hover:bg-[#9333EA] text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-purple-500/30 active:scale-95">
+                    <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95">
                         <Download size={16} /> Export Report
                     </button>
                 </div>
@@ -24,9 +24,7 @@ export default function AnalyticsPanel({ currentUser }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Primary Card (Dark Mode Contrast) */}
-                <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden group">
-                    <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-emerald-500/20 rounded-full blur-[40px] group-hover:opacity-100 opacity-50 transition-opacity duration-500"></div>
-                    
+                <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm relative overflow-hidden group">
                     <div className="flex justify-between items-start relative z-10 mb-6">
                         <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400">
                             <TrendingUp size={24} strokeWidth={2.5} />
@@ -38,16 +36,14 @@ export default function AnalyticsPanel({ currentUser }) {
                     
                     <div className="relative z-10">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gross Sales Volume</p>
-                        <p className="text-5xl font-black text-white tracking-tight">$42,850</p>
+                        <p className="text-5xl font-black text-white tracking-tight">₱42,850</p>
                     </div>
                 </div>
 
                 {/* Secondary Cards */}
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300">
-                    <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-purple-500/5 rounded-full blur-[40px] group-hover:opacity-100 opacity-0 transition-opacity duration-500"></div>
-                    
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
                     <div className="flex justify-between items-start relative z-10 mb-6">
-                        <div className="p-3 bg-purple-50 border border-purple-100 rounded-2xl text-[#A855F7]">
+                        <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 rounded-2xl text-purple-600 dark:text-purple-400">
                             <Percent size={24} strokeWidth={2.5} />
                         </div>
                         <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
@@ -61,11 +57,9 @@ export default function AnalyticsPanel({ currentUser }) {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300">
-                    <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/5 rounded-full blur-[40px] group-hover:opacity-100 opacity-0 transition-opacity duration-500"></div>
-                    
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
                     <div className="flex justify-between items-start relative z-10 mb-6">
-                        <div className="p-3 bg-blue-50 border border-blue-100 rounded-2xl text-blue-500">
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-2xl text-blue-600 dark:text-blue-400">
                             <BarChart3 size={24} strokeWidth={2.5} />
                         </div>
                         <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
@@ -82,27 +76,27 @@ export default function AnalyticsPanel({ currentUser }) {
             </div>
 
             {/* Gradient Metrics Breakdown */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="mb-8">
-                    <h3 className="text-sm font-black tracking-widest text-slate-800 dark:text-slate-200 uppercase flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#A855F7]"></div> Traffic Channel Metrics
+                    <h3 className="text-sm font-bold tracking-widest text-slate-800 dark:text-slate-200 uppercase flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div> Traffic Channel Metrics
                     </h3>
-                    <p className="text-xs font-medium text-slate-500 mt-1">Source distribution for event discovery</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Source distribution for event discovery</p>
                 </div>
 
                 <div className="space-y-6">
                     {[
-                        { name: 'Direct Link Sharing', percentage: '45%', width: 'w-[45%]', color: 'from-[#A855F7] to-[#9333EA]' },
-                        { name: 'Email Newsletters', percentage: '30%', width: 'w-[30%]', color: 'from-blue-500 to-indigo-500' },
-                        { name: 'Social Platforms', percentage: '25%', width: 'w-[25%]', color: 'from-emerald-400 to-teal-500' }
+                        { name: 'Direct Link Sharing', percentage: '45%', width: 'w-[45%]', color: 'bg-purple-500' },
+                        { name: 'Email Newsletters', percentage: '30%', width: 'w-[30%]', color: 'bg-blue-500' },
+                        { name: 'Social Platforms', percentage: '25%', width: 'w-[25%]', color: 'bg-emerald-500' }
                     ].map((bar, i) => (
                         <div key={i} className="group cursor-default">
                             <div className="flex justify-between text-sm font-bold mb-2">
-                                <span className="text-slate-800 group-hover:text-[#A855F7] transition-colors">{bar.name}</span>
-                                <span className="text-slate-900 font-black">{bar.percentage}</span>
+                                <span className="text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{bar.name}</span>
+                                <span className="text-slate-900 dark:text-white font-bold">{bar.percentage}</span>
                             </div>
-                            <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
-                                <div className={`h-full bg-gradient-to-r ${bar.color} rounded-full ${bar.width} transform origin-left group-hover:scale-y-110 transition-transform duration-300 shadow-sm`} />
+                            <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                                <div className={`h-full ${bar.color} rounded-full ${bar.width} transform origin-left group-hover:scale-y-110 transition-transform duration-300`} />
                             </div>
                         </div>
                     ))}
