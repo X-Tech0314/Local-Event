@@ -17,7 +17,7 @@ export default function AttendeesPanel({ currentUser }) {
  <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Attendees Hub</h1>
  <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Monitor registrations and live check-in statuses.</p>
  </div>
- <button className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
+ <button className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
  <Download size={18} strokeWidth={2.5} /> Export Manifest
  </button>
  </div>
@@ -56,7 +56,7 @@ export default function AttendeesPanel({ currentUser }) {
  <input type="text" placeholder="Search by name, email, or ticket ID..." className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded pl-12 pr-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all " />
  </div>
  <div className="flex gap-3 w-full md:w-auto">
- <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-all active:scale-95">
+ <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded text-sm font-bold dark:hover:border-slate-600 transition-all active:scale-95">
  <Filter size={16} /> Filter by Event
  </button>
  </div>

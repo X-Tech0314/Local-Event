@@ -67,7 +67,7 @@ export default function EventsPanel({ currentUser, setActivePanel }) {
  <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Events Directory</h1>
  <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage and track your published and drafted events.</p>
  </div>
- <button onClick={() => setActivePanel('create-event')} className="bg-slate-800 dark:bg-slate-200 hover:bg-purple-700 text-white px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
+ <button onClick={() => setActivePanel('create-event')} className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
  <Plus size={18} strokeWidth={3} /> Create New Event
  </button>
  </div>
@@ -107,7 +107,7 @@ export default function EventsPanel({ currentUser, setActivePanel }) {
  </div>
  <h3 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">It's quiet in here...</h3>
  <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-8 font-medium">You haven't launched any events yet. Tap the button below to start building your first unforgettable experience.</p>
- <button onClick={() => setActivePanel('create-event')} className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 px-8 py-3.5 rounded font-bold transition-all shadow-purple-500/10 flex items-center gap-2 hover:-translate-y-1 active:scale-95">
+ <button onClick={() => setActivePanel('create-event')} className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-8 py-3.5 rounded font-bold transition-all flex items-center gap-2 hover:-translate-y-1 active:scale-95 shadow-purple-500/10">
  <Plus size={18} strokeWidth={3} /> Create Event
  </button>
  </div>

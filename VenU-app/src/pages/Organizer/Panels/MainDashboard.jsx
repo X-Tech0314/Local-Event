@@ -67,7 +67,7 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm font-medium">Your event metrics are looking excellent today.</p>
                     </div>
-                    <button onClick={() => setActivePanel('analytics')} className="bg-purple-700 dark:bg-purple-500 hover:bg-purple-800 dark:hover:bg-purple-600 text-white px-5 py-2.5 rounded text-sm font-medium transition-all active:scale-95 flex items-center gap-2">
+                    <button onClick={() => setActivePanel('analytics')} className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-5 py-2.5 rounded text-sm font-medium transition-all active:scale-95 flex items-center gap-2">
                         View Analytics <ArrowRight size={14} />
                     </button>
                 </div>
@@ -85,7 +85,7 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
                                 <p className="text-2xl font-semibold text-slate-900 dark:text-white">{value}</p>
                             </div>
-                            <div className={`p-3 rounded ${color} text-purple-700 dark:text-purple-400 transform group-hover:scale-105 transition-transform duration-300`}>
+                            <div className={`p-3 rounded ${color} bg-slate-100 dark:bg-slate-700 border border-purple-100 dark:border-purple-800 text-purple-700 dark:text-purple-400 transform group-hover:scale-105 transition-transform duration-300`}>
                                 <Icon size={20} strokeWidth={2} />
                             </div>
                         </div>

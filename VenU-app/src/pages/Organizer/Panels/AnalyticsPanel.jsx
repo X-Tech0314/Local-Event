@@ -11,10 +11,10 @@ export default function AnalyticsPanel({ currentUser }) {
  <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Real-time performance tracking and conversion metrics.</p>
  </div>
  <div className="flex items-center gap-3 w-full md:w-auto">
- <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 transition-all active:scale-95">
+ <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded text-sm font-bold transition-all active:scale-95">
  <Calendar size={16} /> Last 30 Days
  </button>
- <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-200 hover:bg-purple-700 text-white px-6 py-3 rounded text-sm font-bold transition-all active:scale-95">
+ <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded text-sm font-bold transition-all active:scale-95">
  <Download size={16} /> Export Report
  </button>
  </div>
@@ -24,19 +24,19 @@ export default function AnalyticsPanel({ currentUser }) {
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
  
  {/* Primary Card (Dark Mode Contrast) */}
- <div className="bg-slate-900 p-8 rounded border border-slate-800 relative overflow-hidden group">
+ <div className="bg-white dark:bg-slate-800 p-8 rounded border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover: transition-all duration-300">
  <div className="flex justify-between items-start relative z-10 mb-6">
- <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400">
+ <div className="p-3 bg-slate-100 dark:bg-slate-700 border border-purple-100 dark:border-purple-800 rounded text-emerald-400">
  <TrendingUp size={24} strokeWidth={2.5} />
  </div>
- <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+ <span className="flex items-center gap-1 text-[11px] font-semibold text-white bg-emerald-500 px-3 py-1.5 rounded-full shadow-lg shadow-emerald-500/20">
  <ArrowUpRight size={12} strokeWidth={3} /> +18.7% Spike
  </span>
  </div>
  
  <div className="relative z-10">
  <p className="text-[10px] font-semibold text-slate-400 mb-1">Gross Sales Volume</p>
- <p className="text-5xl font-semibold text-white ">₱42,850</p>
+ <p className="text-5xl font-semibold text-slate-900 dark:text-white ">₱42,850</p>
  </div>
  </div>
 
@@ -46,7 +46,7 @@ export default function AnalyticsPanel({ currentUser }) {
  <div className="p-3 bg-slate-100 dark:bg-slate-700 border border-purple-100 dark:border-purple-800 rounded text-slate-800 dark:text-slate-200 ">
  <Percent size={24} strokeWidth={2.5} />
  </div>
- <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+ <span className="flex items-center gap-1 text-[11px] font-semibold text-white bg-emerald-500 px-3 py-1.5 rounded-full shadow-lg shadow-emerald-500/20">
  <ArrowUpRight size={12} strokeWidth={3} /> +4.3%
  </span>
  </div>
@@ -62,7 +62,7 @@ export default function AnalyticsPanel({ currentUser }) {
  <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded text-blue-600 dark:text-blue-400">
  <BarChart3 size={24} strokeWidth={2.5} />
  </div>
- <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+ <span className="flex items-center gap-1 text-[11px] font-semibold text-white bg-emerald-500 px-3 py-1.5 rounded-full shadow-lg shadow-emerald-500/20">
  Steady Baseline
  </span>
  </div>

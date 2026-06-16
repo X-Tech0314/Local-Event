@@ -50,5 +50,7 @@ namespace VenU.Api.Models
         public bool IsVerified { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public Guid? CreatedByOrganizerId { get; set; }
     }
 }

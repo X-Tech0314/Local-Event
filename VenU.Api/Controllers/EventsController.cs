@@ -149,7 +149,8 @@ namespace VenU.Api.Controllers
                     ZipCode = dto.ZipCode,
                     Latitude = dto.Latitude,
                     Longitude = dto.Longitude,
-                    IsVerified = false // Needs admin approval
+                    IsVerified = false, // Needs admin approval
+                    CreatedByOrganizerId = organizerId
                 };
                 _context.Venues.Add(newVenue);
                 // We don't save yet, it will be saved with the event

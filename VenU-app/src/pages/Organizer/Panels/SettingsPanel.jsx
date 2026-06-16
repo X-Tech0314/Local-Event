@@ -706,7 +706,7 @@ export default function SettingsPanel({ currentUser }) {
  </div>
  <div className="flex gap-4 mt-10 border-t border-slate-200 dark:border-slate-800 pt-6">
  <button onClick={() => { setShowAddWalletModal(false); setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' }); }} className="flex-1 py-3.5 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95">Cancel</button>
- <button onClick={submitNewWallet} className="flex-1 py-3.5 rounded bg-slate-800 dark:bg-slate-200 hover:bg-purple-700 text-white font-bold text-sm transition-all active:scale-95">Save Method</button>
+ <button onClick={submitNewWallet} className="flex-1 py-3.5 rounded bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 font-bold text-sm transition-all active:scale-95">Save Method</button>
  </div>
  </div>
  </div>

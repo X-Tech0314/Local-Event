@@ -333,7 +333,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  <div className="absolute -bottom-10 -left-10 text-8xl opacity-10 transform -rotate-12 pointer-events-none">⭐</div>
 
  <CheckCircle className="text-emerald-400 w-24 h-24 mb-6 mx-auto" />
- <h2 className="text-3xl md:text-4xl font-semibold text-white mb-4 ">Congratulations on your event!</h2>
+ <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 dark:text-white mb-4 ">Congratulations on your event!</h2>
  <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-lg mx-auto">Your event has been successfully published to the platform. We wish you the best of luck with your community gathering!</p>
  </div>
 
@@ -982,7 +982,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
  </button>
  <button
  onClick={handleSubmit} disabled={isSubmitting}
- className="flex-grow bg-purple-700 dark:bg-purple-500 hover:bg-purple-800 dark:hover:bg-purple-600 text-white py-3 rounded font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/30 border border-purple-400 dark:border-purple-600"
+ className="flex-grow bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 py-3 rounded font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/30 border border-purple-400 dark:border-purple-600"
  >
  {isSubmitting ? (
  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
