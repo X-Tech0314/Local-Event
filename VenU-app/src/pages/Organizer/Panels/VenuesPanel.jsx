@@ -37,7 +37,7 @@ export default function VenuesPanel({ currentUser }) {
             {/* Map Section */}
             <div className="relative">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden relative z-10 p-2">
-                    <div className="absolute top-6 left-6 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                    <div className="absolute bottom-6 left-6 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-2">
                         <Navigation size={16} className="text-purple-600 dark:text-purple-400" />
                         <span className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Global Coverage</span>
                     </div>
