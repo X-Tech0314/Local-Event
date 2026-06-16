@@ -391,7 +391,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                         {/* Step Tracker Ribbon */}
                         <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-200 dark:border-slate-800 relative">
                             <div className="flex items-center gap-2 z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 1 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : currentStep > 1 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 1 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : currentStep > 1 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:bg-slate-800 text-slate-400'}`}>
                                     {currentStep > 1 ? <CheckCircle size={14} /> : 1}
                                 </div>
                                 <span className={`hidden sm:block font-bold text-xs tracking-wide transition-colors ${currentStep === 1 ? 'text-slate-900 dark:text-white' : currentStep > 1 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>Basic Info</span>
@@ -399,7 +399,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                             <div className={`h-px flex-1 mx-2 transition-colors duration-500 ${currentStep >= 2 ? 'bg-slate-900/50 dark:bg-white/50' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
 
                             <div className="flex items-center gap-2 z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 2 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : currentStep > 2 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 2 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : currentStep > 2 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:bg-slate-800 text-slate-400'}`}>
                                     {currentStep > 2 ? <CheckCircle size={14} /> : 2}
                                 </div>
                                 <span className={`hidden sm:block font-bold text-xs tracking-wide transition-colors ${currentStep === 2 ? 'text-slate-900 dark:text-white' : currentStep > 2 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>Schedule</span>
@@ -407,7 +407,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                             <div className={`h-px flex-1 mx-2 transition-colors duration-500 ${currentStep >= 3 ? 'bg-slate-900/50 dark:bg-white/50' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
 
                             <div className="flex items-center gap-2 z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 3 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : currentStep > 3 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 3 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : currentStep > 3 ? 'bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:bg-slate-800 text-slate-400'}`}>
                                     {currentStep > 3 ? <CheckCircle size={14} /> : 3}
                                 </div>
                                 <span className={`hidden sm:block font-bold text-xs tracking-wide transition-colors ${currentStep === 3 ? 'text-slate-900 dark:text-white' : currentStep > 3 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>Location</span>
@@ -415,7 +415,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel }) {
                             <div className={`h-px flex-1 mx-2 transition-colors duration-500 ${currentStep >= 4 ? 'bg-slate-900/50 dark:bg-white/50' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
 
                             <div className="flex items-center gap-2 z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 4 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${currentStep === 4 ? 'bg-purple-600 text-white shadow-sm scale-110 ring-4 ring-purple-600/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:bg-slate-800 text-slate-400'}`}>
                                     4
                                 </div>
                                 <span className={`hidden sm:block font-bold text-xs tracking-wide transition-colors ${currentStep === 4 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>Ticketing</span>
