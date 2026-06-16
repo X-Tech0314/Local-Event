@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../../utils/constants.js';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { User, MapPin, CheckCircle2, Percent, Ticket, Lock, Camera } from 'lucide-react';
 
 export default function UserSettings({ currentUser }) {
   const [form, setForm] = useState({
@@ -292,27 +292,30 @@ export default function UserSettings({ currentUser }) {
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const inputCls = "w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-900 dark:focus:border-white transition bg-slate-50 focus:bg-white dark:bg-slate-900 dark:text-white dark:border-slate-700 dark:focus:bg-slate-800";
+  const inputCls = "w-full border border-slate-200 dark:border-slate-700 rounded px-4 py-2.5 text-sm text-slate-800 dark:text-white outline-none focus:border-slate-900 dark:focus:border-purple-500 transition bg-slate-50 dark:bg-slate-900 focus:bg-white dark:focus:bg-slate-800";
   const labelCls = "block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5";
 
-  const Section = ({ title, children, className = "" }) => (
-    <div className={`bg-white border border-slate-100 shadow-sm rounded-2xl p-6 mb-6 ${className}`}>
-      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 border-b border-slate-100 pb-3">{title}</h3>
+  const Section = ({ title, icon, children, className = "" }) => (
+    <div className={`bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm rounded p-6 mb-6 ${className}`}>
+      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wider mb-5 border-b border-slate-100 dark:border-slate-700 pb-3 flex items-center gap-2">
+        {icon && <span className="p-1 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">{icon}</span>}
+        {title}
+      </h3>
       {children}
     </div>
   );
 
   const ToggleSwitch = ({ label, description, enabled, onChange, locked = false }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
       <div className="pr-4">
-        <p className="text-sm font-semibold text-slate-800">{label}</p>
-        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{label}</p>
+        {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>}
       </div>
       <button
         onClick={() => !locked && onChange(!enabled)}
-        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-slate-900 dark:bg-white' : 'bg-slate-300 dark:bg-slate-600'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-600 dark:bg-purple-500' : 'bg-slate-300 dark:bg-slate-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-900 transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        <div className={`w-4 h-4 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   );
@@ -325,7 +328,7 @@ export default function UserSettings({ currentUser }) {
   ];
 
   const SaveBtn = ({ label, onClick }) => (
-    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-bold text-sm transition-all active:scale-95">
+    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded bg-purple-700 hover:bg-purple-800 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-sm transition-all active:scale-95">
       {label}
     </button>
   );
@@ -333,20 +336,20 @@ export default function UserSettings({ currentUser }) {
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="mb-8">
-        <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Account</p>
-        <h1 className="text-2xl font-bold text-slate-900 mt-1">Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your account preferences, security, and verification.</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest font-semibold">Account</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Settings</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your account preferences, security, and verification.</p>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex gap-2 border-b border-slate-200 mb-8 overflow-x-auto pb-px">
+      <div className="flex gap-2 mb-8 overflow-x-auto bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded border border-slate-200 dark:border-slate-700 w-full">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
-                ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+            className={`flex-1 px-5 py-3 text-sm font-semibold rounded transition-all whitespace-nowrap ${activeTab === tab.id
+                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
             {tab.label}
@@ -359,65 +362,66 @@ export default function UserSettings({ currentUser }) {
         {/* ── PROFILE & ADDRESS TAB ── */}
         {activeTab === 'profile' && (
           <div className="animate-fade-in">
-            {/* Profile Image Management */}
-            <Section title="Profile Image Management">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <div className="w-24 h-24 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center font-bold text-white dark:text-slate-900 text-3xl shrink-0 overflow-hidden">
-                  {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : form.firstName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            {/* Basic Information (Combined) */}
+            <Section title="Basic Information" icon={<User size={16} />}>
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Profile Picture Column */}
+                <div className="flex flex-col items-start shrink-0 w-full md:w-40">
+                  <label className={labelCls}>Profile Picture</label>
+                  <button 
+                    onClick={() => photoInputRef.current?.click()}
+                    className="group relative w-32 h-32 rounded bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-400 dark:text-slate-500 text-4xl overflow-hidden cursor-pointer"
+                  >
+                    {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : form.firstName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                      <Camera size={24} />
+                    </div>
+                  </button>
+                  <input type="file" accept="image/*" className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }} />
                 </div>
-                <div className="text-center sm:text-left">
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-3 mb-2">
-                    <input type="file" accept="image/*" className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }} />
-                    <button onClick={() => photoInputRef.current?.click()} className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-all px-4 py-2 rounded-xl text-sm font-medium active:scale-95">
-                      Change Photo
-                    </button>
-                    <button onClick={() => setProfilePhoto(null)} className="border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all px-4 py-2 rounded-xl text-sm font-medium active:scale-95">
-                      Remove
-                    </button>
-                  </div>
-                  <p className="text-xs text-slate-400">Recommended: Square JPG or PNG, at least 400x400px.</p>
-                </div>
-              </div>
-              <SaveBtn label="Save Profile Image" />
-            </Section>
 
-            {/* Personal Info */}
-            <Section title="Personal Information">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div>
-                  <label className={labelCls}>First Name</label>
-                  <input className={inputCls} value={form.firstName} onChange={set('firstName')} placeholder="First Name" />
-                </div>
-                <div>
-                  <label className={labelCls}>Middle Name</label>
-                  <input className={inputCls} value={form.middleName} onChange={set('middleName')} placeholder="Middle Name (optional)" />
-                </div>
-                <div>
-                  <label className={labelCls}>Last Name</label>
-                  <input className={inputCls} value={form.lastName} onChange={set('lastName')} placeholder="Last Name" />
-                </div>
-                <div>
-                  <label className={labelCls}>Suffix</label>
-                  <select className={inputCls} value={form.suffix} onChange={set('suffix')}>
-                    {['None', 'Jr.', 'Sr.', 'III', 'IV', 'V', 'VI'].map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Date of Birth</label>
-                  <input type="date" className={inputCls} value={form.dateOfBirth || ''} onChange={set('dateOfBirth')} />
-                </div>
-                <div>
-                  <label className={labelCls}>Contact Number</label>
-                  <input className={inputCls} value={form.contactNumber} onChange={set('contactNumber')} placeholder="09XXXXXXXXX" />
+                {/* Form Fields Column */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                    <div>
+                      <label className={labelCls}>First Name</label>
+                      <input className={inputCls} value={form.firstName} onChange={set('firstName')} placeholder="First Name" />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Last Name</label>
+                      <input className={inputCls} value={form.lastName} onChange={set('lastName')} placeholder="Last Name" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                    <div>
+                      <label className={labelCls}>Role / Title</label>
+                      <input className={inputCls} value={form.role || ''} onChange={set('role')} placeholder="e.g. Attendee" />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Contact Number</label>
+                      <input className={inputCls} value={form.contactNumber} onChange={set('contactNumber')} placeholder="+63 9XX XXX XXXX" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Email Address</label>
+                    <p className="text-sm font-medium text-slate-500 mt-2 px-1">{currentUser?.email || 'company@company.com'}</p>
+                  </div>
                 </div>
               </div>
-              <SaveBtn label="Save Personal Information" />
+              
+              <div className="mt-8">
+                <div className="w-36">
+                    <button onClick={handleSaveProfile} className="w-full py-2.5 rounded bg-purple-700 hover:bg-purple-800 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-sm transition-all active:scale-95">
+                        Save Profile
+                    </button>
+                </div>
+              </div>
             </Section>
 
             {/* Address Details */}
-            <Section title="Address Details">
+            <Section title="Address Details" icon={<MapPin size={16} />}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                   <label className={labelCls}>House / Unit / Bldg. No.</label>
@@ -461,7 +465,7 @@ export default function UserSettings({ currentUser }) {
         {activeTab === 'verification' && (
           <div className="animate-fade-in">
             {/* Identity Verification Status */}
-            <Section title="Identity Verification Status">
+            <Section title="Identity Verification" icon={<CheckCircle2 size={16} />}>
               {idType ? (
                 <div className="bg-amber-50 text-amber-700 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-semibold mb-6 shadow-sm">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-white text-xs">⏳</span>
@@ -489,34 +493,34 @@ export default function UserSettings({ currentUser }) {
                 </div>
               </div>
               <div className="flex flex-col gap-4 mt-5">
-                <div className="flex items-center justify-between border border-slate-200 rounded-xl p-4 bg-slate-50">
+                <div className="flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded p-4 bg-slate-50 dark:bg-slate-800/50">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">F</div>
+                    <div className="w-10 h-10 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold">F</div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">Front Side Document</p>
-                      <p className="text-xs text-slate-500">{idFront ? 'Uploaded' : 'No document uploaded'}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Front Side Document</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{idFront ? 'Uploaded' : 'No document uploaded'}</p>
                     </div>
                   </div>
                   <input type="file" accept="image/*,application/pdf" className="hidden" ref={frontInputRef} onChange={(e) => handleIdUpload(e, setIdFront, 'idFrontPath')} />
                   <div className="flex gap-2">
-                    {idFront && <button onClick={() => window.open(idFront, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
-                    <button onClick={() => frontInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
+                    {idFront && <button onClick={() => window.open(idFront, '_blank')} className="text-sm font-medium text-slate-900 dark:text-white hover:underline">View</button>}
+                    <button onClick={() => frontInputRef.current?.click()} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:underline">Update</button>
                   </div>
                 </div>
 
                 {idConfig?.hasBackSide && (
-                  <div className="flex items-center justify-between border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <div className="flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded p-4 bg-slate-50 dark:bg-slate-800/50">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">B</div>
+                      <div className="w-10 h-10 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold">B</div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">Back Side Document</p>
-                        <p className="text-xs text-slate-500">{idBack ? 'Uploaded' : 'No document uploaded'}</p>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Back Side Document</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{idBack ? 'Uploaded' : 'No document uploaded'}</p>
                       </div>
                     </div>
                     <input type="file" accept="image/*,application/pdf" className="hidden" ref={backInputRef} onChange={(e) => handleIdUpload(e, setIdBack, 'idBackPath')} />
                     <div className="flex gap-2">
-                      {idBack && <button onClick={() => window.open(idBack, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
-                      <button onClick={() => backInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
+                      {idBack && <button onClick={() => window.open(idBack, '_blank')} className="text-sm font-medium text-slate-900 dark:text-white hover:underline">View</button>}
+                      <button onClick={() => backInputRef.current?.click()} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:underline">Update</button>
                     </div>
                   </div>
                 )}
@@ -525,7 +529,7 @@ export default function UserSettings({ currentUser }) {
             </Section>
 
             {/* Accessibility & Statutory Discounts */}
-            <Section title="Accessibility & Statutory Discounts">
+            <Section title="Accessibility & Statutory Discounts" icon={<Percent size={16} />}>
               {idType.includes('senior') || idType.includes('pwd') ? (
                 <div className="bg-purple-50 text-purple-700 border border-purple-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-semibold shadow-sm">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-xs">✓</span>
@@ -542,7 +546,7 @@ export default function UserSettings({ currentUser }) {
             </Section>
 
             {/* Linked Wallets & Method Repository */}
-            <Section title="Linked Wallets & Method Repository">
+            <Section title="Linked Payment Methods" icon={<Ticket size={16} />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {wallets.map(wallet => (
                   <div key={wallet.id} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
@@ -639,12 +643,12 @@ export default function UserSettings({ currentUser }) {
             </Section>
 
             {/* Data Privacy & Transcript Privileges */}
-            <Section title="Data Privacy & Transcript Privileges">
-              <p className="text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <Section title="Data Privacy & Transcript Privileges" icon={<Lock size={16} />}>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded border border-slate-100 dark:border-slate-700">
                 Your data is handled strictly compliant with the Philippine Data Privacy Act of 2012 (NPC). You retain full control over your stored transcripts and cached identity documents.
               </p>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <button onClick={handlePrintTranscript} className="border border-slate-200 text-slate-700 font-medium text-sm px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95 w-full md:w-auto text-center">
+                <button onClick={handlePrintTranscript} className="border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium text-sm px-5 py-2.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95 w-full md:w-auto text-center">
                   Export Profile Metadata Transcript
                 </button>
                 <div className="flex-1 md:border-l md:border-slate-100 md:pl-6">
@@ -676,16 +680,16 @@ export default function UserSettings({ currentUser }) {
       {/* Danger Modal */}
       {showDangerModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-scale-in">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 border border-red-200 text-red-600 text-2xl font-bold">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-scale-in">
+            <div className="w-16 h-16 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-2xl font-bold">
               !
             </div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Delete Account?</h2>
-            <p className="text-sm text-slate-500 mb-6">Are you sure you want to permanently delete your account? This action cannot be undone.</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Delete Account?</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to permanently delete your account? This action cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDangerModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+                className="flex-1 py-2.5 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
               >
                 Cancel
               </button>

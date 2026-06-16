@@ -110,56 +110,67 @@ function EventCard({ event, onSelect }) {
   return (
     <div
       onClick={() => onSelect(event)}
-      className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative flex flex-col h-full"
+      className="bg-white dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:-translate-y-1 transition-transform group cursor-pointer relative flex flex-col h-full"
     >
       {/* Immersive Image Header */}
-      <div className="h-56 relative overflow-hidden">
-        <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 transition-colors duration-500 z-10"></div>
-        <img src={event.image} alt={event.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+      <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
+        <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors z-10"></div>
+        <img src={event.image} alt={event.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
         
         {/* Glowing Badge Area */}
         <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md bg-white/90 shadow-sm ${event.accessType === 'Private' ? 'text-purple-600 border-purple-200' : event.isPaid ? 'text-amber-600 border-amber-200' : 'text-emerald-600 border-emerald-200'}`}>
-                {event.accessType === 'Private' ? <Lock size={10} /> : event.isPaid ? <Tag size={10} /> : <CheckCircle2 size={10} />}
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-white/90 shadow-sm ${event.accessType === 'Private' ? 'text-slate-700 dark:text-slate-300 border-purple-200' : event.isPaid ? 'text-slate-700 dark:text-slate-300 border-amber-200' : 'text-slate-700 dark:text-slate-300 border-emerald-500/20'}`}>
+                {event.accessType === 'Private' ? <Lock size={10} /> : event.isPaid ? <Tag size={10} /> : <span className={`w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse`}></span>}
                 {event.accessType === 'Private' ? 'Private' : event.isPaid ? `₱${event.price}` : 'Free'}
-            </span>
-        </div>
-        
-        {/* Category Pill */}
-        <div className="absolute bottom-4 left-4 z-20">
-             <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-black/50 text-white backdrop-blur-md border border-white/20">
-                {event.category}
             </span>
         </div>
       </div>
 
       {/* Card Details */}
       <div className="p-6 flex flex-col flex-grow relative bg-white dark:bg-slate-800">
-        <div className="absolute -top-8 right-6 z-20">
-            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${event.color} flex flex-col items-center justify-center text-white font-black shadow-lg shadow-black/20 group-hover:-translate-y-1 transition-transform`}>
-                <span className="text-[10px] tracking-widest opacity-80 uppercase leading-none">{new Date(event.date).toLocaleString('en-us', { month: 'short' })}</span>
-                <span className="text-xl leading-tight">{new Date(event.date).getDate()}</span>
+        <div className="absolute -top-6 right-6 z-20">
+            <div className="bg-purple-50 dark:bg-slate-600 w-16 flex flex-col items-center justify-center text-purple-700 dark:text-purple-300 py-2 rounded shadow-md border border-slate-200 dark:border-slate-500 group-hover:-translate-y-1 transition-transform">
+                <span className="text-xs font-medium opacity-80 uppercase">{new Date(event.date).toLocaleString('en-us', { month: 'short' })}</span>
+                <span className="text-lg font-semibold">{new Date(event.date).getDate()}</span>
             </div>
         </div>
 
-        <h4 className="font-black text-slate-900 dark:text-white text-xl leading-tight group-hover:text-[#A855F7] transition-colors pr-16 mb-4">
+        <div className="flex justify-between items-start gap-2 mb-2 pr-16">
+          <span className="text-[10px] font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-md">{event.category}</span>
+        </div>
+        <h4 className="font-semibold text-slate-900 dark:text-white text-xl leading-tight mb-4 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
           {event.title}
         </h4>
         
         <div className="space-y-3 mt-auto mb-6">
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[#A855F7] group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30 transition-colors"><MapPin size={14} /></div> {event.barangay}
-          </p>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[#A855F7] group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30 transition-colors"><Clock size={14} /></div> {event.time}
-          </p>
+          <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+            <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 shrink-0">
+              <Calendar size={14} strokeWidth={2.5} />
+            </div>
+            <span>{new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+            <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 shrink-0">
+              <Clock size={14} strokeWidth={2.5} />
+            </div>
+            <span className="text-xs leading-normal">{event.time}</span>
+          </div>
+          <div className="flex items-start gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+            <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 shrink-0 mt-0.5">
+              <MapPin size={14} strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="font-bold text-slate-800 dark:text-slate-200">{event.city}</span>
+              <span className="text-xs text-slate-500 line-clamp-1">{event.barangay}</span>
+            </div>
+          </div>
         </div>
         
         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
-          <span className="text-sm font-black text-[#A855F7] flex items-center gap-1 group-hover:gap-2 transition-all">
-            Get Tickets <ChevronRight size={16} strokeWidth={3} />
-          </span>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">Ticket Options</span>
+          <button className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1 group-hover:gap-2 transition-all">
+            Get Tickets <ArrowRight size={16} strokeWidth={3} />
+          </button>
         </div>
       </div>
     </div>
@@ -467,25 +478,25 @@ export default function AttendeeDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F9F8FC] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="flex min-h-screen bg-slate-100 dark:bg-slate-900 font-sans">
 
-      {/* ── Fixed Premium Dark Sidebar ──────────────────────────────────────────── */}
-      <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
+      {/* Fixed Sidebar */}
+      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40">
         <div className="flex flex-col gap-8">
           {/* Brand */}
           <div className="flex items-center gap-2 select-none px-2 mb-2">
-            <img src={logo} alt="VenU Logo" className="h-8 w-auto drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-            <span className="text-xl font-black tracking-tight text-white drop-shadow-md">VenU</span>
+            <img src={logo} alt="VenU Logo" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">VenU</span>
           </div>
 
-          {/* User Chip */}
-          <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shadow-inner">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#A855F7] to-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_10px_rgba(168,85,247,0.5)] shrink-0 border border-white/10">
+          {/* User Profile Overview */}
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded">
+            <div className="w-10 h-10 rounded bg-purple-600 dark:bg-purple-500 flex items-center justify-center font-medium text-white text-sm shrink-0">
               {currentUser.firstName.charAt(0)}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-black text-white leading-tight truncate">{currentUser.firstName}</p>
-              <p className="text-[10px] font-black text-[#A855F7] uppercase tracking-widest mt-1">Explorer Node</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-white leading-tight truncate">{currentUser.firstName} {currentUser.lastName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Attendee Account</p>
             </div>
           </div>
 
@@ -497,51 +508,55 @@ export default function AttendeeDashboard() {
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 ${isActive
-                    ? 'bg-gradient-to-r from-[#A855F7] to-indigo-600 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-white/10'
-                    : 'text-slate-400 hover:bg-slate-900 hover:text-white border border-transparent'
-                    }`}
+                  className={`w-full flex items-center gap-3 rounded px-4 py-3 text-sm font-medium transition-colors ${
+                      isActive 
+                          ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-sm' 
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                  }`}
                 >
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
                   <span className="tracking-wide">{label}</span>
-                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_5px_rgba(255,255,255,0.8)]" />}
+                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded bg-white" />}
                 </button>
               );
             })}
           </nav>
         </div>
 
-        {/* Sign Out */}
-        <button
-          onClick={() => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/');
-          }}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent transition-all"
-        >
-          <LogOut size={16} strokeWidth={2.5} /> Log Out
-        </button>
+        {/* Footer Utilities */}
+        <div className="space-y-2">
+          <button 
+              onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
+                  navigate('/');
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+          >
+              <LogOut size={16} strokeWidth={2.5} /> Log Out
+          </button>
+        </div>
       </aside>
 
       {/* ── Main Viewport Canvas ───────────────────────────────────────────── */}
-      <main className="ml-64 flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
+      <main className="ml-64 flex-1 flex flex-col min-h-screen bg-slate-100 dark:bg-slate-900 relative overflow-x-hidden">
         
         {/* Top Notification Bar (Replicated from Organizer) */}
-        <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-end">
+        <div className="sticky top-0 z-30 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-end">
             <div className="flex items-center gap-3">
                 <button 
                     onClick={toggleDarkMode}
-                    className="relative p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-300 hover:border-[#A855F7]/50 hover:text-[#A855F7] transition-all duration-300"
+                    className="p-2.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white transition-colors"
+                    title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
-                    {darkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
+                    {darkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
                 <div className="relative">
                     <button 
                         onClick={() => setShowNotifications(!showNotifications)}
-                        className={`relative p-3 rounded-2xl bg-white dark:bg-slate-800 border transition-all duration-300 ${showNotifications ? 'border-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.3)] text-[#A855F7]' : 'border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-300 hover:border-[#A855F7]/50 hover:text-[#A855F7]'}`}
+                        className={`relative p-2.5 rounded bg-white dark:bg-slate-800 border transition-colors ${showNotifications ? 'border-slate-400 text-slate-800 dark:text-white' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'}`}
                     >
-                        <Bell size={18} strokeWidth={2.5} className={unreadCount > 0 ? 'animate-[wiggle_2s_ease-in-out_infinite]' : ''} />
+                        <Bell size={18} className={unreadCount > 0 ? 'animate-pulse text-purple-700 dark:text-purple-400' : ''} />
                         {unreadCount > 0 && (
                             <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A855F7] opacity-75"></span>
@@ -600,35 +615,36 @@ export default function AttendeeDashboard() {
             {activeTab === 'dashboard' && (
             <div className="animate-fade-in">
                 {/* Header Canvas */}
-                <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-10 relative overflow-hidden mb-12 shadow-md border border-slate-800">
-                    
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div className="text-center md:text-left">
-                            <p className="text-xs text-purple-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
-                                <SparklesIcon /> Explore Events
-                            </p>
-                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                                Find your next <span className="text-purple-400">experience.</span>
-                            </h1>
+                <div className="relative rounded overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 lg:p-10 mb-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="relative z-10 text-center md:text-left">
+                        <div className="flex items-center justify-center md:justify-start gap-2 text-slate-500 mb-1">
+                            <SparklesIcon />
+                            <span className="text-xs uppercase tracking-widest font-medium">Attendee Portal</span>
                         </div>
+                        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+                            Welcome back, <span className="text-purple-700 dark:text-purple-400 font-bold">{currentUser.firstName}</span>
+                        </h1>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
+                            Your discovery feeds are looking excellent today.
+                        </p>
+                    </div>
 
-                        {/* Floating Command Palette Search */}
-                        <div className="w-full md:w-[450px] relative group">
-                            <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2 flex items-center shadow-lg">
-                                <div className="p-3 text-white/50">
-                                    <Search size={20} strokeWidth={2.5} />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search events, venues, access codes..."
-                                    className="w-full bg-transparent text-white placeholder:text-white/50 font-medium text-sm outline-none px-2 pr-4"
-                                />
-                                <button className="bg-white text-slate-900 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-sm">
-                                    Scan
-                                </button>
+                    {/* Floating Command Palette Search */}
+                    <div className="w-full md:w-[450px] relative group z-10">
+                        <div className="relative bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-2 flex items-center shadow-sm">
+                            <div className="p-3 text-slate-400">
+                                <Search size={20} strokeWidth={2.5} />
                             </div>
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search events, venues, access codes..."
+                                className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-sm outline-none px-2 pr-4"
+                            />
+                            <button className="bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white px-4 py-2.5 rounded text-xs font-black uppercase tracking-widest transition-colors shadow-sm">
+                                Search
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -647,7 +663,7 @@ export default function AttendeeDashboard() {
 
                 {/* Event Grid */}
                 {filtered.length === 0 ? (
-                <div className="text-center py-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm relative overflow-hidden group">
+                <div className="text-center py-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm relative overflow-hidden group">
                     <div className="absolute inset-0 bg-slate-50/50 dark:bg-slate-800/50 group-hover:bg-purple-50/30 transition-colors duration-500"></div>
                     <div className="relative z-10">
                         <div className="w-24 h-24 bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-500">
@@ -678,7 +694,7 @@ export default function AttendeeDashboard() {
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Your purchased and saved event tickets.</p>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-3xl p-16 text-center relative overflow-hidden group">
+                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded p-16 text-center relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500 transition-colors duration-500"></div>
                     <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800 transition-colors duration-500" size={64} strokeWidth={1} />
                     <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Tickets Yet</h3>
@@ -704,8 +720,8 @@ export default function AttendeeDashboard() {
                 </div>
 
                 <div className="relative">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-3xl overflow-hidden relative z-10 p-2">
-                        <div className="h-[600px] w-full rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded overflow-hidden relative z-10 p-2">
+                        <div className="h-[600px] w-full rounded overflow-hidden relative border border-slate-200 dark:border-slate-700">
                             <MapContainer center={[14.3296, 120.9367]} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
                             <TileLayer
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'

@@ -74,10 +74,10 @@ export default function OrganizerDashboard() {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#faf9f6] dark:bg-slate-950 font-sans">
+        <div className="flex min-h-screen bg-[#faf9f6] dark:bg-slate-950 font-sans transition-colors duration-300">
 
             {/* Fixed Dark Sidebar */}
-            <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
+            <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl transition-colors duration-300">
                 <div className="flex flex-col gap-8">
                     {/* Brand */}
                     <div className="flex items-center gap-2 select-none px-2 mb-2">
@@ -110,7 +110,7 @@ export default function OrganizerDashboard() {
                                             : 'text-slate-400 hover:bg-slate-900 hover:text-white border border-transparent'
                                     }`}
                                 >
-                                    <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
+                                    <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
                                     <span className="tracking-wide">{label}</span>
                                     {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
                                 </button>

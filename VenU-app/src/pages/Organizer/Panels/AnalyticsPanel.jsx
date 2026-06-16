@@ -24,19 +24,19 @@ export default function AnalyticsPanel({ currentUser }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Primary Card (Dark Mode Contrast) */}
-                <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm relative overflow-hidden group">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
                     <div className="flex justify-between items-start relative z-10 mb-6">
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400">
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl text-emerald-600 dark:text-emerald-400">
                             <TrendingUp size={24} strokeWidth={2.5} />
                         </div>
-                        <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                        <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-500/20">
                             <ArrowUpRight size={12} strokeWidth={3} /> +18.7% Spike
                         </span>
                     </div>
                     
                     <div className="relative z-10">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gross Sales Volume</p>
-                        <p className="text-5xl font-black text-white tracking-tight">₱42,850</p>
+                        <p className="text-5xl font-black text-slate-900 dark:text-white tracking-tight">₱42,850</p>
                     </div>
                 </div>
 
@@ -46,7 +46,7 @@ export default function AnalyticsPanel({ currentUser }) {
                         <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 rounded-2xl text-purple-600 dark:text-purple-400">
                             <Percent size={24} strokeWidth={2.5} />
                         </div>
-                        <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+                        <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-500/20">
                             <ArrowUpRight size={12} strokeWidth={3} /> +4.3%
                         </span>
                     </div>
@@ -62,7 +62,7 @@ export default function AnalyticsPanel({ currentUser }) {
                         <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-2xl text-blue-600 dark:text-blue-400">
                             <BarChart3 size={24} strokeWidth={2.5} />
                         </div>
-                        <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                        <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
                             Steady Baseline
                         </span>
                     </div>
