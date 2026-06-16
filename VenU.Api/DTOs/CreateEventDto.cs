@@ -23,6 +23,18 @@ namespace VenU.Api.DTOs
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
         
+        // Venue Directory Properties
+        public string VenueSourcingMode { get; set; } = "registered";
+        public Guid? VenueId { get; set; }
+        public string? VenueName { get; set; }
+        public string? VenueType { get; set; }
+        public string? FloorLevel { get; set; }
+        public string? WingSection { get; set; }
+        public string? BoothNumber { get; set; }
+        public string? ProximityAnchor { get; set; }
+        public string? LogisticsNotes { get; set; }
+        public bool RegisterVenueToDB { get; set; } = false;
+        
         public string AccessType { get; set; } = "Public"; // Default Value Set
         public string? VerificationCode { get; set; }
         
@@ -35,7 +47,8 @@ namespace VenU.Api.DTOs
     public class TicketTierDto
     {
         public string TierName { get; set; } = string.Empty;
-        public int AllocatedSlots { get; set; }
+        public int OnlineSlots { get; set; }
+        public int F2FSlots { get; set; }
         public decimal Price { get; set; } = 0.00M;
         public string ValidityScope { get; set; } = "Full Event Multi-Pass (All Days)";
     }

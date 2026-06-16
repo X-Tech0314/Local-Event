@@ -55,6 +55,22 @@ export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
           </div>
         </div>
 
+        {/* Location Info */}
+        <div className="w-full text-center mb-2 px-2">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Location</p>
+          <p className="text-xs font-black text-slate-800 leading-tight truncate">
+            {eventData?.venueType === 'Mall / Commercial Complex' || eventData?.venueType === 'Exhibition Hall / Convention Center' 
+              ? `${eventData?.proximityAnchor || 'Venue'} - ${eventData?.floorLevel || 'Floor'}`
+              : eventData?.streetAddress || 'Street Address'
+            }
+          </p>
+          {(eventData?.venueType === 'Mall / Commercial Complex' || eventData?.venueType === 'Exhibition Hall / Convention Center') && eventData?.wingSection && (
+            <span className="inline-block px-2 py-[1px] mt-0.5 bg-slate-100 rounded-md text-[8px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200">
+              {eventData.wingSection}
+            </span>
+          )}
+        </div>
+
         {/* Center: Styled QR Code Container */}
         <div 
           className="p-3 rounded-2xl bg-slate-50 transition-all duration-300 border-2"

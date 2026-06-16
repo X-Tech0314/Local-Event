@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail \"vite\" \"dotnet run --project ../VenU.Api/VenU.Api.csproj --launch-profile http\"",
+    "dev": "concurrently --kill-others-on-fail \"vite\" \"dotnet watch --project ../VenU.Api/VenU.Api.csproj run --launch-profile http\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

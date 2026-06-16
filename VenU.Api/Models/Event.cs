@@ -37,6 +37,32 @@ namespace VenU.Api.Models
         public DateTime TicketSalesEnd { get; set; } = DateTime.UtcNow;
 
         // Cascading Location Parameters
+        public Guid? VenueId { get; set; }
+        [ForeignKey("VenueId")]
+        public Venue Venue { get; set; }
+
+        [MaxLength(150)]
+        public string VenueName { get; set; }
+
+        [MaxLength(100)]
+        public string VenueType { get; set; }
+
+        [MaxLength(100)]
+        public string FloorLevel { get; set; }
+
+        [MaxLength(100)]
+        public string WingSection { get; set; }
+
+        [MaxLength(50)]
+        public string BoothNumber { get; set; }
+
+        [MaxLength(150)]
+        public string ProximityAnchor { get; set; }
+
+        [MaxLength(500)]
+        public string LogisticsNotes { get; set; }
+
+        // Raw Address Fallback
         [Required]
         [MaxLength(255)]
         public string StreetAddress { get; set; }

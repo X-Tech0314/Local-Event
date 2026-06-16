@@ -20,6 +20,38 @@ namespace VenU.Api.Controllers
             _context = context;
         }
 
+        [HttpPost("upload")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> UploadBanner(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            var wwwrootPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsPath = System.IO.Path.Combine(wwwrootPath, "uploads");
+            
+            if (!System.IO.Directory.Exists(uploadsPath))
+            {
+                System.IO.Directory.CreateDirectory(uploadsPath);
+            }
+
+            var fileExtension = System.IO.Path.GetExtension(file.FileName);
+            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+            var filePath = System.IO.Path.Combine(uploadsPath, uniqueFileName);
+
+            using (var stream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            var fileUrl = $"{baseUrl}/uploads/{uniqueFileName}";
+
+            return Ok(new { url = fileUrl });
+        }
+
         [HttpPost]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto dto)
@@ -38,34 +70,81 @@ namespace VenU.Api.Controllers
                 return Unauthorized(new { message = "Invalid user token." });
             }
 
+            // Handle Venue Sourcing Logic
+            Guid? finalVenueId = dto.VenueId;
+            
+            if (dto.VenueSourcingMode == "custom" && dto.RegisterVenueToDB)
+            {
+                var newVenue = new Venue
+                {
+                    Name = dto.VenueName ?? "Custom Venue",
+                    Type = dto.VenueType ?? "Standalone Building / Street Address",
+                    StreetAddress = dto.StreetAddress,
+                    Barangay = dto.Barangay,
+                    City = dto.City,
+                    Province = dto.Province,
+                    Region = dto.Region,
+                    ZipCode = dto.ZipCode,
+                    Latitude = dto.Latitude,
+                    Longitude = dto.Longitude,
+                    IsVerified = false // Needs admin approval
+                };
+                _context.Venues.Add(newVenue);
+                // We don't save yet, it will be saved with the event
+                finalVenueId = newVenue.Id;
+            }
+            else if (dto.VenueSourcingMode == "registered" && finalVenueId.HasValue)
+            {
+                var existingVenue = await _context.Venues.FindAsync(finalVenueId.Value);
+                if (existingVenue != null)
+                {
+                    existingVenue.OrganizersUsedCount += 1;
+                }
+                else
+                {
+                    finalVenueId = null;
+                }
+            }
+
             var newEvent = new Event
             {
-                Title = dto.Title,
-                Description = dto.Description,
-                Category = dto.Category,
-                BannerUrl = dto.BannerUrl,
+                Title = dto.Title ?? "",
+                Description = dto.Description ?? "",
+                Category = dto.Category ?? "",
+                BannerUrl = dto.BannerUrl ?? "",
                 StartDateTime = dto.StartDateTime,
                 EndDateTime = dto.EndDateTime,
                 TicketSalesStart = dto.TicketSalesStart,
                 TicketSalesEnd = dto.TicketSalesEnd,
-                StreetAddress = dto.StreetAddress,
-                Barangay = dto.Barangay,
-                City = dto.City,
-                Province = dto.Province,
-                Region = dto.Region,
-                ZipCode = dto.ZipCode,
+                
+                VenueId = finalVenueId,
+                VenueName = dto.VenueName ?? "",
+                VenueType = dto.VenueType ?? "",
+                FloorLevel = dto.FloorLevel ?? "",
+                WingSection = dto.WingSection ?? "",
+                BoothNumber = dto.BoothNumber ?? "",
+                ProximityAnchor = dto.ProximityAnchor ?? "",
+                LogisticsNotes = dto.LogisticsNotes ?? "",
+                
+                StreetAddress = dto.StreetAddress ?? "N/A",
+                Barangay = dto.Barangay ?? "",
+                City = dto.City ?? "",
+                Province = dto.Province ?? "",
+                Region = dto.Region ?? "",
+                ZipCode = dto.ZipCode ?? "",
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
-                AccessType = dto.AccessType,
-                VerificationCode = dto.VerificationCode,
+                AccessType = dto.AccessType ?? "Public",
+                VerificationCode = dto.VerificationCode ?? "",
                 MaxCapacity = dto.MaxCapacity,
                 OrganizerId = organizerId,
                 TicketTiers = dto.TicketTiers.Select(t => new EventTicketTier
                 {
-                    TierName = t.TierName,
-                    AllocatedSlots = t.AllocatedSlots,
+                    TierName = t.TierName ?? "",
+                    OnlineSlots = t.OnlineSlots,
+                    F2FSlots = t.F2FSlots,
                     Price = t.Price,
-                    ValidityScope = t.ValidityScope
+                    ValidityScope = t.ValidityScope ?? "Full Event Multi-Pass (All Days)"
                 }).ToList()
             };
 

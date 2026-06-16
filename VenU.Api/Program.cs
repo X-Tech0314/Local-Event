@@ -55,6 +55,84 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+// Seed mock venues on startup
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<VenUDbContext>();
+    try
+    {
+        context.Database.Migrate();
+
+        var mockVenues = new List<VenU.Api.Models.Venue>
+        {
+            new VenU.Api.Models.Venue
+            {
+                Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                Name = "SMX Convention Center",
+                Type = "Exhibition Hall / Convention Center",
+                StreetAddress = "Seashell Lane, Mall of Asia Complex, Pasay City",
+                Region = "NCR",
+                Province = "Metro Manila",
+                City = "Manila",
+                Barangay = "Brgy. 1",
+                ZipCode = "1000",
+                Rating = 4.8M,
+                OrganizersUsedCount = 142,
+                IsVerified = true
+            },
+            new VenU.Api.Models.Venue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                Name = "Philippine Arena",
+                Type = "Exhibition Hall / Convention Center",
+                StreetAddress = "Ciudad de Victoria, Santa Maria, Bulacan",
+                Region = "Region III",
+                Province = "Bulacan",
+                City = "Santa Maria",
+                Barangay = "Brgy. 1",
+                ZipCode = "3022",
+                Rating = 4.9M,
+                OrganizersUsedCount = 89,
+                IsVerified = true
+            },
+            new VenU.Api.Models.Venue
+            {
+                Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                Name = "Whitespace Manila",
+                Type = "Standalone Building / Street Address",
+                StreetAddress = "2314 Chino Roces Ave Extension, Makati",
+                Region = "NCR",
+                Province = "Metro Manila",
+                City = "Makati",
+                Barangay = "Brgy. 2",
+                ZipCode = "1200",
+                Rating = 4.7M,
+                OrganizersUsedCount = 230,
+                IsVerified = true
+            }
+        };
+
+        bool modified = false;
+        foreach (var mv in mockVenues)
+        {
+            if (!context.Venues.Any(v => v.Id == mv.Id))
+            {
+                context.Venues.Add(mv);
+                modified = true;
+            }
+        }
+
+        if (modified)
+        {
+            context.SaveChanges();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error running database migrations or seeding: {ex.Message}");
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -69,6 +147,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowReactFrontend");
+
+app.UseStaticFiles(); // Serve static uploaded assets from wwwroot
 
 app.UseAuthentication();
 app.UseAuthorization();

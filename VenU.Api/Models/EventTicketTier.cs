@@ -20,7 +20,10 @@ namespace VenU.Api.Models
         public string TierName { get; set; }
 
         [Required]
-        public int AllocatedSlots { get; set; }
+        public int OnlineSlots { get; set; }
+
+        [Required]
+        public int F2FSlots { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
