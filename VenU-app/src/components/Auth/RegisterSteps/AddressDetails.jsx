@@ -1,5 +1,5 @@
-import React from 'react';
-import { philippineAddressData } from '../../../utils/constants.js';
+import React, { useMemo } from 'react';
+import { regions, getProvincesByRegion, getCityMunByProvince, getBarangayByMun } from 'phil-reg-prov-mun-brgy';
 
 export default function AddressDetails({
   houseNo, setHouseNo,
@@ -12,6 +12,15 @@ export default function AddressDetails({
   barangay, setBarangay,
   touched, touch
 }) {
+
+  // Derive PSGC data based on selected names
+  const selectedReg = useMemo(() => regions.find(r => r.name === region), [region]);
+  const provs = useMemo(() => selectedReg ? getProvincesByRegion(selectedReg.reg_code) : [], [selectedReg]);
+  const selectedProv = useMemo(() => provs.find(p => p.name === province), [provs, province]);
+  const cities = useMemo(() => selectedProv ? getCityMunByProvince(selectedProv.prov_code) : [], [selectedProv]);
+  const selectedCity = useMemo(() => cities.find(c => c.name === city), [cities, city]);
+  const brgys = useMemo(() => selectedCity ? getBarangayByMun(selectedCity.mun_code) : [], [selectedCity]);
+
   return (
     <div>
       <h4 className="text-sm font-bold text-white/90 border-b border-white/5 pb-2 mb-4">2. Address Details</h4>
@@ -117,8 +126,8 @@ export default function AddressDetails({
               }`}
             >
               <option value="">Select Region</option>
-              {Object.keys(philippineAddressData).map((r) => (
-                <option key={r} value={r}>{r}</option>
+              {regions.map((r) => (
+                <option key={r.reg_code} value={r.name}>{r.name}</option>
               ))}
             </select>
             {touched.region && !region && (
@@ -145,10 +154,9 @@ export default function AddressDetails({
               }`}
             >
               <option value="">Select Province</option>
-              {region &&
-                Object.keys(philippineAddressData[region].provinces).map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
+              {provs.map((p) => (
+                <option key={p.prov_code} value={p.name}>{p.name}</option>
+              ))}
             </select>
             {touched.province && region && !province && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a province.</p>
@@ -175,10 +183,9 @@ export default function AddressDetails({
               }`}
             >
               <option value="">Select City / Mun.</option>
-              {region && province &&
-                Object.keys(philippineAddressData[region].provinces[province].cities).map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+              {cities.map((c) => (
+                <option key={c.mun_code} value={c.name}>{c.name}</option>
+              ))}
             </select>
             {touched.city && province && !city && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a city or municipality.</p>
@@ -199,10 +206,9 @@ export default function AddressDetails({
               }`}
             >
               <option value="">Select Barangay</option>
-              {region && province && city &&
-                philippineAddressData[region].provinces[province].cities[city].map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
+              {brgys.map((b, idx) => (
+                <option key={idx} value={b.name}>{b.name}</option>
+              ))}
             </select>
             {touched.barangay && city && !barangay && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a barangay.</p>

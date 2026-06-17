@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { UploadCloud, User, Eye, EyeOff, Building, MapPin, ShieldAlert } from 'lucide-react';
-import { PHILIPPINE_GOVERNMENT_IDS, philippineAddressData, passwordRules } from '../../utils/constants.js';
+import { PHILIPPINE_GOVERNMENT_IDS, passwordRules } from '../../utils/constants.js';
+import { regions, getProvincesByRegion, getCityMunByProvince, getBarangayByMun } from 'phil-reg-prov-mun-brgy';
 import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 import FileDropzone from '../common/FileDropzone.jsx';
 
@@ -48,6 +49,14 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   // Touched state
   const [touched, setTouched] = useState({});
   const touch = (field) => setTouched((prev) => ({ ...prev, [field]: true }));
+
+  // Derive PSGC data based on selected names
+  const selectedReg = useMemo(() => regions.find(r => r.name === region), [region]);
+  const provs = useMemo(() => selectedReg ? getProvincesByRegion(selectedReg.reg_code) : [], [selectedReg]);
+  const selectedProv = useMemo(() => provs.find(p => p.name === province), [provs, province]);
+  const cities = useMemo(() => selectedProv ? getCityMunByProvince(selectedProv.prov_code) : [], [selectedProv]);
+  const selectedCity = useMemo(() => cities.find(c => c.name === city), [cities, city]);
+  const brgys = useMemo(() => selectedCity ? getBarangayByMun(selectedCity.mun_code) : [], [selectedCity]);
 
   const validation = validatePassword(password);
 
@@ -588,8 +597,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select Region</option>
-                      {Object.keys(philippineAddressData).map((r) => (
-                        <option key={r} value={r}>{r}</option>
+                      {regions.map((r) => (
+                        <option key={r.reg_code} value={r.name}>{r.name}</option>
                       ))}
                     </select>
                   </div>
@@ -608,10 +617,9 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none disabled:opacity-40 [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select Province</option>
-                      {region &&
-                        Object.keys(philippineAddressData[region].provinces).map((p) => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
+                      {provs.map((p) => (
+                        <option key={p.prov_code} value={p.name}>{p.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -630,10 +638,9 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none disabled:opacity-40 [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select City / Mun.</option>
-                      {region && province &&
-                        Object.keys(philippineAddressData[region].provinces[province].cities).map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
+                      {cities.map((c) => (
+                        <option key={c.mun_code} value={c.name}>{c.name}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -649,10 +656,9 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none disabled:opacity-40 [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select Barangay</option>
-                      {region && province && city &&
-                        philippineAddressData[region].provinces[province].cities[city].map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
+                      {brgys.map((b, idx) => (
+                        <option key={idx} value={b.name}>{b.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
