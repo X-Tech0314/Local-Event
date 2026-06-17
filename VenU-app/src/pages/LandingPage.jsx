@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Map, Ticket, QrCode, Bookmark, Settings, User, MapPin, Search, ChevronDown } from 'lucide-react';
+import { Map, Ticket, QrCode, Bookmark, Settings, User, MapPin } from 'lucide-react';
 import slide1 from '../assets/image_44e35a.png';
 import slide2 from '../assets/image_44e2c5.png';
 import slide3 from '../assets/image_44e262.png';
@@ -10,7 +10,6 @@ import teamBg from '../assets/image_3a8519.png';
 import featuresMockup from '../assets/features-mockup-2.png';
 import logo from '../assets/venu-logo3-transparent.png';
 import AuthModal from '../components/Auth/AuthModal.jsx';
-import { philippineAddressData } from '../utils/constants.js';
 
 const FeatureCard = ({ icon: Icon, title, desc }) => (
   <div className="p-6 bg-slate-900/50 hover:bg-slate-800/80 backdrop-blur-md rounded-2xl border border-slate-800 hover:border-purple-500/50 shadow-xl hover:-translate-y-2 transition-all duration-300 group">
@@ -79,12 +78,6 @@ export default function LandingPage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [createRole, setCreateRole] = useState('Attendee');
   const [showSuccessAnim, setShowSuccessAnim] = useState(false);
-  
-  // PSGC Search State
-  const [searchRegion, setSearchRegion] = useState('');
-  const [searchProvince, setSearchProvince] = useState('');
-  const [searchCity, setSearchCity] = useState('');
-  const [searchBarangay, setSearchBarangay] = useState('');
 
   const mainContainerRef = useRef(null);
   const navigate = useNavigate();
@@ -212,109 +205,25 @@ export default function LandingPage() {
                 {getSubtitle()}
               </p>
 
-              {/* LEARN MORE & PSGC Search - hides when auth is open */}
+              {/* LEARN MORE - hides when auth is open */}
               <div
-                className="mt-8 transition-all duration-700 ease-in-out"
+                className="mt-8 transition-all duration-500"
                 style={{
                   opacity: showAuth ? 0 : 1,
-                  maxHeight: showAuth ? 0 : '400px',
-                  overflow: 'visible',
+                  maxHeight: showAuth ? 0 : '80px',
+                  overflow: 'hidden',
                   pointerEvents: showAuth ? 'none' : 'auto',
                 }}
               >
-                <div className="flex flex-col items-center gap-6 w-full">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="px-8 py-3 bg-purple-500 hover:bg-purple-600 rounded-full text-white font-semibold shadow-lg shadow-purple-500/25 transition-all"
-                  >
-                    LEARN MORE
-                  </button>
-
-                  {/* PSGC Location Search */}
-                  <div 
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full max-w-4xl bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row items-center gap-3 animate-fadeIn"
-                  >
-                    <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <select
-                        value={searchRegion}
-                        onChange={(e) => {
-                          setSearchRegion(e.target.value);
-                          setSearchProvince('');
-                          setSearchCity('');
-                          setSearchBarangay('');
-                        }}
-                        className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 text-white text-sm outline-none transition-colors hover:bg-slate-800/80 focus:border-purple-500/50 appearance-none cursor-pointer"
-                      >
-                        <option value="">Select Region</option>
-                        {Object.keys(philippineAddressData).map((r) => (
-                          <option key={r} value={r}>{r}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={searchProvince}
-                        disabled={!searchRegion}
-                        onChange={(e) => {
-                          setSearchProvince(e.target.value);
-                          setSearchCity('');
-                          setSearchBarangay('');
-                        }}
-                        className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 text-white text-sm outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800/80 focus:border-purple-500/50 appearance-none cursor-pointer"
-                      >
-                        <option value="">Select Province</option>
-                        {searchRegion && Object.keys(philippineAddressData[searchRegion].provinces).map((p) => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={searchCity}
-                        disabled={!searchProvince}
-                        onChange={(e) => {
-                          setSearchCity(e.target.value);
-                          setSearchBarangay('');
-                        }}
-                        className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 text-white text-sm outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800/80 focus:border-purple-500/50 appearance-none cursor-pointer"
-                      >
-                        <option value="">Select City / Mun.</option>
-                        {searchRegion && searchProvince && Object.keys(philippineAddressData[searchRegion].provinces[searchProvince].cities).map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={searchBarangay}
-                        disabled={!searchCity}
-                        onChange={(e) => setSearchBarangay(e.target.value)}
-                        className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 text-white text-sm outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800/80 focus:border-purple-500/50 appearance-none cursor-pointer"
-                      >
-                        <option value="">Select Barangay</option>
-                        {searchRegion && searchProvince && searchCity && philippineAddressData[searchRegion].provinces[searchProvince].cities[searchCity].map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        const params = new URLSearchParams();
-                        if (searchRegion) params.append('region', searchRegion);
-                        if (searchProvince) params.append('province', searchProvince);
-                        if (searchCity) params.append('city', searchCity);
-                        if (searchBarangay) params.append('barangay', searchBarangay);
-                        navigate(`/attendee?${params.toString()}`);
-                      }}
-                      className="w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
-                    >
-                      <Search size={18} />
-                      Search Events
-                    </button>
-                  </div>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-8 py-3 bg-purple-500 hover:bg-purple-600 rounded-full text-white font-semibold shadow-lg shadow-purple-500/25 transition-all"
+                >
+                  LEARN MORE
+                </button>
               </div>
             </div>
           </div>
@@ -352,10 +261,10 @@ export default function LandingPage() {
                 const user = response.data.user || response.data;
                 localStorage.setItem('token', response.data.token || 'mock-token');
                 localStorage.setItem('user', JSON.stringify(user));
-                
+
                 const rawRole = user.role || user.Role || response.data.role || response.data.Role || '';
                 const isOrganizer = String(rawRole).toLowerCase() === 'organizer';
-                
+
                 if (isOrganizer) {
                   navigate('/dashboard');
                 } else {
@@ -366,7 +275,7 @@ export default function LandingPage() {
                   const mockStoredUser = localStorage.getItem('mockUser_' + data.email);
                   const storedRole = mockStoredUser ? JSON.parse(mockStoredUser).role : null;
                   const role = storedRole || (data.email.toLowerCase().includes('org') ? 'Organizer' : 'Attendee');
-                  
+
                   localStorage.setItem('token', 'mock-jwt-token');
                   localStorage.setItem('user', JSON.stringify({ id: 'mock-123', email: data.email, role, firstName: 'Mock', lastName: 'User' }));
                   return navigate(role === 'Organizer' ? '/dashboard' : '/attendee');
