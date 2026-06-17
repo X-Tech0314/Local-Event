@@ -47,6 +47,7 @@ namespace VenU.Api.DTOs
         public int NumberOfFloors { get; set; } = 1;
         public bool HasFireExit { get; set; }
         public bool HasFireExtinguishers { get; set; }
+        public List<string>? VenueImages { get; set; }
         
         public string AccessType { get; set; } = "Public"; // Default Value Set
         public string? VerificationCode { get; set; }

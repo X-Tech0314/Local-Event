@@ -158,6 +158,9 @@ namespace VenU.Api.Controllers
                     HasFireExit = dto.HasFireExit,
                     HasFireExtinguishers = dto.HasFireExtinguishers,
                     MaxCapacity = dto.MaxCapacity,
+                    VenueImages = dto.VenueImages != null && dto.VenueImages.Count > 0
+                        ? System.Text.Json.JsonSerializer.Serialize(dto.VenueImages)
+                        : null,
                     IsVerified = false, // Needs admin approval
                     CreatedByOrganizerId = organizerId
                 };

@@ -41,6 +41,9 @@ namespace VenU.Api.Models
         [Column(TypeName = "decimal(9,6)")]
         public decimal? Longitude { get; set; }
 
+        // Stored as JSON array string, e.g. ["url1","url2"]
+        public string? VenueImages { get; set; }
+
         public int MaxCapacity { get; set; } = 0;
 
         [MaxLength(100)]

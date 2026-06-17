@@ -213,12 +213,7 @@ function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick }) {
             >
               <Trash2 size={13} strokeWidth={2.5} /> Delete
             </button>
-            <button
-              onClick={() => { setEditEvent(evt); setActivePanel('create-event'); }}
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
-            >
-              <Edit2 size={13} strokeWidth={2.5} /> Edit
-            </button>
+
             <button
               onClick={() => { setEditEvent(evt); setActivePanel('create-event'); }}
               className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1 group-hover:gap-2 transition-all hover:text-purple-700 dark:hover:text-purple-400"
