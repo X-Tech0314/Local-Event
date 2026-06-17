@@ -41,6 +41,28 @@ namespace VenU.Api.Models
         [Column(TypeName = "decimal(9,6)")]
         public decimal? Longitude { get; set; }
 
+        public int MaxCapacity { get; set; } = 0;
+
+        [MaxLength(100)]
+        public string? ContactPerson { get; set; }
+
+        [MaxLength(50)]
+        public string? ContactNumber { get; set; }
+
+        [MaxLength(100)]
+        public string? ContactEmail { get; set; }
+
+        [MaxLength(500)]
+        public string? MapUrl { get; set; }
+
+        public int SquareFootage { get; set; } = 0;
+
+        public int NumberOfFloors { get; set; } = 1;
+
+        public bool HasFireExit { get; set; } = false;
+
+        public bool HasFireExtinguishers { get; set; } = false;
+
         // Algorithm Stats
         [Column(TypeName = "decimal(3,1)")]
         public decimal Rating { get; set; } = 0.0M;

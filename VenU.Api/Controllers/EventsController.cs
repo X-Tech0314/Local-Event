@@ -149,6 +149,15 @@ namespace VenU.Api.Controllers
                     ZipCode = dto.ZipCode,
                     Latitude = dto.Latitude,
                     Longitude = dto.Longitude,
+                    ContactPerson = dto.ContactPerson,
+                    ContactNumber = dto.ContactNumber,
+                    ContactEmail = dto.ContactEmail,
+                    MapUrl = dto.MapUrl,
+                    SquareFootage = dto.SquareFootage,
+                    NumberOfFloors = dto.NumberOfFloors,
+                    HasFireExit = dto.HasFireExit,
+                    HasFireExtinguishers = dto.HasFireExtinguishers,
+                    MaxCapacity = dto.MaxCapacity,
                     IsVerified = false, // Needs admin approval
                     CreatedByOrganizerId = organizerId
                 };
@@ -352,6 +361,30 @@ namespace VenU.Api.Controllers
             await _context.SaveChangesAsync();
             
             return Ok(evt);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> DeleteEvent(Guid id)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
+            {
+                return Unauthorized(new { message = "Invalid user token." });
+            }
+
+            var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+            if (evt == null)
+            {
+                return NotFound("Event not found or you do not have permission to delete it.");
+            }
+
+            _context.Events.Remove(evt);
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { message = "Event deleted successfully." });
         }
     }
 }

@@ -112,7 +112,16 @@ using (var scope = app.Services.CreateScope())
                 ZipCode = "1000",
                 Rating = 4.8M,
                 OrganizersUsedCount = 142,
-                IsVerified = true
+                IsVerified = true,
+                MaxCapacity = 15000,
+                ContactPerson = "Maria Santos",
+                ContactNumber = "09171234567",
+                ContactEmail = "events@smx.ph",
+                MapUrl = "https://maps.google.com/?q=smx",
+                SquareFootage = 226000,
+                NumberOfFloors = 4,
+                HasFireExit = true,
+                HasFireExtinguishers = true
             },
             new VenU.Api.Models.Venue
             {
@@ -127,7 +136,16 @@ using (var scope = app.Services.CreateScope())
                 ZipCode = "3022",
                 Rating = 4.9M,
                 OrganizersUsedCount = 89,
-                IsVerified = true
+                IsVerified = true,
+                MaxCapacity = 55000,
+                ContactPerson = "Juan Dela Cruz",
+                ContactNumber = "09189876543",
+                ContactEmail = "info@philippinearena.net",
+                MapUrl = "https://maps.google.com/?q=philippine+arena",
+                SquareFootage = 1000000,
+                NumberOfFloors = 6,
+                HasFireExit = true,
+                HasFireExtinguishers = true
             },
             new VenU.Api.Models.Venue
             {
@@ -142,7 +160,16 @@ using (var scope = app.Services.CreateScope())
                 ZipCode = "1200",
                 Rating = 4.7M,
                 OrganizersUsedCount = 230,
-                IsVerified = true
+                IsVerified = true,
+                MaxCapacity = 300,
+                ContactPerson = "Anna Reyes",
+                ContactNumber = "09191112222",
+                ContactEmail = "book@whitespacemanila.com",
+                MapUrl = "https://maps.google.com/?q=whitespace",
+                SquareFootage = 7000,
+                NumberOfFloors = 1,
+                HasFireExit = true,
+                HasFireExtinguishers = true
             }
         };
 

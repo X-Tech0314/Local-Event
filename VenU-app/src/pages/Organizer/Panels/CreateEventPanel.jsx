@@ -27,8 +27,9 @@ const locationData = {
   }
 };
 
-export default function CreateEventPanel() {
+export default function CreateEventPanel({ currentUser, setActivePanel, editEvent, setEditEvent }) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [venueSource, setVenueSource] = useState('registered');
@@ -65,6 +66,15 @@ export default function CreateEventPanel() {
     RegisteredVenueId: '',
     RegisteredVenueName: '',
     Capacity: '',
+    ContactPerson: '',
+    ContactNumber: '',
+    ContactEmail: '',
+    MapUrl: '',
+    SquareFootage: '',
+    NumberOfFloors: '1',
+    HasFireExit: false,
+    HasFireExtinguishers: false,
+    VenueImages: [],
     TicketTiers: [
       { Name: 'General Admission', Price: 0, Capacity: '', ValidityScope: 'Full Event Access' }
     ]
@@ -81,9 +91,9 @@ export default function CreateEventPanel() {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const token = localStorage.getItem('user_token');
+        const token = localStorage.getItem('token');
 
-        const response = await fetch(`/api/venues?search=${encodeURIComponent(searchQuery)}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/venues?search=${encodeURIComponent(searchQuery)}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -168,6 +178,77 @@ export default function CreateEventPanel() {
     }
   };
 
+  const handleSubmitEvent = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        Title: formData.EventTitle,
+        Description: formData.EventTitle, // Add actual description if added to UI later
+        Category: formData.Category,
+        BannerUrl: formData.EventBannerUrl,
+        StartDateTime: `${formData.StartDate}T${formData.StartTime}:00Z`,
+        EndDateTime: `${formData.EndDate}T${formData.EndTime}:00Z`,
+        TicketSalesStart: `${formData.StartDate}T00:00:00Z`,
+        TicketSalesEnd: `${formData.StartDate}T${formData.StartTime}:00Z`,
+        RequiresTicket: enableTicketing,
+        DailyStartTime: `${formData.StartTime}:00`,
+        DailyEndTime: `${formData.EndTime}:00`,
+        Status: "Published",
+        VenueSourcingMode: venueSource,
+        RegisterVenueToDB: venueSource === 'custom',
+        VenueId: venueSource === 'registered' ? formData.RegisteredVenueId || null : null,
+        VenueName: venueSource === 'registered' ? formData.RegisteredVenueName : (formData.StreetAddress || "Custom Venue"),
+        VenueType: formData.VenueType,
+        FloorLevel: formData.FloorLevel,
+        WingSection: formData.WingSection,
+        ProximityAnchor: formData.ProximityAnchor,
+        StreetAddress: formData.StreetAddress,
+        Barangay: formData.SelectedBarangay,
+        City: formData.SelectedCity,
+        Province: formData.SelectedProvince,
+        Region: formData.SelectedRegion,
+        ZipCode: "",
+        Latitude: 0,
+        Longitude: 0,
+        ContactPerson: formData.ContactPerson,
+        ContactNumber: formData.ContactNumber,
+        ContactEmail: formData.ContactEmail,
+        SquareFootage: formData.SquareFootage ? parseInt(formData.SquareFootage) : 0,
+        NumberOfFloors: formData.NumberOfFloors ? parseInt(formData.NumberOfFloors) : 1,
+        HasFireExit: formData.HasFireExit,
+        HasFireExtinguishers: formData.HasFireExtinguishers,
+        MapUrl: formData.MapUrl,
+        AccessType: formData.Privacy,
+        MaxCapacity: formData.Capacity ? parseInt(formData.Capacity) : 0,
+        TicketTiers: enableTicketing ? formData.TicketTiers.map(t => ({
+          TierName: t.Name,
+          Price: parseFloat(t.Price || 0),
+          OnlineSlots: t.Capacity ? parseInt(t.Capacity) : 0,
+          F2FSlots: 0,
+          ValidityScope: t.ValidityScope
+        })) : []
+      };
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create event: ${errorText}`);
+      }
+
+      setShowSuccessModal(true);
+    } catch (err) {
+      alert("Error submitting event: " + err.message);
+    }
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
 
@@ -226,6 +307,11 @@ export default function CreateEventPanel() {
           if (!formData.SelectedCity) newErrors.SelectedCity = "City is required.";
           if (!formData.SelectedBarangay) newErrors.SelectedBarangay = "Barangay is required.";
           if (!formData.StreetAddress.trim()) newErrors.StreetAddress = "Street address is required.";
+          if (formData.VenueImages.length < 3) newErrors.VenueImages = "Please upload at least 3 images for your custom venue.";
+          if (!formData.ContactPerson.trim()) newErrors.ContactPerson = "Contact person is required.";
+          if (!formData.ContactNumber.trim()) newErrors.ContactNumber = "Contact number is required.";
+          if (!formData.ContactEmail.trim()) newErrors.ContactEmail = "Contact email is required.";
+          if (!formData.SquareFootage || parseInt(formData.SquareFootage) <= 0) newErrors.SquareFootage = "Valid square footage is required.";
         }
       }
       if (!formData.Capacity || parseInt(formData.Capacity) <= 0) {
@@ -257,13 +343,31 @@ export default function CreateEventPanel() {
     }
   };
 
-  const processFile = (file) => {
+  const processFile = async (file) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);
       };
       reader.readAsDataURL(file);
+
+      const cloudName = "ditxaqwu6";
+      const uploadPreset = "img-c-event";
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("upload_preset", uploadPreset);
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: uploadData,
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          setFormData(prev => ({ ...prev, EventBannerUrl: data.secure_url }));
+        }
+      } catch (err) {
+        console.error("Cloudinary banner upload failed", err);
+      }
     }
   };
 
@@ -280,6 +384,58 @@ export default function CreateEventPanel() {
     if (e.target.files && e.target.files[0]) {
       processFile(e.target.files[0]);
     }
+  };
+
+  const handleVenueImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const cloudName = "ditxaqwu6"; // Replace with your Cloudinary Cloud Name
+    const uploadPreset = "img-c-event"; // Replace with your Cloudinary Upload Preset
+
+    const uploadedUrls = [];
+    for (const file of files) {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("upload_preset", uploadPreset);
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: uploadData,
+        });
+        const data = await res.json();
+        if (data.secure_url) uploadedUrls.push(data.secure_url);
+      } catch (err) {
+        console.error("Cloudinary upload failed", err);
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      VenueImages: [...prev.VenueImages, ...uploadedUrls]
+    }));
+    if (errors.VenueImages) setErrors(prev => ({ ...prev, VenueImages: null }));
+  };
+
+  const removeVenueImage = (index) => {
+    setFormData(prev => {
+      const newImages = [...prev.VenueImages];
+      newImages.splice(index, 1);
+      return { ...prev, VenueImages: newImages };
+    });
+  };
+
+  const getCapacitySuggestion = (capacity) => {
+    if (!capacity) return null;
+    const num = parseInt(capacity);
+    if (isNaN(num)) return null;
+
+    if (num <= 50) return "Recommended for small intimate gatherings";
+    if (num <= 200) return "Suitable for medium-sized events like workshops or seminars";
+    if (num <= 1000) return "Great for large corporate events or mid-sized concerts";
+    if (num <= 10000) return "Ideal for major conventions, large exhibitions, or concerts";
+    if (num <= 100000) return "Massive capacity suitable for stadium tours or huge festivals";
+    return "Ultra-large capacity venue for million-scale global events";
   };
 
   return (
@@ -764,6 +920,73 @@ export default function CreateEventPanel() {
                           <input type="text" name="ProximityAnchor" value={formData.ProximityAnchor} onChange={handleInputChange} placeholder="e.g., Near Gym" className="w-full p-1.5 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white" />
                         </div>
                       </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Contact Person</label>
+                          <input type="text" name="ContactPerson" value={formData.ContactPerson} onChange={handleInputChange} placeholder="Name" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.ContactPerson && <span className="text-[10px] text-red-500">{errors.ContactPerson}</span>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Contact Number</label>
+                          <input type="text" name="ContactNumber" value={formData.ContactNumber} onChange={handleInputChange} placeholder="Phone number" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.ContactNumber && <span className="text-[10px] text-red-500">{errors.ContactNumber}</span>}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Email Address</label>
+                          <input type="email" name="ContactEmail" value={formData.ContactEmail} onChange={handleInputChange} placeholder="Email" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.ContactEmail && <span className="text-[10px] text-red-500">{errors.ContactEmail}</span>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Map URL</label>
+                          <input type="url" name="MapUrl" value={formData.MapUrl} onChange={handleInputChange} placeholder="Google Maps link" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Square Footage</label>
+                          <input type="number" name="SquareFootage" value={formData.SquareFootage} onChange={handleInputChange} placeholder="e.g., 5000" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.SquareFootage && <span className="text-[10px] text-red-500">{errors.SquareFootage}</span>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Number of Floors</label>
+                          <input type="number" name="NumberOfFloors" value={formData.NumberOfFloors} onChange={handleInputChange} placeholder="1" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4 mt-2 mb-2 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" checked={formData.HasFireExit} onChange={(e) => setFormData(prev => ({ ...prev, HasFireExit: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Has Fire Exit</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" checked={formData.HasFireExtinguishers} onChange={(e) => setFormData(prev => ({ ...prev, HasFireExtinguishers: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Has Fire Extinguishers</span>
+                        </label>
+                      </div>
+
+                      <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Venue Images (Min. 3 required)</label>
+                        <div className="flex gap-3 flex-wrap mb-3">
+                          {formData.VenueImages.map((src, idx) => (
+                            <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
+                              <img src={src} alt="venue" className="w-full h-full object-cover" />
+                              <button type="button" onClick={() => removeVenueImage(idx)} className="absolute top-1 right-1 bg-black/50 hover:bg-black/80 text-white rounded-full p-1 transition-colors">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          <label className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all">
+                            <Upload className="w-5 h-5 text-slate-400 mb-1" />
+                            <span className="text-[10px] text-slate-500 font-medium">Upload</span>
+                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleVenueImageUpload} />
+                          </label>
+                        </div>
+                        {errors.VenueImages && <span className="text-[10px] text-red-500">{errors.VenueImages}</span>}
+                      </div>
                     </div>
                   )}
                 </>
@@ -790,6 +1013,13 @@ export default function CreateEventPanel() {
                     className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
                   />
                   {errors.Capacity && <span className="text-xs text-red-500 mt-1 block">{errors.Capacity}</span>}
+
+                  {formData.Capacity && getCapacitySuggestion(formData.Capacity) && (
+                    <div className="mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 rounded-lg flex items-center space-x-2 animate-fade-in">
+                      <span className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">💡 Suggestion:</span>
+                      <span className="text-indigo-700 dark:text-indigo-300 text-[10px]">{getCapacitySuggestion(formData.Capacity)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -862,10 +1092,10 @@ export default function CreateEventPanel() {
                             onChange={(e) => handleTierChange(index, 'ValidityScope', e.target.value)}
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           >
-                            <option value="Full Event Access">Full Event Access Cluster</option>
-                            <option value="Day 1 Matrix Only">Day 1 Matrix Only</option>
-                            <option value="Day 2 Matrix Only">Day 2 Matrix Only</option>
-                            <option value="VIP Backstage Pass">VIP Backstage Pass Token</option>
+                            <option value="Full Event Access" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Full Event Access Cluster</option>
+                            <option value="Day 1 Matrix Only" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Day 1 Matrix Only</option>
+                            <option value="Day 2 Matrix Only" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Day 2 Matrix Only</option>
+                            <option value="VIP Backstage Pass" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">VIP Backstage Pass Token</option>
                           </select>
                         </div>
                       </div>
@@ -902,10 +1132,10 @@ export default function CreateEventPanel() {
 
             <button
               type="button"
-              onClick={currentStep === 4 ? () => alert('Blueprint Dispatched successfully!') : nextStep}
+              onClick={currentStep === 4 ? handleSubmitEvent : nextStep}
               className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl flex items-center space-x-1 text-sm font-medium transition-colors shadow-lg shadow-purple-600/10"
             >
-              <span>{currentStep === 4 ? 'Deploy Blueprint' : 'Continue'}</span>
+              <span>{currentStep === 4 ? 'Publish Event' : 'Continue'}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -920,6 +1150,7 @@ export default function CreateEventPanel() {
             <TicketPreview
               eventData={{
                 title: formData.EventTitle,
+                image: formData.EventBannerUrl,
                 category: formData.Category === 'Others' ? customCategory : formData.Category,
                 startDate: formData.StartDate,
                 startTime: formData.StartTime,
@@ -969,6 +1200,36 @@ export default function CreateEventPanel() {
           </>
         )}
       </div>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl transform scale-100 animate-slide-up relative">
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="w-20 h-20 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle className="w-10 h-10 text-green-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Event Published!</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-8">
+              Congratulations and good luck to your event! Your blueprint has been successfully dispatched to the global network.
+            </p>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                if (setEditEvent) setEditEvent(null);
+                if (setActivePanel) setActivePanel('events');
+              }}
+              className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

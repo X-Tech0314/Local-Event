@@ -40,6 +40,13 @@ namespace VenU.Api.DTOs
         public string? ProximityAnchor { get; set; }
         public string? LogisticsNotes { get; set; }
         public bool RegisterVenueToDB { get; set; } = false;
+        public string? ContactPerson { get; set; }
+        public string? ContactNumber { get; set; }
+        public string? ContactEmail { get; set; }
+        public int SquareFootage { get; set; }
+        public int NumberOfFloors { get; set; } = 1;
+        public bool HasFireExit { get; set; }
+        public bool HasFireExtinguishers { get; set; }
         
         public string AccessType { get; set; } = "Public"; // Default Value Set
         public string? VerificationCode { get; set; }
