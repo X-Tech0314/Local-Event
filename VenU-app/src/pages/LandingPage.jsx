@@ -157,9 +157,8 @@ export default function LandingPage() {
             key={idx}
             src={slide.image}
             alt=""
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-              idx === activeSlide ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100' : 'opacity-0'
+              }`}
             style={{ objectPosition: 'center 30%' }}
           />
         ))}
@@ -235,9 +234,8 @@ export default function LandingPage() {
                 <button
                   key={idx}
                   onClick={() => setActiveSlide(idx)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    idx === activeSlide ? 'w-8 bg-purple-500' : 'w-2.5 bg-white/40 hover:bg-white/70'
-                  }`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${idx === activeSlide ? 'w-8 bg-purple-500' : 'w-2.5 bg-white/40 hover:bg-white/70'
+                    }`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
@@ -259,17 +257,24 @@ export default function LandingPage() {
                   email: data.email,
                   password: data.password
                 });
-                const user = response.data.user;
-                localStorage.setItem('token', response.data.token);
+                const user = response.data.user || response.data;
+                localStorage.setItem('token', response.data.token || 'mock-token');
                 localStorage.setItem('user', JSON.stringify(user));
-                if (user.role === 'Organizer') {
+                
+                const rawRole = user.role || user.Role || response.data.role || response.data.Role || '';
+                const isOrganizer = String(rawRole).toLowerCase() === 'organizer';
+                
+                if (isOrganizer) {
                   navigate('/dashboard');
                 } else {
                   navigate('/attendee');
                 }
               } catch (err) {
                 if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-                  const role = data.email.includes('organizer') ? 'Organizer' : 'Attendee';
+                  const mockStoredUser = localStorage.getItem('mockUser_' + data.email);
+                  const storedRole = mockStoredUser ? JSON.parse(mockStoredUser).role : null;
+                  const role = storedRole || (data.email.toLowerCase().includes('org') ? 'Organizer' : 'Attendee');
+                  
                   localStorage.setItem('token', 'mock-jwt-token');
                   localStorage.setItem('user', JSON.stringify({ id: 'mock-123', email: data.email, role, firstName: 'Mock', lastName: 'User' }));
                   return navigate(role === 'Organizer' ? '/dashboard' : '/attendee');
@@ -284,23 +289,23 @@ export default function LandingPage() {
                 const addr = data.address || {};
                 const idVer = data.idVerification || {};
 
-                const payload = { 
-                  email: p?.email || '', 
-                  password: p?.password || '', 
-                  role, 
-                  firstName: p?.firstName || '', 
+                const payload = {
+                  email: p?.email || '',
+                  password: p?.password || '',
+                  role,
+                  firstName: p?.firstName || '',
                   middleName: p?.middleName || '',
-                  lastName: p?.lastName || '', 
+                  lastName: p?.lastName || '',
                   suffix: p?.suffix || '',
                   dateOfBirth: p?.dateOfBirth ? new Date(p.dateOfBirth).toISOString() : new Date().toISOString(),
-                  contactNumber: p?.contactNumber || '', 
+                  contactNumber: p?.contactNumber || '',
                   houseNo: addr.houseNo || '',
                   streetName: addr.streetName || '',
                   subdivision: addr.subdivision || '',
                   zipCode: addr.zipCode || '',
-                  region: addr.region || '', 
-                  province: addr.province || '', 
-                  city: addr.city || '', 
+                  region: addr.region || '',
+                  province: addr.province || '',
+                  city: addr.city || '',
                   barangay: addr.barangay || '',
                   idType: idVer.type || '',
                   idReferenceNumber: idVer.referenceNumber || '',
@@ -324,13 +329,13 @@ export default function LandingPage() {
           />
         </div>
       </section>
- 
+
       {/* -- About Section -- */}
       <section id="about" className="relative py-24 bg-slate-50 text-slate-900 overflow-hidden border-t border-slate-200/60">
         {/* Glow Effects for Off-White Background */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-400/30 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-400/20 rounded-full blur-[120px] pointer-events-none" />
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
           <h3 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">
             About Us
@@ -347,22 +352,22 @@ export default function LandingPage() {
       <section id="features" className="relative py-24 bg-slate-950 border-t border-slate-900 overflow-hidden">
         {/* Background Gradients */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[600px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none" />
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4">Features</h3>
             <p className="text-slate-400 text-lg">Everything you need to host and discover events.</p>
           </div>
-          
+
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-center mb-16">
             {/* Mockup Image - Made Bigger */}
             <div className="w-full lg:w-5/12 flex justify-center">
-                <img 
-                  src={featuresMockup} 
-                  alt="VenU App Features on Mobile" 
-                  className="w-[120%] max-w-2xl h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-700 pointer-events-none scale-110" 
-                  style={{ filter: "drop-shadow(0 0 50px rgba(168, 85, 247, 0.25))" }}
-                />
+              <img
+                src={featuresMockup}
+                alt="VenU App Features on Mobile"
+                className="w-[120%] max-w-2xl h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-700 pointer-events-none scale-110"
+                style={{ filter: "drop-shadow(0 0 50px rgba(168, 85, 247, 0.25))" }}
+              />
             </div>
 
             {/* Feature Cards Grid */}
@@ -380,7 +385,7 @@ export default function LandingPage() {
               <div className="bg-slate-900/50 hover:bg-slate-800/80 backdrop-blur-md p-8 rounded-2xl border border-slate-800 hover:border-purple-500/50 shadow-xl transition-all duration-300 relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 to-indigo-500 opacity-50 group-hover:opacity-100 transition-opacity" />
                 <h4 className="text-xl font-bold text-white flex items-center gap-3">
-                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-500/20 text-purple-400 text-lg font-black border border-purple-500/20">/</span> 
+                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-500/20 text-purple-400 text-lg font-black border border-purple-500/20">/</span>
                   Our Vision
                 </h4>
                 <p className="mt-5 text-slate-400 leading-relaxed text-sm md:text-base">
@@ -392,7 +397,7 @@ export default function LandingPage() {
               <div className="bg-slate-900/50 hover:bg-slate-800/80 backdrop-blur-md p-8 rounded-2xl border border-slate-800 hover:border-purple-500/50 shadow-xl transition-all duration-300 relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 to-indigo-500 opacity-50 group-hover:opacity-100 transition-opacity" />
                 <h4 className="text-xl font-bold text-white flex items-center gap-3">
-                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-500/20 text-purple-400 text-lg font-black border border-purple-500/20">/</span> 
+                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-500/20 text-purple-400 text-lg font-black border border-purple-500/20">/</span>
                   Our Mission
                 </h4>
                 <p className="mt-5 text-slate-400 leading-relaxed text-sm md:text-base">
