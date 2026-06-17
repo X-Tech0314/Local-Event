@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import AddVenueForm from './AddVenueForm';
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -70,6 +71,7 @@ export default function VenuesPanel({ currentUser }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
+  const [viewMode, setViewMode] = useState('grid');
 
   useEffect(() => { fetchVenues(); }, []);
 
@@ -79,11 +81,6 @@ export default function VenuesPanel({ currentUser }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) { setError('Not authenticated. Please log in again.'); return; }
-      
-      const mockVenues = [
-        { id: 1, title: 'Grand Plaza Hall', capacity: '500 People', location: 'Downtown Hub', type: 'Indoor', coords: [14.33, 120.94], img: 'https://images.unsplash.com/photo-1519167758481-83f5c1d6834b?w=800&q=80', organizersUsedCount: 15, rating: 4.8 },
-        { id: 2, title: 'Sunset Open Amphitheater', capacity: '1,200 People', location: 'Coastal Ridge', type: 'Outdoor', coords: [14.34, 120.93], img: 'https://images.unsplash.com/photo-1540039155732-d6928222aeb9?w=800&q=80', organizersUsedCount: 32, rating: 4.5 }
-      ];
       
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/venues`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -101,8 +98,19 @@ export default function VenuesPanel({ currentUser }) {
   // Venues with valid lat/lng for map pins
   const mappableVenues = venues.filter(v => v.latitude && v.longitude);
 
+  if (viewMode === 'add') {
+    return (
+      <div className="p-4 md:p-8 animate-fade-in">
+        <AddVenueForm setViewMode={(mode) => {
+          setViewMode(mode);
+          if (mode === 'grid') fetchVenues();
+        }} />
+      </div>
+    );
+  }
+
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="p-4 md:p-8 animate-fade-in relative min-h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -111,7 +119,7 @@ export default function VenuesPanel({ currentUser }) {
             Manage physical spaces and coordinates for your event deployments.
           </p>
         </div>
-        <button className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
+        <button onClick={() => setViewMode('add')} className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
           <Plus size={18} strokeWidth={3} /> Add New Venue
         </button>
       </div>
