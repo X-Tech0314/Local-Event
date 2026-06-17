@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Camera } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../../utils/constants.js';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -292,12 +293,12 @@ export default function UserSettings({ currentUser }) {
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const inputCls = "w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-900 dark:focus:border-white transition bg-slate-50 focus:bg-white dark:bg-slate-900 dark:text-white dark:border-slate-700 dark:focus:bg-slate-800";
-  const labelCls = "block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5";
+  const inputCls = "w-full border border-slate-200 dark:border-slate-600 rounded-none px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-700 dark:focus:border-purple-400 bg-white dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-700";
+  const labelCls = "block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5";
 
   const Section = ({ title, children, className = "" }) => (
-    <div className={`bg-white border border-slate-100 shadow-sm rounded-2xl p-6 mb-6 ${className}`}>
-      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 border-b border-slate-100 pb-3">{title}</h3>
+    <div className={`bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-6 mb-6 ${className}`}>
+      <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-5 border-b border-slate-200 dark:border-slate-700 pb-3">{title}</h3>
       {children}
     </div>
   );
@@ -310,22 +311,22 @@ export default function UserSettings({ currentUser }) {
       </div>
       <button
         onClick={() => !locked && onChange(!enabled)}
-        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-slate-900 dark:bg-white' : 'bg-slate-300 dark:bg-slate-600'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-700 dark:bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-900 transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        <div className={`w-4 h-4 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   );
 
   const tabs = [
-    { id: 'profile', label: 'Profile & Address' },
-    { id: 'verification', label: 'Verification & Billing' },
+    { id: 'profile', label: 'Profile' },
+    { id: 'verification', label: 'Billing & Verification' },
     { id: 'notifications', label: 'Notifications' },
-    { id: 'security', label: 'Security & Privacy' }
+    { id: 'security', label: 'Security' }
   ];
 
   const SaveBtn = ({ label, onClick }) => (
-    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-bold text-sm transition-all active:scale-95">
+    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95">
       {label}
     </button>
   );
@@ -333,21 +334,22 @@ export default function UserSettings({ currentUser }) {
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="mb-8">
-        <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Account</p>
-        <h1 className="text-2xl font-bold text-slate-900 mt-1">Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your account preferences, security, and verification.</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest font-semibold">Account</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Settings</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your account preferences, security, and verification.</p>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex gap-2 border-b border-slate-200 mb-8 overflow-x-auto pb-px">
+      {/* Pill Bar Tabs — matches Organizer style */}
+      <div className="bg-slate-50 dark:bg-slate-800 p-1.5 mb-8 overflow-x-auto flex gap-1 border border-slate-200 dark:border-slate-700">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
-                ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
-              }`}
+            className={`px-6 py-2.5 text-sm font-bold whitespace-nowrap flex-1 text-center ${
+              activeTab === tab.id
+                ? 'bg-purple-700 dark:bg-purple-500 text-white'
+                : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+            }`}
           >
             {tab.label}
           </button>
@@ -359,61 +361,72 @@ export default function UserSettings({ currentUser }) {
         {/* ── PROFILE & ADDRESS TAB ── */}
         {activeTab === 'profile' && (
           <div className="animate-fade-in">
-            {/* Profile Image Management */}
-            <Section title="Profile Image Management">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <div className="w-24 h-24 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center font-bold text-white dark:text-slate-900 text-3xl shrink-0 overflow-hidden">
-                  {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : form.firstName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
-                <div className="text-center sm:text-left">
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-3 mb-2">
-                    <input type="file" accept="image/*" className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }} />
-                    <button onClick={() => photoInputRef.current?.click()} className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-all px-4 py-2 rounded-xl text-sm font-medium active:scale-95">
-                      Change Photo
-                    </button>
-                    <button onClick={() => setProfilePhoto(null)} className="border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all px-4 py-2 rounded-xl text-sm font-medium active:scale-95">
-                      Remove
-                    </button>
-                  </div>
-                  <p className="text-xs text-slate-400">Recommended: Square JPG or PNG, at least 400x400px.</p>
-                </div>
-              </div>
-              <SaveBtn label="Save Profile Image" />
-            </Section>
+            {/* ── Basic Information (Profile Photo + Personal Info merged) ── */}
+            <Section title="Basic Information">
+              <div className="flex flex-col sm:flex-row gap-8">
 
-            {/* Personal Info */}
-            <Section title="Personal Information">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div>
-                  <label className={labelCls}>First Name</label>
-                  <input className={inputCls} value={form.firstName} onChange={set('firstName')} placeholder="First Name" />
+                {/* Clickable Profile Avatar */}
+                <div className="flex flex-col items-center gap-2 shrink-0">
+                  <label className={labelCls}>Profile Picture</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={photoInputRef}
+                    onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }}
+                  />
+                  <div
+                    className="relative w-24 h-24 bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-3xl overflow-hidden cursor-pointer group border-2 border-transparent hover:border-purple-400 dark:hover:border-purple-300"
+                    onClick={() => photoInputRef.current?.click()}
+                    title="Click to change photo"
+                  >
+                    {profilePhoto
+                      ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                      : (form.firstName?.charAt(0) || 'U')}
+                    {/* Camera icon overlay on hover */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1">
+                      <Camera size={22} className="text-white" />
+                      <span className="text-white text-[9px] font-bold uppercase tracking-wider">Upload</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 text-center max-w-[96px]">JPG or PNG, min 400×400px</p>
                 </div>
-                <div>
-                  <label className={labelCls}>Middle Name</label>
-                  <input className={inputCls} value={form.middleName} onChange={set('middleName')} placeholder="Middle Name (optional)" />
+
+                {/* Personal Info Fields */}
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className={labelCls}>First Name</label>
+                    <input className={inputCls} value={form.firstName} onChange={set('firstName')} placeholder="First Name" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Last Name</label>
+                    <input className={inputCls} value={form.lastName} onChange={set('lastName')} placeholder="Last Name" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Middle Name</label>
+                    <input className={inputCls} value={form.middleName} onChange={set('middleName')} placeholder="Middle Name (optional)" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Suffix</label>
+                    <select className={inputCls} value={form.suffix} onChange={set('suffix')}>
+                      {['None', 'Jr.', 'Sr.', 'III', 'IV', 'V', 'VI'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Date of Birth</label>
+                    <input type="date" className={inputCls} value={form.dateOfBirth || ''} onChange={set('dateOfBirth')} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Contact Number</label>
+                    <input className={inputCls} value={form.contactNumber} onChange={set('contactNumber')} placeholder="09XXXXXXXXX" />
+                  </div>
+
                 </div>
-                <div>
-                  <label className={labelCls}>Last Name</label>
-                  <input className={inputCls} value={form.lastName} onChange={set('lastName')} placeholder="Last Name" />
-                </div>
-                <div>
-                  <label className={labelCls}>Suffix</label>
-                  <select className={inputCls} value={form.suffix} onChange={set('suffix')}>
-                    {['None', 'Jr.', 'Sr.', 'III', 'IV', 'V', 'VI'].map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Date of Birth</label>
-                  <input type="date" className={inputCls} value={form.dateOfBirth || ''} onChange={set('dateOfBirth')} />
-                </div>
-                <div>
-                  <label className={labelCls}>Contact Number</label>
-                  <input className={inputCls} value={form.contactNumber} onChange={set('contactNumber')} placeholder="09XXXXXXXXX" />
-                </div>
+
               </div>
-              <SaveBtn label="Save Personal Information" />
+              <SaveBtn label="Save Basic Information" />
             </Section>
 
             {/* Address Details */}
@@ -463,12 +476,12 @@ export default function UserSettings({ currentUser }) {
             {/* Identity Verification Status */}
             <Section title="Identity Verification Status">
               {idType ? (
-                <div className="bg-amber-50 text-amber-700 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-semibold mb-6 shadow-sm">
+                <div className="bg-amber-50 text-amber-700 border border-amber-200 rounded-none px-4 py-3 flex items-center gap-3 text-sm font-semibold mb-6 shadow-sm">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-white text-xs">⏳</span>
                   Pending Admin Verification
                 </div>
               ) : (
-                <div className="bg-red-50 text-red-700 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-semibold mb-6 shadow-sm">
+                <div className="bg-red-50 text-red-700 border border-red-200 rounded-none px-4 py-3 flex items-center gap-3 text-sm font-semibold mb-6 shadow-sm">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-red-500 text-white text-xs">!</span>
                   Unverified Account - Please upload a valid ID
                 </div>
@@ -489,7 +502,7 @@ export default function UserSettings({ currentUser }) {
                 </div>
               </div>
               <div className="flex flex-col gap-4 mt-5">
-                <div className="flex items-center justify-between border border-slate-200 rounded-xl p-4 bg-slate-50">
+                <div className="flex items-center justify-between border border-slate-200 rounded-none p-4 bg-slate-50">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">F</div>
                     <div>
@@ -505,7 +518,7 @@ export default function UserSettings({ currentUser }) {
                 </div>
 
                 {idConfig?.hasBackSide && (
-                  <div className="flex items-center justify-between border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <div className="flex items-center justify-between border border-slate-200 rounded-none p-4 bg-slate-50">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">B</div>
                       <div>
@@ -527,7 +540,7 @@ export default function UserSettings({ currentUser }) {
             {/* Accessibility & Statutory Discounts */}
             <Section title="Accessibility & Statutory Discounts">
               {idType.includes('senior') || idType.includes('pwd') ? (
-                <div className="bg-purple-50 text-purple-700 border border-purple-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-semibold shadow-sm">
+                <div className="bg-purple-50 text-purple-700 border border-purple-200 rounded-none px-4 py-3 flex items-center gap-3 text-sm font-semibold shadow-sm">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-xs">✓</span>
                   Statutory 20% Discount Automatically Applied to Paid Bookings
                 </div>
@@ -545,7 +558,7 @@ export default function UserSettings({ currentUser }) {
             <Section title="Linked Wallets & Method Repository">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {wallets.map(wallet => (
-                  <div key={wallet.id} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                  <div key={wallet.id} className="bg-slate-50 border border-slate-200 rounded-none p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full ${wallet.bg} flex items-center justify-center ${wallet.text} font-bold`}>{wallet.icon}</div>
                       <div>
@@ -560,7 +573,7 @@ export default function UserSettings({ currentUser }) {
                 ))}
               </div>
               <div className="flex justify-center mt-6 pt-4 border-t border-slate-100">
-                <button onClick={handleAddWallet} className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-1">
+                <button onClick={handleAddWallet} className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-none text-sm font-bold text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-1">
                   + Link New Payment Method
                 </button>
               </div>
@@ -640,11 +653,11 @@ export default function UserSettings({ currentUser }) {
 
             {/* Data Privacy & Transcript Privileges */}
             <Section title="Data Privacy & Transcript Privileges">
-              <p className="text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <p className="text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-none border border-slate-100">
                 Your data is handled strictly compliant with the Philippine Data Privacy Act of 2012 (NPC). You retain full control over your stored transcripts and cached identity documents.
               </p>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <button onClick={handlePrintTranscript} className="border border-slate-200 text-slate-700 font-medium text-sm px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95 w-full md:w-auto text-center">
+                <button onClick={handlePrintTranscript} className="border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-400 font-medium text-sm px-5 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all shadow-sm active:scale-95 w-full md:w-auto text-center">
                   Export Profile Metadata Transcript
                 </button>
                 <div className="flex-1 md:border-l md:border-slate-100 md:pl-6">
@@ -663,7 +676,7 @@ export default function UserSettings({ currentUser }) {
               <p className="text-sm text-red-800 mb-4 font-medium">Once you delete your account, there is no going back. Please be certain.</p>
               <button
                 onClick={() => setShowDangerModal(true)}
-                className="border border-red-200 text-red-600 hover:bg-red-50 bg-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm active:scale-95 shadow-sm"
+                className="border border-red-200 text-red-600 hover:bg-red-50 bg-white font-semibold px-5 py-2.5 rounded-none transition-all text-sm active:scale-95 shadow-sm"
               >
                 Delete My Attendee Account Permanently
               </button>
@@ -676,7 +689,7 @@ export default function UserSettings({ currentUser }) {
       {/* Danger Modal */}
       {showDangerModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-scale-in">
+          <div className="bg-white rounded-none shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-scale-in">
             <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 border border-red-200 text-red-600 text-2xl font-bold">
               !
             </div>
@@ -685,13 +698,13 @@ export default function UserSettings({ currentUser }) {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDangerModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
+                className="flex-1 py-2.5 rounded-none bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
               >
                 Yes, Delete
               </button>
@@ -702,7 +715,7 @@ export default function UserSettings({ currentUser }) {
       {/* Confirm Unlink Wallet Modal */}
       {walletToUnlink && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-scale-in">
+          <div className="bg-white rounded-none shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-scale-in">
             <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 border border-red-200 text-red-600 text-2xl font-bold">
               !
             </div>
@@ -711,7 +724,7 @@ export default function UserSettings({ currentUser }) {
             <div className="flex gap-3">
               <button 
                 onClick={() => setWalletToUnlink(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
               >
                 Cancel
               </button>
@@ -720,7 +733,7 @@ export default function UserSettings({ currentUser }) {
                   setWallets(wallets.filter(w => w.id !== walletToUnlink.id));
                   setWalletToUnlink(null);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
+                className="flex-1 py-2.5 rounded-none bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
               >
                 Yes, Unlink
               </button>
@@ -731,7 +744,7 @@ export default function UserSettings({ currentUser }) {
       {/* Add Wallet Modal */}
       {showAddWalletModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6 animate-scale-in">
+          <div className="bg-white rounded-none shadow-2xl w-full max-w-md overflow-hidden p-6 animate-scale-in">
             <h2 className="text-xl font-bold text-slate-900 mb-2">Add Payment Method</h2>
             <p className="text-sm text-slate-500 mb-6">Enter your Philippine banking or e-wallet details.</p>
 
@@ -797,13 +810,13 @@ export default function UserSettings({ currentUser }) {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={() => { setShowAddWalletModal(false); setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' }); }}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={submitNewWallet}
-                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-semibold text-sm transition-all"
+                className="flex-1 py-2.5 rounded-none bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-semibold text-sm transition-all"
               >
                 Save Payment Method
               </button>

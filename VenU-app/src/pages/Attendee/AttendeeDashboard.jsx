@@ -99,7 +99,7 @@ function QrMockup() {
   return (
     <div className="grid grid-cols-8 gap-0.5 w-full h-full">
       {grid.map((filled, i) => (
-        <div key={i} className={`rounded-sm ${filled ? 'bg-slate-900' : 'bg-transparent'}`} />
+        <div key={i} className={`rounded-none ${filled ? 'bg-slate-900' : 'bg-transparent'}`} />
       ))}
     </div>
   );
@@ -110,12 +110,12 @@ function EventCard({ event, onSelect }) {
   return (
     <div
       onClick={() => onSelect(event)}
-      className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative flex flex-col h-full"
+      className="bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 group cursor-pointer relative flex flex-col h-full"
     >
       {/* Immersive Image Header */}
       <div className="h-56 relative overflow-hidden">
-        <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 transition-colors duration-500 z-10"></div>
-        <img src={event.image} alt={event.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+        <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 z-10"></div>
+        <img src={event.image} alt={event.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform" />
         
         {/* Glowing Badge Area */}
         <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
@@ -134,30 +134,30 @@ function EventCard({ event, onSelect }) {
       </div>
 
       {/* Card Details */}
-      <div className="p-6 flex flex-col flex-grow relative bg-white dark:bg-slate-800">
+      <div className="p-6 flex flex-col flex-grow relative bg-slate-50 dark:bg-slate-800">
         <div className="absolute -top-8 right-6 z-20">
-            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${event.color} flex flex-col items-center justify-center text-white font-black shadow-lg shadow-black/20 group-hover:-translate-y-1 transition-transform`}>
+            <div className={`w-14 h-14 rounded-none bg-purple-50 dark:bg-slate-600 flex flex-col items-center justify-center text-purple-700 dark:text-purple-300 font-black shadow-lg shadow-black/20 group-hover:-translate-y-1 transition-transform`}>
                 <span className="text-[10px] tracking-widest opacity-80 uppercase leading-none">{new Date(event.date).toLocaleString('en-us', { month: 'short' })}</span>
                 <span className="text-xl leading-tight">{new Date(event.date).getDate()}</span>
             </div>
         </div>
 
-        <h4 className="font-black text-slate-900 dark:text-white text-xl leading-tight group-hover:text-[#A855F7] transition-colors pr-16 mb-4">
+        <h4 className="font-black text-slate-900 dark:text-white text-xl leading-tight group-hover:text-purple-700 dark:text-purple-500 pr-16 mb-4">
           {event.title}
         </h4>
         
         <div className="space-y-3 mt-auto mb-6">
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[#A855F7] group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30 transition-colors"><MapPin size={14} /></div> {event.barangay}
+            <div className="p-2 rounded-none bg-slate-50 dark:bg-slate-900 text-purple-700 dark:text-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30"><MapPin size={14} /></div> {event.barangay}
           </p>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[#A855F7] group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30 transition-colors"><Clock size={14} /></div> {event.time}
+            <div className="p-2 rounded-none bg-slate-50 dark:bg-slate-900 text-purple-700 dark:text-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30"><Clock size={14} /></div> {event.time}
           </p>
         </div>
         
         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
-          <span className="text-sm font-black text-[#A855F7] flex items-center gap-1 group-hover:gap-2 transition-all">
+          <span className="text-sm font-black text-purple-700 dark:text-purple-500 flex items-center gap-1 group-hover:gap-2">
             Get Tickets <ChevronRight size={16} strokeWidth={3} />
           </span>
         </div>
@@ -188,7 +188,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity" onClick={onClose} />
 
       {/* Drawer Panel */}
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col animate-slide-in-right relative z-10 overflow-hidden">
+      <div className="w-full max-w-md bg-slate-50 dark:bg-slate-900 h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col animate-slide-in-right relative z-10 overflow-hidden">
         
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between relative z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
@@ -201,7 +201,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
               <MapPin size={14} /> {event.barangay}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700 shadow-sm">
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 shadow-sm">
             <X size={18} strokeWidth={2.5} />
           </button>
         </div>
@@ -213,7 +213,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Select Admission Tier</p>
             <div className="space-y-3">
               {event.ticketTiers.map((tier) => (
-                <label key={tier} className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedTier === tier ? `border-purple-500 bg-purple-50 dark:bg-purple-900/10` : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}>
+                <label key={tier} className={`flex items-center justify-between p-4 rounded-none border-2 cursor-pointer ${selectedTier === tier ? `border-purple-500 bg-purple-50 dark:bg-purple-900/10` : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}>
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === tier ? 'border-purple-500' : 'border-slate-300 dark:border-slate-600'}`}>
                         {selectedTier === tier && <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />}
@@ -228,7 +228,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
           {/* FLOW 1: Private — Access Code Gate */}
           {event.accessType === 'Private' && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-none border border-slate-200 dark:border-slate-700">
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                 <Shield size={14} className="text-purple-500" /> Pass Verification
               </p>
@@ -238,7 +238,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   placeholder="ENTER ACCESS CODE"
-                  className={`w-full bg-white dark:bg-slate-900 border-2 rounded-xl px-4 py-4 text-center font-bold tracking-[0.1em] uppercase text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 ${accessCode && !codeMatches
+                  className={`w-full bg-slate-50 dark:bg-slate-900 border-2 rounded-none px-4 py-4 text-center font-bold tracking-[0.1em] uppercase text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 ${accessCode && !codeMatches
                     ? 'border-red-400 focus:border-red-500'
                     : codeMatches
                       ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
@@ -266,7 +266,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                   { id: 'gcash', label: 'GCash', icon: '📱', color: 'blue' },
                   { id: 'gotyme', label: 'GoTyme', icon: '🏦', color: 'indigo' },
                 ].map((method) => (
-                  <label key={method.id} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === method.id ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'}`}>
+                  <label key={method.id} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-none border-2 cursor-pointer ${paymentMethod === method.id ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'}`}>
                     <input type="radio" name="payment" checked={paymentMethod === method.id} onChange={() => setPaymentMethod(method.id)} className="hidden" />
                     <span className="text-2xl">{method.icon}</span>
                     <span className={`text-xs font-bold uppercase tracking-wide ${paymentMethod === method.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{method.label}</span>
@@ -275,7 +275,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
               </div>
 
               {/* Price Summary */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-none p-5">
                 <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
                   <span>Subtotal</span>
                   <span>₱{event.price.toLocaleString()}</span>
@@ -294,7 +294,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
           {/* FLOW 3: Free Public */}
           {!event.isPaid && event.accessType === 'Public' && (
-            <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-6 text-center shadow-sm">
+            <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-none p-6 text-center shadow-sm">
               <CheckCircle2 className="text-emerald-500 dark:text-emerald-400 mx-auto mb-3" size={36} strokeWidth={2.5} />
               <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400 mb-1">Free Admission Guaranteed</p>
               <p className="text-sm font-medium text-emerald-600/70 dark:text-emerald-400/70">No payment required. Claim your pass directly.</p>
@@ -308,7 +308,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             <button
               disabled={!codeMatches}
               onClick={handleCheckout}
-              className={`w-full py-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${codeMatches
+              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide ${codeMatches
                 ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'
                 : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
                 }`}
@@ -316,11 +316,11 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
               {codeMatches ? 'Confirm Registration' : 'Enter Access Code'}
             </button>
           ) : event.isPaid ? (
-            <button onClick={handleCheckout} className="w-full py-4 rounded-xl text-sm font-bold uppercase tracking-wide bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button onClick={handleCheckout} className="w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95 flex justify-center items-center gap-2">
               <Lock size={16} /> Authorize Payment
             </button>
           ) : (
-            <button onClick={handleCheckout} className="w-full py-4 rounded-xl text-sm font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button onClick={handleCheckout} className="w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95 flex justify-center items-center gap-2">
               <SparklesIcon /> Claim Free Pass
             </button>
           )}
@@ -340,12 +340,12 @@ function TicketModal({ ticket, onClose }) {
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm animate-scale-in relative group perspective-1000">
 
-        <div className="bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 transform transition-transform duration-500 preserve-3d">
+        <div className="bg-white rounded-none overflow-hidden shadow-2xl relative z-10 transform transition-transform preserve-3d">
             
             {/* Header Strip */}
             <div className={`bg-gradient-to-br ${ticket.event.color} p-6 pb-12 text-white text-center relative`}>
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-30 mix-blend-overlay pointer-events-none"></div>
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 transition backdrop-blur-md">
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md">
                     <X size={14} strokeWidth={3} />
                 </button>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest mb-4 border border-white/20 shadow-inner">
@@ -364,7 +364,7 @@ function TicketModal({ ticket, onClose }) {
             {/* Body */}
             <div className="p-8 pt-6 flex flex-col items-center bg-white relative">
                 {/* QR Code Container */}
-                <div className="w-40 h-40 bg-white border border-slate-200 shadow-sm rounded-2xl p-4 mb-6 relative overflow-hidden group">
+                <div className="w-40 h-40 bg-white border border-slate-200 shadow-sm rounded-none p-4 mb-6 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-slate-50"></div>
                     <div className="relative z-10 w-full h-full">
                         <QrMockup />
@@ -373,7 +373,7 @@ function TicketModal({ ticket, onClose }) {
 
                 <div className="text-center w-full mb-6">
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Ticket ID</p>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 font-mono font-black text-slate-900 tracking-widest text-sm shadow-inner">
+                    <div className="bg-slate-50 border border-slate-100 rounded-none py-2 px-4 font-mono font-black text-slate-900 tracking-widest text-sm shadow-inner">
                         {ticket.ticketId}
                     </div>
                 </div>
@@ -396,7 +396,7 @@ function TicketModal({ ticket, onClose }) {
 
             {/* Footer */}
             <div className="bg-slate-50 border-t border-slate-100 p-4 text-center">
-                <button onClick={onClose} className="text-xs font-black uppercase tracking-widest text-[#A855F7] hover:text-purple-700 transition-colors">
+                <button onClick={onClose} className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-500 hover:text-purple-700">
                     Close Pass
                 </button>
             </div>
@@ -467,25 +467,25 @@ export default function AttendeeDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F9F8FC] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="flex min-h-screen bg-slate-200 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
 
       {/* ── Fixed Premium Dark Sidebar ──────────────────────────────────────────── */}
-      <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
+      <aside className="w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
         <div className="flex flex-col gap-8">
           {/* Brand */}
           <div className="flex items-center gap-2 select-none px-2 mb-2">
-            <img src={logo} alt="VenU Logo" className="h-8 w-auto drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-            <span className="text-xl font-black tracking-tight text-white drop-shadow-md">VenU</span>
+            <img src={logo} alt="VenU Logo" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">VenU</span>
           </div>
 
           {/* User Chip */}
-          <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shadow-inner">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#A855F7] to-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_10px_rgba(168,85,247,0.5)] shrink-0 border border-white/10">
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-none shadow-inner">
+            <div className="w-10 h-10 rounded-full bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_10px_rgba(168,85,247,0.5)] shrink-0 border border-white/10">
               {currentUser.firstName.charAt(0)}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-black text-white leading-tight truncate">{currentUser.firstName}</p>
-              <p className="text-[10px] font-black text-[#A855F7] uppercase tracking-widest mt-1">Explorer Node</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{currentUser.firstName}</p>
+              <p className="text-[10px] font-black text-purple-700 dark:text-purple-500 uppercase tracking-widest mt-1">Explorer Node</p>
             </div>
           </div>
 
@@ -497,14 +497,14 @@ export default function AttendeeDashboard() {
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 ${isActive
-                    ? 'bg-gradient-to-r from-[#A855F7] to-indigo-600 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-white/10'
-                    : 'text-slate-400 hover:bg-slate-900 hover:text-white border border-transparent'
+                  className={`w-full flex items-center gap-3 rounded-none px-4 py-3.5 text-sm font-bold ${isActive
+                    ? 'bg-purple-700 dark:bg-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-white/10'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border border-transparent'
                     }`}
                 >
                   <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
                   <span className="tracking-wide">{label}</span>
-                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_5px_rgba(255,255,255,0.8)]" />}
+                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
                 </button>
               );
             })}
@@ -518,7 +518,7 @@ export default function AttendeeDashboard() {
             localStorage.removeItem('user');
             navigate('/');
           }}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent transition-all"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-none text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
         >
           <LogOut size={16} strokeWidth={2.5} /> Log Out
         </button>
@@ -528,40 +528,34 @@ export default function AttendeeDashboard() {
       <main className="ml-64 flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
         
         {/* Top Notification Bar (Replicated from Organizer) */}
-        <div className="sticky top-0 z-30 bg-[#F9F8FC]/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-end">
+        <div className="sticky top-0 z-30 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-end">
             <div className="flex items-center gap-3">
-                <button 
-                    onClick={toggleDarkMode}
-                    className="relative p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-300 hover:border-[#A855F7]/50 hover:text-[#A855F7] transition-all duration-300"
-                >
-                    {darkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
-                </button>
                 <div className="relative">
                     <button 
                         onClick={() => setShowNotifications(!showNotifications)}
-                        className={`relative p-3 rounded-2xl bg-white dark:bg-slate-800 border transition-all duration-300 ${showNotifications ? 'border-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.3)] text-[#A855F7]' : 'border-slate-100 dark:border-slate-700 shadow-sm text-slate-400 dark:text-slate-300 hover:border-[#A855F7]/50 hover:text-[#A855F7]'}`}
+                        className={`relative p-2.5 rounded-none bg-slate-50 dark:bg-slate-800 border ${showNotifications ? 'border-slate-400 text-slate-800 dark:text-white' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'}`}
                     >
-                        <Bell size={18} strokeWidth={2.5} className={unreadCount > 0 ? 'animate-[wiggle_2s_ease-in-out_infinite]' : ''} />
+                        <Bell size={18} className={unreadCount > 0 ? 'animate-pulse text-purple-700 dark:text-purple-400' : ''} />
                         {unreadCount > 0 && (
                             <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A855F7] opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#A855F7] border-2 border-white"></span>
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-none bg-purple-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-none h-2.5 w-2.5 bg-purple-700 dark:bg-purple-500 border-2 border-white dark:border-slate-800"></span>
                             </span>
                         )}
                     </button>
 
                     {/* Notifications Dropdown */}
                     {showNotifications && (
-                        <div className="absolute top-full right-0 mt-4 w-[360px] bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-100/50 dark:border-slate-700/50 z-50 overflow-hidden animate-fade-in origin-top-right">
+                        <div className="absolute top-full right-0 mt-4 w-[360px] bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-none shadow-2xl border border-slate-100/50 dark:border-slate-700/50 z-50 overflow-hidden animate-fade-in origin-top-right">
                             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Notifications</h3>
                                     {unreadCount > 0 && (
-                                        <span className="bg-[#A855F7] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>
+                                        <span className="bg-purple-700 dark:bg-purple-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>
                                     )}
                                 </div>
                                 {unreadCount > 0 && (
-                                    <button onClick={markAllRead} className="text-xs font-bold text-[#A855F7] hover:text-purple-700 transition-colors">
+                                    <button onClick={markAllRead} className="text-xs font-bold text-purple-700 dark:text-purple-500 hover:text-purple-700">
                                         Mark all read
                                     </button>
                                 )}
@@ -576,9 +570,9 @@ export default function AttendeeDashboard() {
                                     </div>
                                 ) : (
                                     notifications.map(notif => (
-                                        <div key={notif.id} className={`p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                                        <div key={notif.id} className={`p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50/80 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
                                             {!notif.read && (
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#A855F7] rounded-r-md"></div>
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r-md"></div>
                                             )}
                                             <div className="flex justify-between items-start mb-1.5 pl-2">
                                                 <h4 className={`text-sm font-black ${notif.read ? 'text-slate-600' : 'text-slate-900'}`}>{notif.title}</h4>
@@ -592,6 +586,13 @@ export default function AttendeeDashboard() {
                         </div>
                     )}
                 </div>
+                <button 
+                    onClick={toggleDarkMode}
+                    className="p-2.5 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white"
+                    title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
             </div>
         </div>
 
@@ -600,22 +601,22 @@ export default function AttendeeDashboard() {
             {activeTab === 'dashboard' && (
             <div className="animate-fade-in">
                 {/* Header Canvas */}
-                <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-10 relative overflow-hidden mb-12 shadow-md border border-slate-800">
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-none p-10 relative overflow-hidden mb-12 shadow-md border border-slate-200 dark:border-slate-700">
                     
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                         <div className="text-center md:text-left">
-                            <p className="text-xs text-purple-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
+                            <p className="text-xs text-purple-700 dark:text-purple-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
                                 <SparklesIcon /> Explore Events
                             </p>
-                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                                Find your next <span className="text-purple-400">experience.</span>
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                                Find your next <span className="text-purple-700 dark:text-purple-400">experience.</span>
                             </h1>
                         </div>
 
                         {/* Floating Command Palette Search */}
                         <div className="w-full md:w-[450px] relative group">
-                            <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2 flex items-center shadow-lg">
-                                <div className="p-3 text-white/50">
+                            <div className="relative bg-slate-50 dark:bg-slate-700/50 backdrop-blur-md border border-slate-200 dark:border-slate-600 rounded-none p-2 flex items-center shadow-lg">
+                                <div className="p-3 text-slate-400 dark:text-slate-500">
                                     <Search size={20} strokeWidth={2.5} />
                                 </div>
                                 <input
@@ -623,9 +624,9 @@ export default function AttendeeDashboard() {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Search events, venues, access codes..."
-                                    className="w-full bg-transparent text-white placeholder:text-white/50 font-medium text-sm outline-none px-2 pr-4"
+                                    className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-sm outline-none px-2 pr-4"
                                 />
-                                <button className="bg-white text-slate-900 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-sm">
+                                <button className="bg-white text-slate-900 px-4 py-2.5 rounded-none text-xs font-black uppercase tracking-widest hover:bg-slate-100 shadow-sm">
                                     Scan
                                 </button>
                             </div>
@@ -637,7 +638,7 @@ export default function AttendeeDashboard() {
                 <div className="flex items-center justify-between mb-8 px-2">
                 <div>
                     <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#A855F7] animate-pulse"></div> {scope}
+                        <div className="w-2 h-2 rounded-full bg-purple-700 dark:bg-purple-500 animate-pulse"></div> {scope}
                     </h2>
                 </div>
                 <span className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 px-4 py-1.5 rounded-full shadow-sm">
@@ -647,10 +648,10 @@ export default function AttendeeDashboard() {
 
                 {/* Event Grid */}
                 {filtered.length === 0 ? (
-                <div className="text-center py-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-slate-50/50 dark:bg-slate-800/50 group-hover:bg-purple-50/30 transition-colors duration-500"></div>
+                <div className="text-center py-32 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none shadow-sm relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-slate-50/50 dark:bg-slate-800/50 group-hover:bg-purple-50/30"></div>
                     <div className="relative z-10">
-                        <div className="w-24 h-24 bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-500">
+                        <div className="w-24 h-24 bg-slate-50 dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-500">
                             <Search size={32} strokeWidth={2.5} />
                         </div>
                         <h3 className="text-2xl font-bold text-slate-900 dark:text-white">No events found</h3>
@@ -671,19 +672,19 @@ export default function AttendeeDashboard() {
             {activeTab === 'mytickets' && (
             <div className="animate-fade-in max-w-4xl mx-auto">
                 <div className="mb-10 text-center">
-                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
+                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-none flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
                         <Ticket size={28} strokeWidth={2.5} />
                     </div>
                     <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">My Tickets</h1>
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Your purchased and saved event tickets.</p>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-3xl p-16 text-center relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500 transition-colors duration-500"></div>
-                    <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800 transition-colors duration-500" size={64} strokeWidth={1} />
+                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-16 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500"></div>
+                    <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800" size={64} strokeWidth={1} />
                     <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Tickets Yet</h3>
                     <p className="text-sm font-medium text-slate-400 mt-2 mb-8 max-w-sm mx-auto">You haven't purchased any tickets yet. Browse events to find something you like.</p>
-                    <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
+                    <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-none bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
                         <Search size={16} /> Explore Events
                     </button>
                 </div>
@@ -694,7 +695,7 @@ export default function AttendeeDashboard() {
             {activeTab === 'map' && (
             <div className="animate-fade-in">
                 <div className="flex items-center gap-4 mb-8">
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-2xl">
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-none">
                         <MapPin size={24} strokeWidth={2.5} />
                     </div>
                     <div>
@@ -704,8 +705,8 @@ export default function AttendeeDashboard() {
                 </div>
 
                 <div className="relative">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-3xl overflow-hidden relative z-10 p-2">
-                        <div className="h-[600px] w-full rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-700">
+                    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none overflow-hidden relative z-10 p-2">
+                        <div className="h-[600px] w-full rounded-none overflow-hidden relative border border-slate-200 dark:border-slate-700">
                             <MapContainer center={[14.3296, 120.9367]} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
                             <TileLayer
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
@@ -713,12 +714,12 @@ export default function AttendeeDashboard() {
                             />
                             {mockEvents.map((event, i) => (
                                 <Marker key={event.id} position={event.city === 'Imus' ? [14.4296, 120.9367] : [14.3296 + (i * 0.01), 120.9367 - (i * 0.01)]}>
-                                <Popup className="rounded-2xl overflow-hidden shadow-2xl border-0 p-0 m-0 w-[240px]">
+                                <Popup className="rounded-none overflow-hidden shadow-2xl border-0 p-0 m-0 w-[240px]">
                                     <div className="font-sans">
                                         <div className="h-24 w-full bg-slate-200 relative">
                                             <img src={event.image} className="w-full h-full object-cover" alt="Venue" />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                            <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 bg-[#A855F7]/80 rounded-md backdrop-blur-sm">
+                                            <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 bg-purple-700 dark:bg-purple-500/80 rounded-none backdrop-blur-sm">
                                                 {event.category}
                                             </span>
                                         </div>

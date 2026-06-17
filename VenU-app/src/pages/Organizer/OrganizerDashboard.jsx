@@ -75,25 +75,25 @@ export default function OrganizerDashboard() {
     };
 
     return (
-        <div className="flex min-h-screen bg-slate-100 dark:bg-slate-900 font-sans">
+        <div className="flex min-h-screen bg-slate-200 dark:bg-slate-900 font-sans">
 
             {/* Fixed Dark Sidebar */}
-            <aside className="w-64 bg-slate-900 border-r border-slate-800 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40">
+            <aside className="w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40">
                 <div className="flex flex-col gap-8">
                     {/* Brand */}
                     <div className="flex items-center gap-2 select-none px-2 mb-2">
                         <img src={logo} alt="VenU Logo" className="h-8 w-auto" />
-                        <span className="text-xl font-bold text-white">VenU</span>
+                        <span className="text-xl font-bold text-slate-900 dark:text-white">VenU</span>
                     </div>
 
                     {/* User Profile Overview */}
-                    <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 p-3 rounded">
-                        <div className="w-10 h-10 rounded bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-medium text-white text-sm shrink-0">
+                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded">
+                        <div className="w-10 h-10 rounded-full bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-medium text-white text-sm shrink-0">
                             {currentUser.firstName.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-sm font-medium text-white leading-tight truncate">{currentUser.firstName} {currentUser.lastName}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">Organizer Account</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white leading-tight truncate">{currentUser.firstName} {currentUser.lastName}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Organizer Account</p>
                         </div>
                     </div>
 
@@ -108,10 +108,10 @@ export default function OrganizerDashboard() {
                                         setEditEvent(null);
                                         setActivePanel(id);
                                     }}
-                                    className={`w-full flex items-center gap-3 rounded px-4 py-3 text-sm font-medium transition-colors ${
+                                    className={`w-full flex items-center gap-3 rounded px-4 py-3 text-sm font-medium ${
                                         isActive 
                                             ? 'bg-purple-700 dark:bg-purple-500 text-white' 
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                                     }`}
                                 >
                                     <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
@@ -131,7 +131,7 @@ export default function OrganizerDashboard() {
                             localStorage.removeItem('user');
                             navigate('/');
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
                         <LogOut size={16} strokeWidth={2.5} /> Log Out
                     </button>
@@ -139,14 +139,14 @@ export default function OrganizerDashboard() {
             </aside>
 
             {/* ── Main Content Canvas ── */}
-            <main className="flex-1 bg-slate-100 dark:bg-slate-900 min-h-screen overflow-y-auto ml-64">
+            <main className="flex-1 bg-slate-200 dark:bg-slate-900 min-h-screen overflow-y-auto ml-64">
                 {/* Top Bar */}
                 <div className="sticky top-0 z-30 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-end">
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <button 
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className={`relative p-2.5 rounded bg-white dark:bg-slate-800 border transition-colors ${showNotifications ? 'border-slate-400 text-slate-800 dark:text-white' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'}`}
+                                className={`relative p-2.5 rounded bg-slate-50 dark:bg-slate-800 border ${showNotifications ? 'border-slate-400 text-slate-800 dark:text-white' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'}`}
                             >
                                 <Bell size={18} className={unreadCount > 0 ? 'animate-pulse text-purple-700 dark:text-purple-400' : ''} />
                                 {unreadCount > 0 && (
@@ -159,7 +159,7 @@ export default function OrganizerDashboard() {
 
                             {/* Notifications Dropdown */}
                             {showNotifications && (
-                                <div className="absolute top-full right-0 mt-4 w-[360px] bg-white dark:bg-slate-800 rounded shadow border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-fade-in origin-top-right">
+                                <div className="absolute top-full right-0 mt-4 w-[360px] bg-slate-50 dark:bg-slate-800 rounded shadow border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-fade-in origin-top-right">
                                     <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-sm font-medium text-slate-900 dark:text-white">Notifications</h3>
@@ -168,7 +168,7 @@ export default function OrganizerDashboard() {
                                             )}
                                         </div>
                                         {unreadCount > 0 && (
-                                            <button onClick={markAllRead} className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
+                                            <button onClick={markAllRead} className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white">
                                                 Mark all read
                                             </button>
                                         )}
@@ -183,7 +183,7 @@ export default function OrganizerDashboard() {
                                             </div>
                                         ) : (
                                             notifications.map(notif => (
-                                                <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                                                <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
                                                     {!notif.read && (
                                                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r"></div>
                                                     )}
@@ -197,7 +197,7 @@ export default function OrganizerDashboard() {
                                         )}
                                     </div>
                                     <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-center">
-                                        <button onClick={() => { setShowNotifications(false); setActivePanel('settings'); }} className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
+                                        <button onClick={() => { setShowNotifications(false); setActivePanel('settings'); }} className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white">
                                             View All Notifications
                                         </button>
                                     </div>
@@ -208,7 +208,7 @@ export default function OrganizerDashboard() {
                         {/* Dark Mode Toggle */}
                         <button
                             onClick={toggleDarkMode}
-                            className="p-2.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white transition-colors"
+                            className="p-2.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white"
                             title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                         >
                             {darkMode ? <Sun size={18} /> : <Moon size={18} />}

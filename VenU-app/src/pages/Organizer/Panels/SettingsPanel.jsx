@@ -282,10 +282,10 @@ export default function SettingsPanel({ currentUser }) {
  );
 
  const tabs = [
- { id: 'profile', label: 'Profile & Identity' },
+ { id: 'profile', label: 'Profile' },
  { id: 'verification', label: 'Billing & Verification' },
- { id: 'notifications', label: 'Communication Hub' },
- { id: 'security', label: 'Security & Access' }
+ { id: 'notifications', label: 'Notifications' },
+ { id: 'security', label: 'Security' }
  ];
 
  return (
