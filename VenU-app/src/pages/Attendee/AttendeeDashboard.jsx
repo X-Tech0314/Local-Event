@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, MapPin, Ticket, Settings, Search, Lock,
   Tag, CheckCircle2, X, ChevronRight, Calendar, Clock,
@@ -76,6 +76,86 @@ const mockEvents = [
     color: "from-emerald-500 to-teal-600",
   },
 ];
+
+// ── Map organizer-created backend events → attendee event schema ──────────────
+// Organizer events (from EventsPanel) use: { id, title, category, startDateTime,
+// endDateTime, barangay, city, streetAddress, bannerUrl, ticketTiers: [{tierName,
+// price, onlineSlots, f2fSlots, validityScope}], accessType, verificationCode,
+// venueName, status, ... }
+// Attendee UI expects: { id, title, category, barangay (display), city, date
+// (string), time (string), accessType, verificationCode, isPaid, price,
+// ticketTiers: [strings], image, color (Tailwind gradient), status }
+const CATEGORY_GRADIENTS = {
+  'Music & Concerts': 'from-amber-500 to-orange-600',
+  'Sports & Athletics': 'from-emerald-500 to-teal-600',
+  'Tech & Innovation': 'from-purple-500 to-indigo-600',
+  'Technology': 'from-purple-500 to-indigo-600',
+  'Business & Corp': 'from-blue-500 to-cyan-600',
+  'Birthdays': 'from-pink-500 to-rose-600',
+  'Weddings': 'from-rose-400 to-pink-600',
+  'Private Gatherings': 'from-purple-500 to-indigo-600',
+  'Arts': 'from-fuchsia-500 to-purple-600',
+  'Others': 'from-slate-500 to-slate-700',
+};
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+
+function mapBackendEvent(evt) {
+  if (!evt) return null;
+
+  const startDate = new Date(evt.startDateTime);
+  const isValidDate = !isNaN(startDate.getTime());
+  const dateStr = isValidDate
+    ? startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : 'Date TBA';
+  const timeStr = isValidDate
+    ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : '';
+
+  // Build a readable location label from whatever address parts the organizer provided
+  const locationParts = [evt.barangay, evt.city].filter(v => v && v !== 'N/A');
+  const locationLabel = locationParts.join(', ') || evt.venueName || 'Venue TBA';
+
+  // Convert organizer ticket tier objects into attendee-friendly tier name strings,
+  // and derive a representative price (first paid tier wins).
+  let tierNames = [];
+  let isPaid = false;
+  let price = 0;
+
+  if (Array.isArray(evt.ticketTiers) && evt.ticketTiers.length > 0) {
+    tierNames = evt.ticketTiers
+      .map(t => (typeof t === 'string' ? t : (t.tierName || t.name || 'General Admission')))
+      .filter(Boolean);
+    const paidTier = evt.ticketTiers.find(t => Number(t?.price) > 0);
+    if (paidTier) {
+      isPaid = true;
+      price = Number(paidTier.price);
+    }
+  }
+  if (tierNames.length === 0) tierNames = ['General Admission'];
+
+  return {
+    id: evt.id,
+    title: evt.title || 'Untitled Event',
+    category: evt.category || 'Others',
+    barangay: locationLabel,   // display string (matches mock format like "Dasmariñas, Cavite")
+    city: evt.city || '',      // kept separate for city-based recommendation filtering
+    date: dateStr,
+    time: timeStr,
+    accessType: evt.accessType || 'Public',
+    verificationCode: evt.verificationCode || null,
+    isPaid,
+    price,
+    ticketTiers: tierNames,
+    image: evt.bannerUrl || FALLBACK_IMAGE,
+    color: CATEGORY_GRADIENTS[evt.category] || CATEGORY_GRADIENTS['Others'],
+    status: evt.status,
+    // Preserve organizer-only fields for richer detail views (map pins, etc.)
+    streetAddress: evt.streetAddress,
+    venueName: evt.venueName,
+    mapUrl: evt.mapUrl,
+  };
+}
 
 function getRecommendedEvents(events, user) {
   const byBarangay = events.filter(
@@ -314,7 +394,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 }
 
 function SparklesIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>;
 }
 
 function TicketModal({ ticket, onClose }) {
@@ -391,6 +471,49 @@ export default function AttendeeDashboard() {
   const [confirmedTicket, setConfirmedTicket] = useState(null);
   const [selectedWalletCategory, setSelectedWalletCategory] = useState('All');
 
+  // ── Fetch events created by organizers from the shared /api/events endpoint ──
+  // Same endpoint used by EventsPanel.jsx on the organizer side. We map the
+  // organizer event schema → attendee schema and surface only Published events.
+  const [events, setEvents] = useState(mockEvents); // start with mocks to avoid empty UI flicker
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setEventsLoading(true);
+      setEventsError(null);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/events/public`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const data = await res.json();
+        if (cancelled) return;
+        const rawEvents = Array.isArray(data) ? data : (data.events || []);
+        // Attendees should only discover Published events (not Draft / Discontinued)
+        const visible = rawEvents
+          .map(mapBackendEvent)
+          .filter(evt => evt && (!evt.status || evt.status === 'Published'));
+        if (visible.length > 0) {
+          setEvents(visible);
+        } else {
+          // API responded but has no published events yet — keep mocks so the UI isn't empty
+          setEvents(mockEvents);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.warn('Events API unavailable, falling back to mock events:', err.message);
+        setEventsError(err.message);
+        setEvents(mockEvents);
+      } finally {
+        if (!cancelled) setEventsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const [tickets, setTickets] = useState(() => {
     const savedTickets = localStorage.getItem('vnu_user_tickets');
     return savedTickets ? JSON.parse(savedTickets) : [];
@@ -425,11 +548,11 @@ export default function AttendeeDashboard() {
   const navItems = [
     { id: 'dashboard', label: 'Discovery', icon: LayoutDashboard },
     { id: 'mytickets', label: 'Ticket Wallet', icon: Ticket },
-    { id: 'map', label: 'Global Radar', icon: MapPin },
-    { id: 'settings', label: 'Configuration', icon: Settings },
+    { id: 'map', label: 'Event Map', icon: MapPin },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const { events: recommended, scope } = getRecommendedEvents(mockEvents, currentUser);
+  const { events: recommended, scope } = getRecommendedEvents(events, currentUser);
 
   const filtered = recommended.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -564,13 +687,14 @@ export default function AttendeeDashboard() {
             <span className="text-xl font-bold text-slate-900 dark:text-white">VenU</span>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-none shadow-inner">
-            <div className="w-10 h-10 rounded-full bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_10px_rgba(168,85,247,0.5)] shrink-0 border border-white/10">
+          {/* User Profile Overview — matches Organizer Dashboard card style */}
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded">
+            <div className="w-10 h-10 rounded-full bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-medium text-white text-sm shrink-0">
               {currentUser.firstName.charAt(0)}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{currentUser.firstName}</p>
-              <p className="text-[10px] font-black text-purple-700 dark:text-purple-500 uppercase tracking-widest mt-1">Explorer Node</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-white leading-tight truncate">{currentUser.firstName} {currentUser.lastName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Attendee Account</p>
             </div>
           </div>
 
@@ -685,11 +809,11 @@ export default function AttendeeDashboard() {
               <div className="bg-slate-50 dark:bg-slate-800 rounded-none p-10 relative overflow-hidden mb-12 shadow-md border border-slate-200 dark:border-slate-700">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                   <div className="text-center md:text-left">
-                    <p className="text-xs text-purple-700 dark:text-purple-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
                       <SparklesIcon /> Explore Events
                     </p>
                     <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                      Find your next <span className="text-purple-700 dark:text-purple-400">experience.</span>
+                      Find your next <span className="text-slate-700 dark:text-slate-300">experience.</span>
                     </h1>
                   </div>
 
@@ -724,7 +848,12 @@ export default function AttendeeDashboard() {
                 </span>
               </div>
 
-              {filtered.length === 0 ? (
+              {eventsLoading ? (
+                <div className="flex flex-col items-center justify-center py-32 text-slate-400">
+                  <div className="w-12 h-12 border-4 border-purple-700 dark:border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Loading events from organizers…</p>
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="text-center py-32 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none shadow-sm relative overflow-hidden group">
                   <div className="absolute inset-0 bg-slate-50/50 dark:bg-slate-800/50 group-hover:bg-purple-50/30"></div>
                   <div className="relative z-10">
@@ -733,6 +862,9 @@ export default function AttendeeDashboard() {
                     </div>
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white">No events found</h3>
                     <p className="text-sm font-medium text-slate-500 mt-2 max-w-sm mx-auto">No events match your current query. Try adjusting your filters.</p>
+                    {eventsError && (
+                      <p className="text-xs text-amber-500 mt-3 font-medium">Showing sample events (organizer API unreachable: {eventsError}).</p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -871,12 +1003,12 @@ export default function AttendeeDashboard() {
               <div className="relative">
                 <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none overflow-hidden relative z-10 p-2">
                   <div className="h-[600px] w-full rounded-none overflow-hidden relative border border-slate-200 dark:border-slate-700">
-                    <MapContainer center={[14.3296, 120.9367]} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
+                    <MapContainer center={[14.3296, 120.9367]} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
                       <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                       />
-                      {mockEvents.map((event, i) => (
+                      {events.map((event, i) => (
                         <Marker key={event.id} position={event.city === 'Imus' ? [14.4296, 120.9367] : [14.3296 + (i * 0.01), 120.9367 - (i * 0.01)]}>
                           <Popup className="rounded-none overflow-hidden shadow-2xl border-0 p-0 m-0 w-[240px]">
                             <div className="font-sans">

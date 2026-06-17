@@ -271,6 +271,26 @@ namespace VenU.Api.Controllers
             return Ok(events);
         }
 
+        // ── Public discovery endpoint for Attendees ────────────────────────────
+        // Returns ALL published events from ALL organizers, with TicketTiers
+        // eager-loaded. Accessible to any authenticated user (Attendee, Organizer,
+        // or Admin) — drop the [Authorize] attribute entirely if you want
+        // unauthenticated browsing later.
+        //
+        // Used by AttendeeDashboard.jsx to populate the Discovery grid + Map tab.
+        [HttpGet("public")]
+        [Authorize] // any logged-in user; remove this attribute for anonymous browsing
+        public async Task<IActionResult> GetPublishedEvents()
+        {
+            var events = await _context.Events
+                .Include(e => e.TicketTiers)
+                .Where(e => e.Status == "Published")
+                .OrderByDescending(e => e.StartDateTime)
+                .ToListAsync();
+
+            return Ok(events);
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> UpdateEvent(Guid id, [FromBody] CreateEventDto dto)
@@ -389,6 +409,7 @@ namespace VenU.Api.Controllers
             
             return Ok(new { message = "Event deleted successfully." });
         }
+
         [HttpGet("{id}/analytics")]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> GetEventAnalytics(Guid id, [FromQuery] string search = null)
