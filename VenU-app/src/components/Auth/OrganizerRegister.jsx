@@ -62,18 +62,33 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
 
   const isTinValid = (v) => /^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/.test(v.replace(/\s/g, ''));
 
+  // Max length validation for names, position, email, and company name
+  const MAX_NAME_LENGTH = 30;
+  const isFirstNameTooLong = firstName.length > MAX_NAME_LENGTH;
+  const isLastNameTooLong = lastName.length > MAX_NAME_LENGTH;
+  const isPositionTooLong = position.length > MAX_NAME_LENGTH;
+  const isEmailTooLong = corporateEmail.length > MAX_NAME_LENGTH;
+  const isCompanyNameTooLong = companyName.length > MAX_NAME_LENGTH;
+
+  // Age bounds
+  const MIN_AGE = 25;
+  const MAX_AGE = 100;
+
   const calculatedAge = calculateAge(dateOfBirth);
+  const isAgeValid = dateOfBirth && calculatedAge >= MIN_AGE && calculatedAge <= MAX_AGE;
+
   const isStep1Valid =
-    firstName.trim() && isNameValid(firstName) &&
-    lastName.trim() && isNameValid(lastName) &&
-    dateOfBirth && calculatedAge >= 25 &&
+    firstName.trim() && isNameValid(firstName) && !isFirstNameTooLong &&
+    lastName.trim() && isNameValid(lastName) && !isLastNameTooLong &&
+    position.trim() && !isPositionTooLong &&
+    dateOfBirth && isAgeValid &&
     contactNumber.trim() && isContactValid(contactNumber) &&
-    corporateEmail.trim() && isEmailValid(corporateEmail) &&
+    corporateEmail.trim() && isEmailValid(corporateEmail) && !isEmailTooLong &&
     password && Object.values(validation).every(Boolean) &&
     confirmPassword === password;
 
   const isStep2Valid =
-    (orgType === 'Commercial/Private Business' && companyName.trim() && tinNumber.trim() && isTinValid(tinNumber) && orgDocFile) ||
+    (orgType === 'Commercial/Private Business' && companyName.trim() && !isCompanyNameTooLong && tinNumber.trim() && isTinValid(tinNumber) && orgDocFile) ||
     (orgType === 'LGU / Barangay / SK' && councilName.trim() && orgDocFile) ||
     (orgType === 'Accredited Student Organization' && universityName.trim() && orgDocFile);
 
@@ -128,8 +143,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
         </button>
       </div>
 
-      <form 
-        className="space-y-5" 
+      <form
+        className="space-y-5"
         onSubmit={handleFormSubmit}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
@@ -144,11 +159,10 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
               key={r}
               type="button"
               onClick={() => setCreateRole(r)}
-              className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${
-                createRole === r
+              className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${createRole === r
                   ? 'bg-[#A855F7] text-white shadow-sm'
                   : 'text-white/50 hover:text-white/80'
-              }`}
+                }`}
             >
               {r}
             </button>
@@ -161,13 +175,12 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
             {[1, 2, 3, 4].map((stepNum) => (
               <div
                 key={stepNum}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  stepNum === currentStep
+                className={`h-1.5 rounded-full transition-all duration-300 ${stepNum === currentStep
                     ? 'w-6 bg-[#A855F7]'
                     : stepNum < currentStep
-                    ? 'w-2 bg-[#A855F7]/50'
-                    : 'w-2 bg-white/10'
-                }`}
+                      ? 'w-2 bg-[#A855F7]/50'
+                      : 'w-2 bg-white/10'
+                  }`}
               />
             ))}
           </div>
@@ -178,7 +191,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
 
         {/* Form Input Card */}
         <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl p-5 border border-white/10 shadow-2xl space-y-6 text-left">
-          
+
           {/* SECTION 1: Personal & Position Block */}
           {currentStep === 1 && (
             <div className="animate-fadeIn">
@@ -194,11 +207,17 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       onBlur={() => touch('firstName')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                        touched.firstName && !firstName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.firstName && !firstName.trim()) || isFirstNameTooLong
+                          ? 'border-red-500/60'
+                          : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
                       placeholder="Juan"
                     />
+                    {isFirstNameTooLong && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">
+                        First Name must be at most {MAX_NAME_LENGTH} characters (currently {firstName.length}).
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">Last Name</label>
@@ -207,11 +226,17 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       onBlur={() => touch('lastName')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                        touched.lastName && !lastName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.lastName && !lastName.trim()) || isLastNameTooLong
+                          ? 'border-red-500/60'
+                          : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
                       placeholder="dela Cruz"
                     />
+                    {isLastNameTooLong && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">
+                        Last Name must be at most {MAX_NAME_LENGTH} characters (currently {lastName.length}).
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -223,11 +248,17 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       onBlur={() => touch('position')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                        touched.position && !position.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.position && !position.trim()) || isPositionTooLong
+                          ? 'border-red-500/60'
+                          : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
                       placeholder="Event Director"
                     />
+                    {isPositionTooLong && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">
+                        Official Position / Designation must be at most {MAX_NAME_LENGTH} characters (currently {position.length}).
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -237,18 +268,22 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         value={dateOfBirth}
                         onChange={(e) => setDateOfBirth(e.target.value)}
                         onBlur={() => touch('dateOfBirth')}
-                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                          touched.dateOfBirth && (!dateOfBirth || calculatedAge < 25)
+                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
                             ? 'border-red-500/60 focus:border-red-400'
                             : 'border-white/10 focus:border-[#A855F7]/50'
-                        }`}
+                          }`}
                       />
                       {touched.dateOfBirth && !dateOfBirth && (
                         <p className="text-[10px] text-red-400 mt-1 font-medium">Date of Birth is required.</p>
                       )}
-                      {touched.dateOfBirth && dateOfBirth && calculatedAge < 25 && (
+                      {touched.dateOfBirth && dateOfBirth && calculatedAge < MIN_AGE && (
                         <p className="text-[10px] text-red-400 mt-1 font-medium">
-                          Organizers must be at least 25 years old. (Current age: {calculatedAge})
+                          Organizers must be at least {MIN_AGE} years old. (Current age: {calculatedAge})
+                        </p>
+                      )}
+                      {touched.dateOfBirth && dateOfBirth && calculatedAge > MAX_AGE && (
+                        <p className="text-[10px] text-red-400 mt-1 font-medium">
+                          Age must not exceed {MAX_AGE} years old. (Current age: {calculatedAge})
                         </p>
                       )}
                     </div>
@@ -259,11 +294,10 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         value={contactNumber}
                         onChange={(e) => setContactNumber(e.target.value)}
                         onBlur={() => touch('contactNumber')}
-                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                          touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
+                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
                             ? 'border-red-500/60'
                             : 'border-white/10 focus:border-[#A855F7]/50'
-                        }`}
+                          }`}
                         placeholder="+639XXXXXXXXX"
                       />
                     </div>
@@ -277,21 +311,24 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     value={corporateEmail}
                     onChange={(e) => setCorporateEmail(e.target.value)}
                     onBlur={() => touch('corporateEmail')}
-                    className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                      touched.corporateEmail && (!corporateEmail.trim() || !isEmailValid(corporateEmail))
+                    className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.corporateEmail && (!corporateEmail.trim() || !isEmailValid(corporateEmail))) || isEmailTooLong
                         ? 'border-red-500/60'
                         : 'border-white/10 focus:border-[#A855F7]/50'
-                    }`}
+                      }`}
                     placeholder="director@company.ph"
                   />
+                  {isEmailTooLong && (
+                    <p className="text-[10px] text-red-400 mt-1 font-medium">
+                      Email must be at most {MAX_NAME_LENGTH} characters (currently {corporateEmail.length}).
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">Password (Min 8 chars)</label>
-                    <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${
-                      touched.password && password.length < 8 ? 'border-red-500/60' : 'border-white/10 focus-within:border-[#A855F7]/50'
-                    }`}>
+                    <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${touched.password && password.length < 8 ? 'border-red-500/60' : 'border-white/10 focus-within:border-[#A855F7]/50'
+                      }`}>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
@@ -311,9 +348,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">Confirm Password</label>
-                    <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${
-                      touched.confirmPassword && confirmPassword !== password ? 'border-red-500/60' : 'border-white/10 focus-within:border-[#A855F7]/50'
-                    }`}>
+                    <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${touched.confirmPassword && confirmPassword !== password ? 'border-red-500/60' : 'border-white/10 focus-within:border-[#A855F7]/50'
+                      }`}>
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         value={confirmPassword}
@@ -341,14 +377,12 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     {passwordRules.map((pr) => (
                       <li key={pr.key} className="flex items-center gap-2 text-xs">
                         <span
-                          className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-300 ${
-                            validation[pr.key] ? 'bg-green-400' : 'bg-white/10'
-                          }`}
+                          className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-300 ${validation[pr.key] ? 'bg-green-400' : 'bg-white/10'
+                            }`}
                         />
                         <span
-                          className={`transition-colors duration-300 ${
-                            validation[pr.key] ? 'text-green-400 font-medium' : 'text-white/30'
-                          }`}
+                          className={`transition-colors duration-300 ${validation[pr.key] ? 'text-green-400 font-medium' : 'text-white/30'
+                            }`}
                         >
                           {pr.rule}
                         </span>
@@ -356,15 +390,14 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     ))}
                   </ul>
                 </div>
-                
+
                 <div className="pt-2">
                   <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
                     disabled={!isStep1Valid}
-                    className={`w-full rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                      isStep1Valid ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20' : 'bg-purple-500/30 cursor-not-allowed opacity-50'
-                    }`}
+                    className={`w-full rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${isStep1Valid ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20' : 'bg-purple-500/30 cursor-not-allowed opacity-50'
+                      }`}
                   >
                     Next: Organization Profile
                   </button>
@@ -406,11 +439,17 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                           value={companyName}
                           onChange={(e) => setCompanyName(e.target.value)}
                           onBlur={() => touch('companyName')}
-                          className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${
-                            touched.companyName && !companyName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                          }`}
+                          className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${(touched.companyName && !companyName.trim()) || isCompanyNameTooLong
+                              ? 'border-red-500/60'
+                              : 'border-white/10 focus:border-[#A855F7]/50'
+                            }`}
                           placeholder="Enter registered business name"
                         />
+                        {isCompanyNameTooLong && (
+                          <p className="text-[10px] text-red-400 mt-1 font-medium">
+                            Company Name must be at most {MAX_NAME_LENGTH} characters (currently {companyName.length}).
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-white/70 mb-1.5">TIN Number (Taxpayer ID)</label>
@@ -419,11 +458,10 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                           value={tinNumber}
                           onChange={(e) => setTinNumber(e.target.value)}
                           onBlur={() => touch('tinNumber')}
-                          className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${
-                            touched.tinNumber && (!tinNumber.trim() || !isTinValid(tinNumber))
+                          className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${touched.tinNumber && (!tinNumber.trim() || !isTinValid(tinNumber))
                               ? 'border-red-500/60'
                               : 'border-white/10 focus:border-[#A855F7]/50'
-                          }`}
+                            }`}
                           placeholder="000-000-000-000"
                         />
                       </div>
@@ -450,9 +488,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         value={councilName}
                         onChange={(e) => setCouncilName(e.target.value)}
                         onBlur={() => touch('councilName')}
-                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${
-                          touched.councilName && !councilName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                        }`}
+                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${touched.councilName && !councilName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                          }`}
                         placeholder="e.g. Barangay Socorro Council"
                       />
                     </div>
@@ -478,9 +515,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         value={universityName}
                         onChange={(e) => setUniversityName(e.target.value)}
                         onBlur={() => touch('universityName')}
-                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${
-                          touched.universityName && !universityName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                        }`}
+                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${touched.universityName && !universityName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                          }`}
                         placeholder="e.g. University of the Philippines Diliman"
                       />
                     </div>
@@ -496,7 +532,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     </div>
                   </div>
                 )}
-                
+
                 <div className="pt-2 flex gap-4">
                   <button
                     type="button"
@@ -509,9 +545,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     type="button"
                     onClick={() => setCurrentStep(3)}
                     disabled={!isStep2Valid}
-                    className={`flex-[2] rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                      isStep2Valid ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20' : 'bg-purple-500/30 cursor-not-allowed opacity-50'
-                    }`}
+                    className={`flex-[2] rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${isStep2Valid ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20' : 'bg-purple-500/30 cursor-not-allowed opacity-50'
+                      }`}
                   >
                     Next: Base Coordinates
                   </button>
@@ -535,9 +570,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       value={houseNo}
                       onChange={(e) => setHouseNo(e.target.value)}
                       onBlur={() => touch('houseNo')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
-                        touched.houseNo && !houseNo.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${touched.houseNo && !houseNo.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
                       placeholder="e.g. Blk 65 Lot 4"
                     />
                   </div>
@@ -548,9 +582,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       value={streetName}
                       onChange={(e) => setStreetName(e.target.value)}
                       onBlur={() => touch('streetName')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
-                        touched.streetName && !streetName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${touched.streetName && !streetName.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
                       placeholder="e.g. Commonwealth Ave."
                     />
                   </div>
@@ -574,9 +607,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
                       onBlur={() => touch('zipCode')}
-                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${
-                        touched.zipCode && !zipCode.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 placeholder:text-white/25 ${touched.zipCode && !zipCode.trim() ? 'border-red-500/60' : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
                       placeholder="e.g. 1121"
                     />
                   </div>
@@ -675,9 +707,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     type="button"
                     onClick={() => setCurrentStep(4)}
                     disabled={!isStep3Valid}
-                    className={`flex-[2] rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                      isStep3Valid ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20' : 'bg-purple-500/30 cursor-not-allowed opacity-50'
-                    }`}
+                    className={`flex-[2] rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${isStep3Valid ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20' : 'bg-purple-500/30 cursor-not-allowed opacity-50'
+                      }`}
                   >
                     Next: ID Verification
                   </button>
@@ -732,11 +763,10 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         value={idReferenceNumber}
                         onChange={(e) => setIdReferenceNumber(e.target.value.toUpperCase())}
                         onBlur={() => touch('idReferenceNumber')}
-                        className={`w-full mt-1 px-3 py-2 border rounded-md text-sm outline-none font-mono bg-white ${
-                          touched.idReferenceNumber && !isIdNumberValid(idType, idReferenceNumber)
+                        className={`w-full mt-1 px-3 py-2 border rounded-md text-sm outline-none font-mono bg-white ${touched.idReferenceNumber && !isIdNumberValid(idType, idReferenceNumber)
                             ? 'border-red-400 focus:border-red-500'
                             : 'border-slate-300 focus:border-[#A855F7]'
-                        }`}
+                          }`}
                         placeholder={PHILIPPINE_GOVERNMENT_IDS.find(id => id.id === idType).placeholder}
                       />
                       {touched.idReferenceNumber && !isIdNumberValid(idType, idReferenceNumber) && (
@@ -754,7 +784,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       onFileChange={setIdFrontFile}
                       onRemove={() => setIdFrontFile(null)}
                     />
-                    
+
                     {idRequiresBack ? (
                       <FileDropzone
                         label="Upload ID Back Side"
@@ -811,11 +841,10 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className={`flex-1 rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                      canSubmit
+                    className={`flex-1 rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${canSubmit
                         ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
                         : 'bg-purple-500/30 cursor-not-allowed opacity-50 text-white/50'
-                    }`}
+                      }`}
                   >
                     Create Account
                   </button>

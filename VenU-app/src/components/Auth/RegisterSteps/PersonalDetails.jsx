@@ -19,8 +19,22 @@ export default function PersonalDetails({
   isAgeValid,
   validation,
   createRole,
-  calculatedAge
+  calculatedAge,
+  // New validation props
+  MAX_NAME_LENGTH,
+  MIN_AGE,
+  MAX_AGE,
+  isFirstNameTooLong,
+  isLastNameTooLong,
+  isMiddleNameTooLong,
+  isEmailTooLong,
 }) {
+  // Derive which age error (if any) should be shown
+  const isAgeNaN = isNaN(calculatedAge);
+  const isAgeNegative = !isAgeNaN && calculatedAge < 0;
+  const isAgeTooYoung = !isAgeNaN && calculatedAge >= 0 && calculatedAge < MIN_AGE;
+  const isAgeTooOld = !isAgeNaN && calculatedAge > MAX_AGE;
+
   return (
     <div>
       <h4 className="text-sm font-bold text-white/90 border-b border-white/5 pb-2 mb-4">1. Personal Details</h4>
@@ -33,11 +47,10 @@ export default function PersonalDetails({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               onBlur={() => touch('firstName')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.firstName && (!firstName.trim() || !isNameValid(firstName))
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.firstName && (!firstName.trim() || !isNameValid(firstName))) || isFirstNameTooLong
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
-              }`}
+                }`}
               placeholder="Juan"
             />
             {touched.firstName && !firstName.trim() && (
@@ -45,6 +58,11 @@ export default function PersonalDetails({
             )}
             {touched.firstName && firstName.trim() && !isNameValid(firstName) && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Only letters, spaces, hyphens, or apostrophes (min 2 characters).</p>
+            )}
+            {isFirstNameTooLong && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">
+                First Name must be at most {MAX_NAME_LENGTH} characters (currently {firstName.length}).
+              </p>
             )}
           </div>
           <div>
@@ -54,15 +72,19 @@ export default function PersonalDetails({
               value={middleName}
               onChange={(e) => setMiddleName(e.target.value)}
               onBlur={() => touch('middleName')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.middleName && middleName.trim() && !isNameValid(middleName)
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.middleName && middleName.trim() && !isNameValid(middleName)) || isMiddleNameTooLong
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
-              }`}
+                }`}
               placeholder="Santos"
             />
             {touched.middleName && middleName.trim() && !isNameValid(middleName) && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Only letters, spaces, hyphens, or apostrophes.</p>
+            )}
+            {isMiddleNameTooLong && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">
+                Middle Name must be at most {MAX_NAME_LENGTH} characters (currently {middleName.length}).
+              </p>
             )}
           </div>
         </div>
@@ -75,11 +97,10 @@ export default function PersonalDetails({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               onBlur={() => touch('lastName')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.lastName && (!lastName.trim() || !isNameValid(lastName))
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.lastName && (!lastName.trim() || !isNameValid(lastName))) || isLastNameTooLong
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
-              }`}
+                }`}
               placeholder="dela Cruz"
             />
             {touched.lastName && !lastName.trim() && (
@@ -87,6 +108,11 @@ export default function PersonalDetails({
             )}
             {touched.lastName && lastName.trim() && !isNameValid(lastName) && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Only letters, spaces, hyphens, or apostrophes (min 2 characters).</p>
+            )}
+            {isLastNameTooLong && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">
+                Last Name must be at most {MAX_NAME_LENGTH} characters (currently {lastName.length}).
+              </p>
             )}
           </div>
           <div>
@@ -111,20 +137,34 @@ export default function PersonalDetails({
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
               onBlur={() => touch('dateOfBirth')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
-              }`}
+                }`}
             />
             {touched.dateOfBirth && !dateOfBirth && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Date of Birth is required.</p>
             )}
-            {touched.dateOfBirth && dateOfBirth && !isAgeValid && (
+            {touched.dateOfBirth && dateOfBirth && isAgeNaN && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">
+                Please enter a valid date of birth.
+              </p>
+            )}
+            {touched.dateOfBirth && dateOfBirth && isAgeNegative && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">
+                Date of Birth cannot be in the future. (Current calculated age: {calculatedAge})
+              </p>
+            )}
+            {touched.dateOfBirth && dateOfBirth && isAgeTooYoung && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">
                 {createRole === 'Organizer'
-                  ? 'Organizers must be at least 25 years old.'
-                  : 'Attendees must be at least 18 years old.'} (Current calculated age: {calculatedAge})
+                  ? `Organizers must be at least ${MIN_AGE} years old.`
+                  : `Attendees must be at least ${MIN_AGE} years old.`} (Current calculated age: {calculatedAge})
+              </p>
+            )}
+            {touched.dateOfBirth && dateOfBirth && isAgeTooOld && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">
+                Age must not exceed {MAX_AGE} years old. (Current calculated age: {calculatedAge})
               </p>
             )}
           </div>
@@ -135,11 +175,10 @@ export default function PersonalDetails({
               value={contactNumber}
               onChange={(e) => setContactNumber(e.target.value)}
               onBlur={() => touch('contactNumber')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-                touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
-              }`}
+                }`}
               placeholder="+639XXXXXXXXX"
             />
             {touched.contactNumber && !contactNumber.trim() && (
@@ -158,11 +197,10 @@ export default function PersonalDetails({
             value={createEmail}
             onChange={(e) => setCreateEmail(e.target.value)}
             onBlur={() => touch('createEmail')}
-            className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${
-              touched.createEmail && (!createEmail.trim() || !isEmailValid(createEmail))
+            className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.createEmail && (!createEmail.trim() || !isEmailValid(createEmail))) || isEmailTooLong
                 ? 'border-red-500/60 focus:border-red-400'
                 : 'border-white/10 focus:border-[#A855F7]/50'
-            }`}
+              }`}
             placeholder="juan.delacruz@example.ph"
           />
           {touched.createEmail && !createEmail.trim() && (
@@ -171,16 +209,20 @@ export default function PersonalDetails({
           {touched.createEmail && createEmail.trim() && !isEmailValid(createEmail) && (
             <p className="text-[10px] text-red-400 mt-1 font-medium">Enter a valid email address (e.g. juan@example.ph).</p>
           )}
+          {isEmailTooLong && (
+            <p className="text-[10px] text-red-400 mt-1 font-medium">
+              Email must be at most {MAX_NAME_LENGTH} characters (currently {createEmail.length}).
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Password</label>
-            <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${
-              touched.createPassword && (!createPassword || !Object.values(validation).every(Boolean))
+            <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${touched.createPassword && (!createPassword || !Object.values(validation).every(Boolean))
                 ? 'border-red-500/60'
                 : 'border-white/10 focus-within:border-[#A855F7]/50'
-            }`}>
+              }`}>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={createPassword}
@@ -203,11 +245,10 @@ export default function PersonalDetails({
           </div>
           <div>
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Confirm Password</label>
-            <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${
-              touched.confirmPassword && (!confirmPassword || createPassword !== confirmPassword)
+            <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${touched.confirmPassword && (!confirmPassword || createPassword !== confirmPassword)
                 ? 'border-red-500/60'
                 : 'border-white/10 focus-within:border-[#A855F7]/50'
-            }`}>
+              }`}>
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
@@ -241,14 +282,12 @@ export default function PersonalDetails({
             {passwordRules.map((pr) => (
               <li key={pr.key} className="flex items-center gap-2 text-xs">
                 <span
-                  className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-300 ${
-                    validation[pr.key] ? 'bg-green-400' : 'bg-white/10'
-                  }`}
+                  className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-300 ${validation[pr.key] ? 'bg-green-400' : 'bg-white/10'
+                    }`}
                 />
                 <span
-                  className={`transition-colors duration-300 ${
-                    validation[pr.key] ? 'text-green-400 font-medium' : 'text-white/30'
-                  }`}
+                  className={`transition-colors duration-300 ${validation[pr.key] ? 'text-green-400 font-medium' : 'text-white/30'
+                    }`}
                 >
                   {pr.rule}
                 </span>

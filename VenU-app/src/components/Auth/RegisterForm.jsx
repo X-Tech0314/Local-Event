@@ -44,7 +44,20 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const roles = ['Organizer', 'Attendee'];
 
   const calculatedAge = calculateAge(dateOfBirth);
-  const isAgeValid = dateOfBirth && (createRole === 'Organizer' ? calculatedAge >= 25 : calculatedAge >= 18);
+
+  // ─── Validation Constants ────────────────────────────────────────────────
+  const MAX_NAME_LENGTH = 30;
+  const MIN_AGE = createRole === 'Organizer' ? 25 : 18;
+  const MAX_AGE = 100;
+
+  // Max length checks (middle name only checked when there's input)
+  const isFirstNameTooLong = firstName.length > MAX_NAME_LENGTH;
+  const isLastNameTooLong = lastName.length > MAX_NAME_LENGTH;
+  const isMiddleNameTooLong = middleName.trim().length > 0 && middleName.length > MAX_NAME_LENGTH;
+  const isEmailTooLong = createEmail.length > MAX_NAME_LENGTH;
+
+  // Age bounds: lower bound depends on role, upper bound is 100 for both
+  const isAgeValid = dateOfBirth && calculatedAge >= MIN_AGE && calculatedAge <= MAX_AGE;
 
   // ─── Touched / Dirty State ────────────────────────────────────────────────
   const [touched, setTouched] = useState({});
@@ -54,11 +67,12 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   // ─── Wizard Step Guards ───────────────────────────────────────────────────
   const isStep1Valid =
-    firstName.trim() && isNameValid(firstName) &&
-    lastName.trim() && isNameValid(lastName) &&
+    firstName.trim() && isNameValid(firstName) && !isFirstNameTooLong &&
+    lastName.trim() && isNameValid(lastName) && !isLastNameTooLong &&
+    !isMiddleNameTooLong &&
     isAgeValid &&
     contactNumber.trim() && isContactValid(contactNumber) &&
-    createEmail.trim() && isEmailValid(createEmail) &&
+    createEmail.trim() && isEmailValid(createEmail) && !isEmailTooLong &&
     createPassword && Object.values(validation).every(Boolean) &&
     confirmPassword && createPassword === confirmPassword;
 
@@ -129,8 +143,8 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
         </button>
       </div>
 
-      <form 
-        className="space-y-5" 
+      <form
+        className="space-y-5"
         onSubmit={handleFormSubmit}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
@@ -150,11 +164,10 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                   setIdType('');
                 }
               }}
-              className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${
-                createRole === r
+              className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${createRole === r
                   ? 'bg-[#A855F7] text-white shadow-sm'
                   : 'text-white/50 hover:text-white/80'
-              }`}
+                }`}
             >
               {r}
             </button>
@@ -167,13 +180,12 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
             {[1, 2, 3, 4].map((stepNum) => (
               <div
                 key={stepNum}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  stepNum === currentStep
+                className={`h-1.5 rounded-full transition-all duration-300 ${stepNum === currentStep
                     ? 'w-6 bg-[#A855F7]'
                     : stepNum < currentStep
-                    ? 'w-2 bg-[#A855F7]/50'
-                    : 'w-2 bg-white/10'
-                }`}
+                      ? 'w-2 bg-[#A855F7]/50'
+                      : 'w-2 bg-white/10'
+                  }`}
               />
             ))}
           </div>
@@ -184,10 +196,31 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
         {/* Form Input Card */}
         <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl p-5 border border-white/10 shadow-2xl space-y-6 text-left">
-          
+
           {currentStep === 1 && (
             <PersonalDetails
-              {...{ firstName, setFirstName, middleName, setMiddleName, lastName, setLastName, suffix, setSuffix, dateOfBirth, setDateOfBirth, contactNumber, setContactNumber, createEmail, setCreateEmail, createPassword, setCreatePassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, touched, touch, isAgeValid, validation, createRole, calculatedAge }}
+              {...{
+                firstName, setFirstName,
+                middleName, setMiddleName,
+                lastName, setLastName,
+                suffix, setSuffix,
+                dateOfBirth, setDateOfBirth,
+                contactNumber, setContactNumber,
+                createEmail, setCreateEmail,
+                createPassword, setCreatePassword,
+                confirmPassword, setConfirmPassword,
+                showPassword, setShowPassword,
+                showConfirmPassword, setShowConfirmPassword,
+                touched, touch,
+                isAgeValid, validation, createRole, calculatedAge,
+                // New validation props
+                MAX_NAME_LENGTH,
+                MIN_AGE, MAX_AGE,
+                isFirstNameTooLong,
+                isLastNameTooLong,
+                isMiddleNameTooLong,
+                isEmailTooLong,
+              }}
             />
           )}
 
@@ -253,13 +286,12 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                 (currentStep === 2 && !isStep2Valid) ||
                 (currentStep === 3 && !isStep3Valid)
               }
-              className={`flex-1 rounded-xl py-3 text-white text-sm font-semibold transition-all duration-300 cursor-pointer ${
-                ((currentStep === 1 && isStep1Valid) ||
-                (currentStep === 2 && isStep2Valid) ||
-                (currentStep === 3 && isStep3Valid))
+              className={`flex-1 rounded-xl py-3 text-white text-sm font-semibold transition-all duration-300 cursor-pointer ${((currentStep === 1 && isStep1Valid) ||
+                  (currentStep === 2 && isStep2Valid) ||
+                  (currentStep === 3 && isStep3Valid))
                   ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
                   : 'bg-purple-500/30 cursor-not-allowed opacity-50 text-white/50'
-              }`}
+                }`}
             >
               Next
             </button>
@@ -267,11 +299,10 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
             <button
               type="submit"
               disabled={!canCreate}
-              className={`flex-1 rounded-xl py-3 text-white text-sm font-semibold transition-all duration-300 cursor-pointer ${
-                canCreate
+              className={`flex-1 rounded-xl py-3 text-white text-sm font-semibold transition-all duration-300 cursor-pointer ${canCreate
                   ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
                   : 'bg-purple-500/30 cursor-not-allowed text-white/50'
-              }`}
+                }`}
             >
               Create Account
             </button>
