@@ -127,6 +127,12 @@ namespace VenU.Api.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation Property for Ticket Tiers
-        public ICollection<EventTicketTier> TicketTiers { get; set; }
+        public ICollection<EventTicketTier> TicketTiers { get; set; } = new List<EventTicketTier>();
+
+        [NotMapped]
+        public decimal? AverageRating { get; set; }
+
+        [NotMapped]
+        public int? TotalReviews { get; set; }
     }
 }
