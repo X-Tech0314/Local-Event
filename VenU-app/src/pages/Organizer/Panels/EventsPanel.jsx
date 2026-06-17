@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Plus, Search, Filter, MapPin, Clock, ArrowRight, AlertCircle, Lock, Edit2, Trash2, ChevronDown, Ticket } from 'lucide-react';
+import { Calendar, Plus, Search, Filter, MapPin, Clock, ArrowRight, AlertCircle, Lock, Edit2, Trash2, ChevronDown, Ticket, BarChart3 } from 'lucide-react';
+import EventAnalyticsHub from './EventAnalyticsHub';
 
 // ── Status config ────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -11,7 +12,7 @@ const STATUS_CONFIG = {
 };
 
 // ── Individual Event Card (hooks are valid here) ──────────────────
-function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick }) {
+function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAnalytics }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(
     evt.status || (new Date(evt.startDateTime) > new Date() ? 'Published' : 'Done')
@@ -208,6 +209,12 @@ function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick }) {
           <p className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500">ID: {String(evt.id).substring(0, 8)}</p>
           <div className="flex items-center gap-3">
             <button
+              onClick={() => onViewAnalytics(evt.id)}
+              className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
+            >
+              <BarChart3 size={13} strokeWidth={2.5} /> Analytics
+            </button>
+            <button
               onClick={() => onDeleteClick(evt)}
               className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
             >
@@ -233,6 +240,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [eventToDelete, setEventToDelete] = useState(null);
+  const [analyticsEventId, setAnalyticsEventId] = useState(null);
 
   useEffect(() => {
     fetchEvents();
@@ -269,6 +277,10 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       setLoading(false);
     }
   };
+
+  if (analyticsEventId) {
+    return <EventAnalyticsHub eventId={analyticsEventId} onBack={() => setAnalyticsEventId(null)} />;
+  }
 
   const handleDeleteEvent = async () => {
     if (!eventToDelete) return;
@@ -340,7 +352,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((evt) => (
-            <EventCard key={evt.id} evt={evt} setEditEvent={setEditEvent} setActivePanel={setActivePanel} onDeleteClick={setEventToDelete} />
+            <EventCard key={evt.id} evt={evt} setEditEvent={setEditEvent} setActivePanel={setActivePanel} onDeleteClick={setEventToDelete} onViewAnalytics={setAnalyticsEventId} />
           ))}
         </div>
       )}

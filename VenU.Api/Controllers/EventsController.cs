@@ -389,5 +389,73 @@ namespace VenU.Api.Controllers
             
             return Ok(new { message = "Event deleted successfully." });
         }
+        [HttpGet("{id}/analytics")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> GetEventAnalytics(Guid id, [FromQuery] string search = null)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
+            {
+                return Unauthorized(new { message = "Invalid user token." });
+            }
+
+            var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+            if (evt == null)
+            {
+                return StatusCode(403, "Forbidden. You do not have permission to view analytics for this event.");
+            }
+
+            var attendeesQuery = _context.EventAttendees.Where(a => a.EventId == id).AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                var lowerSearch = search.ToLower();
+                attendeesQuery = attendeesQuery.Where(a => 
+                    a.AttendeeName.ToLower().Contains(lowerSearch) || 
+                    a.AttendeeEmail.ToLower().Contains(lowerSearch) ||
+                    a.TicketType.ToLower().Contains(lowerSearch));
+            }
+
+            var attendees = await attendeesQuery.OrderByDescending(a => a.CreatedAt).ToListAsync();
+
+            var totalRegistered = attendees.Count;
+            var checkedInCount = attendees.Count(a => a.IsPresent);
+            var arrivalRate = totalRegistered > 0 ? ((decimal)checkedInCount / totalRegistered) * 100 : 0;
+            var isOverCapacity = evt.MaxCapacity > 0 && totalRegistered >= evt.MaxCapacity;
+
+            var result = new VenU.Api.DTOs.EventAnalyticsHubDto
+            {
+                EventId = evt.Id,
+                EventTitle = evt.Title,
+                MaxCapacity = evt.MaxCapacity,
+                TotalRegistered = totalRegistered,
+                CheckedInCount = checkedInCount,
+                ArrivalRatePercentage = arrivalRate,
+                IsOverCapacity = isOverCapacity,
+                Attendees = attendees.Select(a => new VenU.Api.DTOs.AttendeeDto
+                {
+                    Id = a.Id,
+                    AttendeeName = a.AttendeeName,
+                    MaskedEmail = MaskEmail(a.AttendeeEmail),
+                    TicketType = a.TicketType,
+                    IsPresent = a.IsPresent,
+                    ArrivalTime = a.ArrivalTime
+                })
+            };
+
+            return Ok(result);
+        }
+
+        private string MaskEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email) || !email.Contains("@")) return email;
+            var parts = email.Split('@');
+            var name = parts[0];
+            var domain = parts[1];
+            if (name.Length <= 1) return email;
+            return $"{name[0]}***@{domain}";
+        }
     }
 }

@@ -1,0 +1,201 @@
+import React, { useState, useEffect } from 'react';
+import { BarChart3, Users, Clock, AlertTriangle, CheckCircle, Search, ChevronLeft, MapPin, Shield } from 'lucide-react';
+
+export default function EventAnalyticsHub({ eventId, onBack }) {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        if (!eventId) return;
+        fetchAnalytics();
+    }, [eventId, search]);
+
+    const fetchAnalytics = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const url = new URL(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/analytics`);
+            if (search) url.searchParams.append('search', search);
+
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) {
+                if (res.status === 403) throw new Error("Access Denied: You do not have permission to view analytics for this event.");
+                throw new Error("Failed to load analytics data.");
+            }
+
+            const json = await res.json();
+            setData(json);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading && !data) {
+        return (
+            <div className="flex justify-center items-center py-20 min-h-[500px]">
+                <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-6 flex flex-col items-center justify-center text-center">
+                <AlertTriangle size={32} className="text-red-500 mb-3" />
+                <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-1">Analytics Unavailable</h3>
+                <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+                <button onClick={onBack} className="mt-4 text-purple-600 font-bold hover:underline">Return to Events</button>
+            </div>
+        );
+    }
+
+    if (!data) return null;
+
+    return (
+        <div className="animate-fade-in space-y-8 relative min-h-[calc(100vh-4rem)]">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div>
+                    <button onClick={onBack} className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:underline mb-2">
+                        <ChevronLeft size={16} /> Back to Events
+                    </button>
+                    <h1 className="text-3xl font-semibold text-slate-900 dark:text-white flex items-center gap-3">
+                        {data.eventTitle} <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 text-xs font-bold rounded-full">Hub</span>
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 text-sm flex items-center gap-1">
+                        <MapPin size={14} /> Analytics & Secure Attendee Ledger
+                    </p>
+                </div>
+            </div>
+
+            {/* Executive Summary Ribbon */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Total Registered */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg text-purple-600 dark:text-purple-400">
+                            <Users size={20} strokeWidth={2.5} />
+                        </div>
+                    </div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Registered</p>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-slate-900 dark:text-white">{data.totalRegistered}</span>
+                        {data.maxCapacity > 0 && <span className="text-sm text-slate-500 font-medium">/ {data.maxCapacity} cap</span>}
+                    </div>
+                </div>
+
+                {/* Checked In */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-lg text-emerald-600 dark:text-emerald-400">
+                            <CheckCircle size={20} strokeWidth={2.5} />
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full">
+                            {data.arrivalRatePercentage.toFixed(1)}% Arrival Rate
+                        </span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Checked In</p>
+                    <span className="text-4xl font-bold text-slate-900 dark:text-white">{data.checkedInCount}</span>
+                </div>
+
+                {/* Capacity Status */}
+                <div className={`p-6 rounded-xl border shadow-sm relative overflow-hidden ${data.isOverCapacity ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                        <div className={`p-3 rounded-lg border ${data.isOverCapacity ? 'bg-red-100 dark:bg-red-900/40 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400'}`}>
+                            <AlertTriangle size={20} strokeWidth={2.5} />
+                        </div>
+                    </div>
+                    <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${data.isOverCapacity ? 'text-red-500' : 'text-slate-400'}`}>Capacity Standing</p>
+                    <span className={`text-2xl font-bold ${data.isOverCapacity ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
+                        {data.isOverCapacity ? 'Over Capacity Warning' : 'Safe Boundaries'}
+                    </span>
+                </div>
+            </div>
+
+            {/* Attendee Ledger */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col mt-8">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            Secure Attendee Ledger <Shield size={16} className="text-emerald-500" />
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-1">Data privacy mode active. Emails masked per R.A. 10173.</p>
+                    </div>
+                    <div className="relative w-full md:w-72">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search names, emails, tickets..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-slate-900 dark:text-white"
+                        />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th className="px-6 py-4">Attendee Info</th>
+                                <th className="px-6 py-4">Ticket Type</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Arrival Time</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {data.attendees.length === 0 ? (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                        No attendees found matching your search.
+                                    </td>
+                                </tr>
+                            ) : (
+                                data.attendees.map((a) => (
+                                    <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="font-bold text-slate-900 dark:text-white">{a.attendeeName}</div>
+                                            <div className="text-xs text-slate-500">{a.maskedEmail}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold rounded">
+                                                {a.ticketType || 'Standard'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {a.isPresent ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-full border border-emerald-200 dark:border-emerald-800/50">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Present
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-full border border-amber-200 dark:border-amber-800/50">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                            {a.arrivalTime ? (
+                                                <>
+                                                    <Clock size={14} className="text-purple-500" />
+                                                    {new Date(a.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </>
+                                            ) : (
+                                                <span className="text-slate-400 italic">--</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}
