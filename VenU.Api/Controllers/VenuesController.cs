@@ -95,6 +95,12 @@ namespace VenU.Api.Controllers
                 Landmarks = dto.Landmarks,
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
+                // PSGC codes
+                Region = dto.Region,
+                RegionCode = dto.RegionCode,
+                ProvinceCode = dto.ProvinceCode,
+                CityMunCode = dto.CityMunCode,
+                BarangayCode = dto.BarangayCode,
                 RepresentativeName = dto.RepresentativeName,
                 MobileNumber = dto.MobileNumber,
                 Landline = dto.Landline,

@@ -1,31 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Image as ImageIcon, MapPin, Calendar, Clock, Users, Lock, Unlock, Plus, Trash2, CheckCircle, ChevronRight, ChevronLeft, Map, Ticket, Music, Trophy, Star, Search, X, Gift, Heart, MoreHorizontal } from 'lucide-react';
+import { Upload, Image as ImageIcon, MapPin, Calendar, Clock, Users, Lock, Unlock, Plus, Trash2, CheckCircle, ChevronRight, ChevronLeft, Map, Ticket, Music, Trophy, Star, Search, X, Gift, Heart, MoreHorizontal, Loader2 } from 'lucide-react';
 import TicketPreview from '../../../components/TicketPreview';
-
-const locationData = {
-  "NCR": {
-    "Metro Manila": {
-      "Quezon City": ["Brgy. Laging Handa", "Brgy. Kamuning", "Brgy. Sacred Heart"],
-      "Manila": ["Brgy. 1", "Brgy. 2", "Brgy. 3"],
-      "Pasig": ["Brgy. Kapitolyo", "Brgy. Oranbo", "Brgy. San Antonio"]
-    }
-  },
-  "Region IV-A": {
-    "Cavite": {
-      "Dasmariñas": ["Dasmariñas, Cavite", "Brgy. San Jose", "Brgy. Paliparan"],
-      "Imus": ["Brgy. Buhay na Tubig", "Brgy. Carsadang Bago", "Brgy. Malagasang"],
-      "Bacoor": ["Brgy. Molino", "Brgy. Niog", "Brgy. Panapaan"]
-    },
-    "Laguna": {
-      "Santa Rosa": ["Brgy. Balibago", "Brgy. Dila", "Brgy. Macabling"],
-      "Calamba": ["Brgy. Real", "Brgy. Halang", "Brgy. Parian"]
-    },
-    "Batangas": {
-      "Batangas City": ["Brgy. Balagtas", "Brgy. Calicanto", "Brgy. Kumintang Ibaba"],
-      "Lipa": ["Brgy. Sabang", "Brgy. Marawoy", "Brgy. Tambo"]
-    }
-  }
-};
+import usePsgc from '../../../hooks/usePsgc';
 
 export default function CreateEventPanel({ currentUser, setActivePanel, editEvent, setEditEvent }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,6 +18,17 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   const [searchQuery, setSearchQuery] = useState('');
   const [venueResults, setVenueResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // PSGC cascading location hook
+  const {
+    regions, provinces, cities, barangays,
+    loading: psgcLoading,
+    noProvinceRegion,
+    psgcSel,
+    selectRegion, selectProvince, selectCity, selectBarangay,
+    getRegionName, getProvinceName, getCityName, getBarangayName,
+  } = usePsgc();
+  const [brgySearch, setBrgySearch] = useState('');
 
   const [formData, setFormData] = useState({
     EventTitle: '',
@@ -303,7 +290,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         }
         if (venueSource === 'custom') {
           if (!formData.SelectedRegion) newErrors.SelectedRegion = "Region is required.";
-          if (!formData.SelectedProvince) newErrors.SelectedProvince = "Province is required.";
+          if (!formData.SelectedProvince && !noProvinceRegion) newErrors.SelectedProvince = "Province is required.";
           if (!formData.SelectedCity) newErrors.SelectedCity = "City is required.";
           if (!formData.SelectedBarangay) newErrors.SelectedBarangay = "Barangay is required.";
           if (!formData.StreetAddress.trim()) newErrors.StreetAddress = "Street address is required.";
@@ -834,29 +821,36 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     <div className="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Region Vector</label>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                            Region {psgcLoading.regions && <Loader2 size={10} className="animate-spin text-purple-500" />}
+                          </label>
                           <select
-                            name="SelectedRegion"
-                            value={formData.SelectedRegion}
-                            onChange={(e) => setFormData(prev => ({ ...prev, SelectedRegion: e.target.value, SelectedProvince: '', SelectedCity: '', SelectedBarangay: '' }))}
+                            value={psgcSel.regionCode}
+                            onChange={e => { selectRegion(e.target.value); setFormData(prev => ({ ...prev, SelectedRegion: e.target.value, SelectedProvince: '', SelectedCity: '', SelectedBarangay: '' })); setBrgySearch(''); }}
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                           >
                             <option value="">Select Region</option>
-                            {Object.keys(locationData).map(r => <option key={r} value={r}>{r}</option>)}
+                            {regions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
                           </select>
                           {errors.SelectedRegion && <span className="text-[10px] text-red-500">{errors.SelectedRegion}</span>}
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Province Cluster</label>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                            Province {psgcLoading.provinces && <Loader2 size={10} className="animate-spin text-purple-500" />}
+                          </label>
                           <select
-                            name="SelectedProvince"
-                            value={formData.SelectedProvince}
-                            disabled={!formData.SelectedRegion}
-                            onChange={(e) => setFormData(prev => ({ ...prev, SelectedProvince: e.target.value, SelectedCity: '', SelectedBarangay: '' }))}
-                            className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                            value={psgcSel.provinceCode}
+                            disabled={!psgcSel.regionCode || noProvinceRegion}
+                            onChange={e => { selectProvince(e.target.value); setFormData(prev => ({ ...prev, SelectedProvince: e.target.value, SelectedCity: '', SelectedBarangay: '' })); setBrgySearch(''); }}
+                            className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50"
                           >
-                            <option value="">Select Province</option>
-                            {formData.SelectedRegion && Object.keys(locationData[formData.SelectedRegion]).map(p => <option key={p} value={p}>{p}</option>)}
+                            {noProvinceRegion
+                              ? <option value="__direct__">N/A — Province-less Region (e.g. NCR)</option>
+                              : <>
+                                  <option value="">Select Province</option>
+                                  {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                                </>
+                            }
                           </select>
                           {errors.SelectedProvince && <span className="text-[10px] text-red-500">{errors.SelectedProvince}</span>}
                         </div>
@@ -864,31 +858,52 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">City/Municipality Zone</label>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                            City / Municipality {psgcLoading.cities && <Loader2 size={10} className="animate-spin text-purple-500" />}
+                          </label>
                           <select
-                            name="SelectedCity"
-                            value={formData.SelectedCity}
-                            disabled={!formData.SelectedProvince}
-                            onChange={(e) => setFormData(prev => ({ ...prev, SelectedCity: e.target.value, SelectedBarangay: '' }))}
-                            className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                            value={psgcSel.cityMunCode}
+                            disabled={!psgcSel.provinceCode}
+                            onChange={e => { selectCity(e.target.value); setFormData(prev => ({ ...prev, SelectedCity: e.target.value, SelectedBarangay: '' })); setBrgySearch(''); }}
+                            className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50"
                           >
-                            <option value="">Select City</option>
-                            {formData.SelectedProvince && Object.keys(locationData[formData.SelectedRegion][formData.SelectedProvince]).map(c => <option key={c} value={c}>{c}</option>)}
+                            <option value="">Select City / Municipality</option>
+                            {cities.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
                           </select>
                           {errors.SelectedCity && <span className="text-[10px] text-red-500">{errors.SelectedCity}</span>}
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Barangay Sector</label>
-                          <select
-                            name="SelectedBarangay"
-                            value={formData.SelectedBarangay}
-                            disabled={!formData.SelectedCity}
-                            onChange={(e) => setFormData(prev => ({ ...prev, SelectedBarangay: e.target.value }))}
-                            className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                          >
-                            <option value="">Select Barangay</option>
-                            {formData.SelectedCity && locationData[formData.SelectedRegion][formData.SelectedProvince][formData.SelectedCity].map(b => <option key={b} value={b}>{b}</option>)}
-                          </select>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                            Barangay {psgcLoading.barangays && <Loader2 size={10} className="animate-spin text-purple-500" />}
+                          </label>
+                          <div className="relative">
+                            <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder={barangays.length === 0 ? 'Select a city first' : `Search ${barangays.length} barangays...`}
+                              value={brgySearch}
+                              onChange={e => setBrgySearch(e.target.value)}
+                              disabled={barangays.length === 0 || psgcLoading.barangays}
+                              className="w-full pl-6 pr-2 py-2 border border-slate-200 dark:border-slate-800 rounded-t-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50"
+                            />
+                          </div>
+                          <div className="bg-white dark:bg-slate-900 border border-t-0 border-slate-200 dark:border-slate-800 rounded-b-lg max-h-32 overflow-y-auto">
+                            {barangays.filter(b => b.name.toLowerCase().includes(brgySearch.toLowerCase())).map(b => (
+                              <button
+                                key={b.code}
+                                type="button"
+                                onClick={() => { selectBarangay(b.code); setBrgySearch(b.name); setFormData(prev => ({ ...prev, SelectedBarangay: b.name })); }}
+                                className={`w-full text-left px-2 py-1.5 text-[11px] hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors ${
+                                  psgcSel.barangayCode === b.code ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold' : 'text-slate-700 dark:text-slate-300'
+                                }`}
+                              >
+                                {b.name}
+                              </button>
+                            ))}
+                            {barangays.length > 0 && barangays.filter(b => b.name.toLowerCase().includes(brgySearch.toLowerCase())).length === 0 && (
+                              <p className="text-[10px] text-slate-400 text-center py-2">No match</p>
+                            )}
+                          </div>
                           {errors.SelectedBarangay && <span className="text-[10px] text-red-500">{errors.SelectedBarangay}</span>}
                         </div>
                       </div>

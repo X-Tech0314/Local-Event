@@ -46,6 +46,19 @@ namespace VenU.Api.Models
         [MaxLength(255)]
         public string? Landmarks { get; set; }
 
+        // PSGC Codes
+        [MaxLength(10)]
+        public string? RegionCode { get; set; }
+
+        [MaxLength(10)]
+        public string? ProvinceCode { get; set; }
+
+        [MaxLength(10)]
+        public string? CityMunCode { get; set; }
+
+        [MaxLength(10)]
+        public string? BarangayCode { get; set; }
+
         [Column(TypeName = "decimal(9,6)")]
         public decimal? Latitude { get; set; }
 

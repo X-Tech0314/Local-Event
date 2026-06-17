@@ -20,6 +20,11 @@ namespace VenU.Api.DTOs
         public string? Landmarks { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
+        // PSGC codes
+        public string? RegionCode { get; set; }
+        public string? ProvinceCode { get; set; }
+        public string? CityMunCode { get; set; }
+        public string? BarangayCode { get; set; }
 
         // 3. Contact
         public string? RepresentativeName { get; set; }
