@@ -37,6 +37,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const [idBackFile, setIdBackFile] = useState(null);
   const [idReferenceNumber, setIdReferenceNumber] = useState('');
   const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
+  const [tosConsent, setTosConsent] = useState(false);
 
   // Wizard Step State
   const [currentStep, setCurrentStep] = useState(1);
@@ -87,7 +88,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   const idRequiresBack = PHILIPPINE_GOVERNMENT_IDS.find(id => id.id === idType)?.hasBackSide;
   const isStep3Valid = idType && idFrontFile && (!idRequiresBack || idBackFile) && idReferenceNumber.trim() && isIdNumberValid(idType, idReferenceNumber);
-  const isStep4Valid = dataPrivacyConsent;
+  const isStep4Valid = dataPrivacyConsent && tosConsent;
 
   const canCreate = isStep1Valid && isStep2Valid && isStep3Valid && isStep4Valid;
 
@@ -240,22 +241,41 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
           {currentStep === 4 && (
             <div>
               <h4 className="text-sm font-bold text-white/90 border-b border-white/5 pb-2 mb-4">4. Legal Compliance</h4>
-              <div className="pt-2 text-white/70">
-                <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="accent-[#A855F7] h-4 w-4 mt-0.5 shrink-0"
-                    checked={dataPrivacyConsent}
-                    onChange={(e) => { setDataPrivacyConsent(e.target.checked); touch('consent'); }}
-                  />
-                  <span>
-                    I agree to the collection and processing of my data in compliance with the{' '}
-                    <strong className="text-white/90">Philippine Data Privacy Act of 2012 (NPC)</strong>.
-                  </span>
-                </label>
-                {touched.consent && !dataPrivacyConsent && (
-                  <p className="text-[10px] text-red-400 mt-2 font-medium">You must agree to the data privacy terms.</p>
-                )}
+              <div className="pt-2 text-white/70 space-y-4">
+                <div>
+                  <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="accent-[#A855F7] h-4 w-4 mt-0.5 shrink-0"
+                      checked={tosConsent}
+                      onChange={(e) => { setTosConsent(e.target.checked); touch('tos'); }}
+                    />
+                    <span>
+                      I agree to the <strong className="text-[#A855F7] hover:underline">Terms of Service</strong> and acknowledge my responsibilities as an attendee.
+                    </span>
+                  </label>
+                  {touched.tos && !tosConsent && (
+                    <p className="text-[10px] text-red-400 mt-2 font-medium">You must agree to the Terms of Service.</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="accent-[#A855F7] h-4 w-4 mt-0.5 shrink-0"
+                      checked={dataPrivacyConsent}
+                      onChange={(e) => { setDataPrivacyConsent(e.target.checked); touch('consent'); }}
+                    />
+                    <span>
+                      I agree to the collection and processing of my data in compliance with the{' '}
+                      <strong className="text-white/90">Philippine Data Privacy Act of 2012 (NPC)</strong>.
+                    </span>
+                  </label>
+                  {touched.consent && !dataPrivacyConsent && (
+                    <p className="text-[10px] text-red-400 mt-2 font-medium">You must agree to the data privacy terms.</p>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -44,7 +44,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   const [idBackFile, setIdBackFile] = useState(null);
   const [selfieFile, setSelfieFile] = useState(null);
   const [idReferenceNumber, setIdReferenceNumber] = useState('');
-  const [merchantConsent, setMerchantConsent] = useState(false);
+  const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
+  const [tosConsent, setTosConsent] = useState(false);
 
   // Touched state
   const [touched, setTouched] = useState({});
@@ -101,7 +102,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
     (!idRequiresBack || idBackFile) &&
     selfieFile &&
     idReferenceNumber.trim() && isIdNumberValid(idType, idReferenceNumber) &&
-    merchantConsent;
+    dataPrivacyConsent && tosConsent;
 
   const canSubmit = isStep1Valid && isStep2Valid && isStep3Valid && isStep4Valid;
 
@@ -812,21 +813,40 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                   </div>
                 )}
 
-                <div className="pt-2">
-                  <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      className="accent-[#A855F7] h-4 w-4 mt-0.5 shrink-0"
-                      checked={merchantConsent}
-                      onChange={(e) => {
-                        setMerchantConsent(e.target.checked);
-                        touch('consent');
-                      }}
-                    />
-                    <span className="text-white/60">
-                      I agree to the <strong className="text-[#A855F7] hover:underline">Terms of Service for Event Organizers</strong> and consent to the collection and background verification of our uploaded official credentials in strict compliance with the <strong className="text-white">Philippine Data Privacy Act of 2012</strong>.
-                    </span>
-                  </label>
+                <div className="pt-2 space-y-4">
+                  <div>
+                    <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="accent-[#A855F7] h-4 w-4 mt-0.5 shrink-0"
+                        checked={tosConsent}
+                        onChange={(e) => {
+                          setTosConsent(e.target.checked);
+                          touch('tos');
+                        }}
+                      />
+                      <span className="text-white/60">
+                        I agree to the <strong className="text-[#A855F7] hover:underline">Terms of Service for Event Organizers</strong>.
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="accent-[#A855F7] h-4 w-4 mt-0.5 shrink-0"
+                        checked={dataPrivacyConsent}
+                        onChange={(e) => {
+                          setDataPrivacyConsent(e.target.checked);
+                          touch('consent');
+                        }}
+                      />
+                      <span className="text-white/60">
+                        I consent to the collection and background verification of our uploaded official credentials in strict compliance with the <strong className="text-white">Philippine Data Privacy Act of 2012</strong>.
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-white/5 flex gap-4">
