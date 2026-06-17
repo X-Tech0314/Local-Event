@@ -15,6 +15,7 @@ namespace VenU.Api.Data
         public DbSet<EventTicketTier> EventTicketTiers { get; set; }
         public DbSet<Venue> Venues { get; set; }
         public DbSet<EventAttendee> EventAttendees { get; set; }
+        public DbSet<EventReview> EventReviews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -268,6 +268,30 @@ namespace VenU.Api.Controllers
                 .OrderByDescending(e => e.CreatedAt)
                 .ToListAsync();
 
+            var eventIds = events.Where(e => e.EndDateTime < DateTime.UtcNow).Select(e => e.Id).ToList();
+            if (eventIds.Any())
+            {
+                var reviews = await _context.EventReviews
+                    .Where(r => eventIds.Contains(r.EventId))
+                    .GroupBy(r => r.EventId)
+                    .Select(g => new { EventId = g.Key, Avg = g.Average(r => r.StarRating), Count = g.Count() })
+                    .ToDictionaryAsync(x => x.EventId, x => x);
+
+                foreach (var evt in events)
+                {
+                    if (reviews.TryGetValue(evt.Id, out var stat))
+                    {
+                        evt.AverageRating = (decimal)Math.Round(stat.Avg, 1);
+                        evt.TotalReviews = stat.Count;
+                    }
+                    else if (evt.EndDateTime < DateTime.UtcNow)
+                    {
+                        evt.AverageRating = 0;
+                        evt.TotalReviews = 0;
+                    }
+                }
+            }
+
             return Ok(events);
         }
 
@@ -467,6 +491,77 @@ namespace VenU.Api.Controllers
             };
 
             return Ok(result);
+        }
+
+        [HttpGet("{id}/management-summary")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> GetManagementSummary(Guid id)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Sub ||
+                c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid organizerId))
+            {
+                return Unauthorized(new { message = "Invalid user token." });
+            }
+
+            var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+            if (evt == null)
+            {
+                return StatusCode(403, "Forbidden. You do not have permission to view management summary for this event.");
+            }
+
+            var attendees = await _context.EventAttendees.Where(a => a.EventId == id).ToListAsync();
+            var reviews = await _context.EventReviews.Where(r => r.EventId == id).OrderByDescending(r => r.DateSubmitted).ToListAsync();
+
+            var totalRegistered = attendees.Count;
+            var checkedInCount = attendees.Count(a => a.IsPresent);
+            
+            decimal avgRating = 0;
+            if (reviews.Count > 0)
+            {
+                avgRating = (decimal)reviews.Average(r => r.StarRating);
+            }
+
+            var isEnded = evt.EndDateTime < DateTime.UtcNow;
+
+            var result = new VenU.Api.DTOs.EventManagementSummaryDto
+            {
+                EventId = evt.Id,
+                EventTitle = evt.Title,
+                TotalRegistered = totalRegistered,
+                CheckedInCount = checkedInCount,
+                AverageRating = Math.Round(avgRating, 1),
+                TotalReviews = reviews.Count,
+                IsEnded = isEnded,
+                Reviews = reviews.Select(r => new VenU.Api.DTOs.EventReviewDto
+                {
+                    Id = r.Id,
+                    ReviewerName = MaskName(r.ReviewerName),
+                    StarRating = r.StarRating,
+                    FeedbackText = r.FeedbackText,
+                    DateSubmitted = r.DateSubmitted
+                }),
+                Attendees = attendees.Select(a => new VenU.Api.DTOs.AttendeeDto
+                {
+                    Id = a.Id,
+                    AttendeeName = MaskName(a.AttendeeName),
+                    MaskedEmail = MaskEmail(a.AttendeeEmail),
+                    TicketType = a.TicketType,
+                    IsPresent = a.IsPresent,
+                    ArrivalTime = a.ArrivalTime
+                })
+            };
+
+            return Ok(result);
+        }
+
+        private string MaskName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "Anonymous";
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return $"{parts[0][0]}***";
+            return $"{parts[0][0]}*** {parts[^1][0]}***";
         }
 
         private string MaskEmail(string email)

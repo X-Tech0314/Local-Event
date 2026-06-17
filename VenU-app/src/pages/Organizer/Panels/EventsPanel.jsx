@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Plus, Search, Filter, MapPin, Clock, ArrowRight, AlertCircle, Lock, Edit2, Trash2, ChevronDown, Ticket, BarChart3 } from 'lucide-react';
+import { Trash2, Edit, Copy, ChevronDown, CheckCircle, Clock, Ban, Lock, MapPin, Calendar, Ticket, Tag, ArrowRight, Star, Settings, Plus, Search, Filter, BarChart3, AlertCircle } from 'lucide-react';
 import EventAnalyticsHub from './EventAnalyticsHub';
+import EventManagementModal from './EventManagementModal';
 
 // ── Status config ────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -12,7 +13,7 @@ const STATUS_CONFIG = {
 };
 
 // ── Individual Event Card (hooks are valid here) ──────────────────
-function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAnalytics }) {
+export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAnalytics, onManage }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(
     evt.status || (new Date(evt.startDateTime) > new Date() ? 'Published' : 'Done')
@@ -55,6 +56,8 @@ function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAna
   const timeDisplay = isMultiDay
     ? `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${startStr} – ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${endStr}`
     : endStr ? `${startStr} – ${endStr}` : startStr;
+
+  const isEnded = endDate && endDate < new Date();
 
   const venueDisplay = evt.venueName || 'Custom Venue';
   const microLocation = [evt.floorLevel, evt.wingSection, evt.boothNumber, evt.proximityAnchor].filter(Boolean).join(', ');
@@ -196,13 +199,34 @@ function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAna
           </div>
         )}
 
-        {/* App Ticketing Window */}
-        {evt.ticketSalesStart && evt.ticketSalesEnd && (
+        {/* App Ticketing Window or Date Ended Badge */}
+        {isEnded ? (
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50 flex flex-col gap-2">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded-full w-max border border-red-500/20">
+              <Ban size={10} /> Date Ended
+            </div>
+            {(evt.totalReviews !== undefined && evt.totalReviews > 0) && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                  {Number(evt.averageRating).toFixed(1)} / 5.0
+                </span>
+                <span className="text-[9px] text-slate-500 font-semibold">({evt.totalReviews} reviews)</span>
+              </div>
+            )}
+            {(evt.totalReviews !== undefined && evt.totalReviews === 0) && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Star size={12} className="text-slate-400" />
+                <span className="text-[9px] text-slate-500 font-semibold">No reviews yet</span>
+              </div>
+            )}
+          </div>
+        ) : evt.ticketSalesStart && evt.ticketSalesEnd ? (
           <div className="mt-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 bg-slate-700/5 dark:bg-slate-300/5 border border-purple-500/10 px-2.5 py-1.5 rounded-lg">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
             <span>App Ticketing: {new Date(evt.ticketSalesStart).toLocaleDateString([], { month: 'short', day: 'numeric' })} to {new Date(evt.ticketSalesEnd).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
           </div>
-        )}
+        ) : null}
 
         {/* Footer Actions */}
         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/50 flex justify-between items-center mt-auto">
@@ -222,10 +246,10 @@ function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAna
             </button>
 
             <button
-              onClick={() => { setEditEvent(evt); setActivePanel('create-event'); }}
+              onClick={() => onManage(evt)}
               className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1 group-hover:gap-2 transition-all hover:text-purple-700 dark:hover:text-purple-400"
             >
-              Manage <ArrowRight size={16} strokeWidth={3} />
+              Manage <Settings size={14} className="ml-0.5" />
             </button>
           </div>
         </div>
@@ -241,6 +265,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
   const [error, setError] = useState(null);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [analyticsEventId, setAnalyticsEventId] = useState(null);
+  const [managementEventId, setManagementEventId] = useState(null);
 
   useEffect(() => {
     fetchEvents();
@@ -277,10 +302,6 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       setLoading(false);
     }
   };
-
-  if (analyticsEventId) {
-    return <EventAnalyticsHub eventId={analyticsEventId} onBack={() => setAnalyticsEventId(null)} />;
-  }
 
   const handleDeleteEvent = async () => {
     if (!eventToDelete) return;
@@ -352,9 +373,40 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((evt) => (
-            <EventCard key={evt.id} evt={evt} setEditEvent={setEditEvent} setActivePanel={setActivePanel} onDeleteClick={setEventToDelete} onViewAnalytics={setAnalyticsEventId} />
+            <EventCard 
+              key={evt.id} 
+              evt={evt} 
+              setEditEvent={setEditEvent} 
+              setActivePanel={setActivePanel} 
+              onDeleteClick={setEventToDelete} 
+              onViewAnalytics={setAnalyticsEventId} 
+              onManage={(e) => setManagementEventId(e.id)}
+            />
           ))}
         </div>
+      )}
+
+      {/* Event Analytics Modal */}
+      {analyticsEventId && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900">
+          <EventAnalyticsHub eventId={analyticsEventId} onBack={() => setAnalyticsEventId(null)} />
+        </div>
+      )}
+
+      {/* Event Management & Feedback Modal */}
+      {managementEventId && (
+        <EventManagementModal 
+          eventId={managementEventId} 
+          onClose={() => setManagementEventId(null)} 
+          onEdit={() => {
+            const ev = events.find(e => e.id === managementEventId);
+            if (ev) {
+              setManagementEventId(null);
+              setEditEvent(ev);
+              setActivePanel('create-event');
+            }
+          }}
+        />
       )}
 
       {eventToDelete && (

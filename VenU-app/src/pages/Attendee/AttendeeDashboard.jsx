@@ -158,15 +158,36 @@ function mapBackendEvent(evt) {
 }
 
 function getRecommendedEvents(events, user) {
-  const byBarangay = events.filter(
-    (e) => e.barangay === user.barangay && (user.preferredCategories || []).includes(e.category)
-  );
-  if (byBarangay.length > 0) return { events: byBarangay, scope: `Near You in ${user.barangay}` };
+  // 1. Sort events so the user's location is at the top
+  const sortedEvents = [...events].sort((a, b) => {
+    let scoreA = 0;
+    let scoreB = 0;
 
-  const byCity = events.filter((e) => e.city === user.city);
-  if (byCity.length > 0) return { events: byCity, scope: `Events in ${user.city || 'your city'}` };
+    if (a.barangay === user.barangay) scoreA += 10;
+    if (b.barangay === user.barangay) scoreB += 10;
 
-  return { events, scope: 'Trending Events Across the Philippines' };
+    if (a.city === user.city) scoreA += 5;
+    if (b.city === user.city) scoreB += 5;
+
+    return scoreB - scoreA;
+  });
+
+  // 2. Look at the #1 most recommended event to determine the Scope Title
+  let scopeTitle = 'Trending Events Across the Philippines';
+  const topEvent = sortedEvents[0];
+
+  if (topEvent) {
+    if (topEvent.barangay === user.barangay) {
+      scopeTitle = `Near You in ${user.barangay}`;
+    } else if (topEvent.city === user.city) {
+      scopeTitle = `Events in ${user.city}`;
+    }
+  }
+
+  return {
+    events: sortedEvents,
+    scope: scopeTitle
+  };
 }
 
 function generateTicketId() {
