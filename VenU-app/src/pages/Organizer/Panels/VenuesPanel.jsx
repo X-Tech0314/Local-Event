@@ -23,9 +23,18 @@ function parseImages(raw) {
 }
 
 // ── Image Carousel ─────────────────────────────────────────────────
-function ImageCarousel({ images, fallback, alt }) {
+function ImageCarousel({ images, fallback, alt, autoPlay = true, interval = 3000 }) {
   const [idx, setIdx] = useState(0);
   const all = images.length > 0 ? images : (fallback ? [fallback] : []);
+
+  useEffect(() => {
+    if (!autoPlay || all.length <= 1) return;
+    const timer = setInterval(() => {
+      setIdx(i => (i + 1) % all.length);
+    }, interval);
+    return () => clearInterval(timer);
+  }, [autoPlay, interval, all.length]);
+
   if (all.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">

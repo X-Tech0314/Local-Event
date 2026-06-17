@@ -21,6 +21,14 @@ namespace VenU.Api.Controllers
             _context = context;
         }
 
+        [HttpGet("debug-bldg")]
+        [AllowAnonymous]
+        public async Task<IActionResult> DebugBldg()
+        {
+            var venue = await _context.Venues.FirstOrDefaultAsync(v => v.Name.Contains("BRAZA"));
+            return Ok(venue);
+        }
+
         [HttpGet]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> GetVenues([FromQuery] string? search)

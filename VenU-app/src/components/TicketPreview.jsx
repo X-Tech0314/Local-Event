@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
+import { Lock } from 'lucide-react';
 
 export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -105,20 +106,28 @@ export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
           )}
         </div>
 
-        {/* Center: Styled QR Code Container */}
+        {/* Center: Styled QR Code Container or Invite Code */}
         <div 
-          className="p-3 rounded-2xl bg-slate-50 transition-all duration-300 border-2"
+          className="p-3 rounded-2xl bg-slate-50 transition-all duration-300 border-2 flex flex-col items-center justify-center w-32 h-32"
           style={{ borderColor: `${themeColor}20` }}
         >
-          <div className="w-24 h-24 flex items-center justify-center">
-            <QRCode
-              value={eventData?.ticketId || "https://yourplatform.com/verify/ticket-123"}
-              size={96}
-              level="H"
-              fgColor="#0f172a"
-              bgColor="transparent"
-            />
-          </div>
+          {eventData?.accessType === 'Private' ? (
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <Lock className="w-8 h-8 text-slate-700" />
+              <div className="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Invite Code</div>
+              <div className="text-lg font-black text-slate-800 tracking-widest">A7X9-B2</div>
+            </div>
+          ) : (
+            <div className="w-24 h-24 flex items-center justify-center">
+              <QRCode
+                value={eventData?.ticketId || "https://yourplatform.com/verify/ticket-123"}
+                size={96}
+                level="H"
+                fgColor="#0f172a"
+                bgColor="transparent"
+              />
+            </div>
+          )}
         </div>
 
          {/* Footer: Dynamic Ticket Tier Label */}

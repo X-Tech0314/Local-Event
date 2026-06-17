@@ -6,6 +6,7 @@ import usePsgc from '../../../hooks/usePsgc';
 export default function CreateEventPanel({ currentUser, setActivePanel, editEvent, setEditEvent }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [venueSource, setVenueSource] = useState('registered');
@@ -158,6 +159,24 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     }));
   };
 
+  const handleSmartAllocate = () => {
+    const totalCapacity = parseInt(formData.Capacity) || 0;
+    if (totalCapacity <= 0) return;
+    
+    const numTiers = formData.TicketTiers.length;
+    if (numTiers === 0) return;
+
+    const baseAmount = Math.floor(totalCapacity / numTiers);
+    const remainder = totalCapacity % numTiers;
+
+    const updatedTiers = formData.TicketTiers.map((tier, index) => ({
+      ...tier,
+      Capacity: (index === numTiers - 1 ? baseAmount + remainder : baseAmount).toString()
+    }));
+    
+    setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
+  };
+
   const removeTicketTier = (index) => {
     if (formData.TicketTiers.length > 1) {
       const updatedTiers = formData.TicketTiers.filter((_, i) => i !== index);
@@ -166,6 +185,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   };
 
   const handleSubmitEvent = async () => {
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
       const payload = {
@@ -205,6 +225,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         HasFireExit: formData.HasFireExit,
         HasFireExtinguishers: formData.HasFireExtinguishers,
         MapUrl: formData.MapUrl,
+        VenueImages: formData.VenueImages || [],
         AccessType: formData.Privacy,
         MaxCapacity: formData.Capacity ? parseInt(formData.Capacity) : 0,
         TicketTiers: enableTicketing ? formData.TicketTiers.map(t => ({
@@ -231,8 +252,12 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       }
 
       setShowSuccessModal(true);
+      setTimeout(() => {
+        setActivePanel('events');
+      }, 3000);
     } catch (err) {
       alert("Error submitting event: " + err.message);
+      setIsSubmitting(false);
     }
   };
 
@@ -301,8 +326,27 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           if (!formData.SquareFootage || parseInt(formData.SquareFootage) <= 0) newErrors.SquareFootage = "Valid square footage is required.";
         }
       }
-      if (!formData.Capacity || parseInt(formData.Capacity) <= 0) {
+      if (venueSource === 'custom' && (!formData.Capacity || parseInt(formData.Capacity) <= 0)) {
         newErrors.Capacity = "Please enter a valid occupancy capacity.";
+      }
+    }
+
+    if (step === 4 && enableTicketing) {
+      if (formData.TicketTiers.length === 0) {
+        newErrors.TicketTiers = "At least one ticket tier is required.";
+      } else {
+        const totalCapacity = parseInt(formData.Capacity) || 0;
+        let sumTickets = 0;
+        
+        formData.TicketTiers.forEach((tier, index) => {
+          if (!tier.Name.trim()) newErrors[`TierName_${index}`] = "Tier name required.";
+          if (!tier.Capacity || parseInt(tier.Capacity) <= 0) newErrors[`TierCapacity_${index}`] = "Valid capacity required.";
+          sumTickets += (parseInt(tier.Capacity) || 0);
+        });
+
+        if (totalCapacity > 0 && sumTickets > totalCapacity) {
+          newErrors.TicketCapacitySum = `Total ticket allocation (${sumTickets}) exceeds structural capacity limit (${totalCapacity}).`;
+        }
       }
     }
 
@@ -1014,28 +1058,36 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
               )}
 
               <div className="p-4 bg-purple-50/40 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/40 rounded-xl space-y-3">
-                <p className="text-xs font-medium text-purple-900 dark:text-purple-400">
-                  ⚠️ <strong>Organizer Verification Statement:</strong> Are you certain that the parameters selected above correctly map to your physical layout setup and logistics deployment capacity limits?
-                </p>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Structural Occupancy Capacity Limit</label>
-                  <input
-                    type="number"
-                    name="Capacity"
-                    value={formData.Capacity}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 500"
-                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
-                  />
-                  {errors.Capacity && <span className="text-xs text-red-500 mt-1 block">{errors.Capacity}</span>}
+                {venueSource === 'registered' ? (
+                  <p className="text-xs font-medium text-purple-900 dark:text-purple-400">
+                    ✅ <strong>Venue Occupancy Synchronized:</strong> Capacity limits and logistics are automatically inherited from the registered venue profile in the database.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs font-medium text-purple-900 dark:text-purple-400">
+                      ⚠️ <strong>Organizer Verification Statement:</strong> Are you certain that the parameters selected above correctly map to your physical layout setup and logistics deployment capacity limits?
+                    </p>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Structural Occupancy Capacity Limit</label>
+                      <input
+                        type="number"
+                        name="Capacity"
+                        value={formData.Capacity}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 500"
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
+                      />
+                      {errors.Capacity && <span className="text-xs text-red-500 mt-1 block">{errors.Capacity}</span>}
 
-                  {formData.Capacity && getCapacitySuggestion(formData.Capacity) && (
-                    <div className="mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 rounded-lg flex items-center space-x-2 animate-fade-in">
-                      <span className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">💡 Suggestion:</span>
-                      <span className="text-indigo-700 dark:text-indigo-300 text-[10px]">{getCapacitySuggestion(formData.Capacity)}</span>
+                      {formData.Capacity && getCapacitySuggestion(formData.Capacity) && (
+                        <div className="mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 rounded-lg flex items-center space-x-2 animate-fade-in">
+                          <span className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">💡 Suggestion:</span>
+                          <span className="text-indigo-700 dark:text-indigo-300 text-[10px]">{getCapacitySuggestion(formData.Capacity)}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -1047,7 +1099,21 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white">Configure Ticket Allocations</h2>
                   <p className="text-xs text-slate-500">Map custom tiers to your dynamic structural capacity.</p>
                 </div>
+                {enableTicketing && formData.Capacity && parseInt(formData.Capacity) > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleSmartAllocate}
+                    className="text-xs px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                  >
+                    ✨ Smart Auto-Allocate
+                  </button>
+                )}
               </div>
+              {errors.TicketCapacitySum && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg text-xs text-red-600 dark:text-red-400 animate-fade-in">
+                  ⚠️ {errors.TicketCapacitySum}
+                </div>
+              )}
 
               {enableTicketing ? (
                 <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
@@ -1148,10 +1214,11 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
             <button
               type="button"
               onClick={currentStep === 4 ? handleSubmitEvent : nextStep}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl flex items-center space-x-1 text-sm font-medium transition-colors shadow-lg shadow-purple-600/10"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl flex items-center space-x-1 text-sm font-medium transition-colors shadow-lg shadow-purple-600/10 disabled:opacity-50"
             >
-              <span>{currentStep === 4 ? 'Publish Event' : 'Continue'}</span>
-              <ChevronRight className="w-4 h-4" />
+              <span>{currentStep === 4 ? (isSubmitting ? 'Publishing...' : 'Publish Event') : 'Continue'}</span>
+              {!isSubmitting && <ChevronRight className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -1178,7 +1245,9 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                 barangay: formData.SelectedBarangay,
                 capacity: formData.Capacity,
                 privacy: formData.Privacy,
+                accessType: formData.Privacy,
                 ticketType: enableTicketing && formData.TicketTiers.length > 0 ? formData.TicketTiers[0].ValidityScope : null,
+                ticketTiers: enableTicketing ? formData.TicketTiers : [],
                 venueType: formData.VenueType,
                 floorLevel: formData.FloorLevel,
                 wingSection: formData.WingSection,
