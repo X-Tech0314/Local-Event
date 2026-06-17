@@ -102,8 +102,8 @@ function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick }) {
                   key={key}
                   onClick={() => handleStatusChange(key)}
                   className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center gap-2 transition-colors ${currentStatus === key
-                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${cfg.dot.replace(' animate-pulse', '')}`} />
@@ -300,9 +300,8 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-center relative overflow-hidden group">
-        <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 to-indigo-600" />
-        <div className="relative w-full md:w-96 ml-3">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors" size={18} />
           <input type="text" placeholder="Search event titles or venues..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded pl-12 pr-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" />
         </div>

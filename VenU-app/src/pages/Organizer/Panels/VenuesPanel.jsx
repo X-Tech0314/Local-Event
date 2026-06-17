@@ -90,7 +90,7 @@ export default function VenuesPanel({ currentUser }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) { setError('Not authenticated. Please log in again.'); return; }
-      
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/venues`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -144,7 +144,7 @@ export default function VenuesPanel({ currentUser }) {
       {/* Map Section */}
       <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded overflow-hidden p-2">
         <div className="relative">
-          <div className="absolute top-4 left-4 z-20 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+          <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-lg">
             <Navigation size={16} className="text-purple-600" />
             <span className="text-xs font-semibold text-slate-900 dark:text-white">
               {mappableVenues.length} Pinned Location{mappableVenues.length !== 1 ? 's' : ''}
@@ -157,7 +157,7 @@ export default function VenuesPanel({ currentUser }) {
                 : [14.34, 120.94]}
               zoom={13}
               scrollWheelZoom={false}
-              style={{ height: '100%', width: '100%', zIndex: 10 }}
+              style={{ height: '100%', width: '100%' }}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
