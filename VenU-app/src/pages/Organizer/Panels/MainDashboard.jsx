@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Users, Ticket, ArrowUpRight, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import { Calendar, ArrowRight, MapPin, Sparkles } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -20,42 +20,11 @@ const mockVenues = [
     { id: 3, title: 'The Metro Tech Lab', capacity: '150 People', location: 'Silicon District', type: 'Hybrid', coords: [14.35, 120.95] }
 ];
 
-const statCards = [
-    {
-        icon: Calendar,
-        label: 'Total Active Events',
-        value: '12',
-        sub: '+3 this week',
-        trend: 'up',
-        color: 'bg-slate-100 dark:bg-slate-700',
-        shadow: ''
-    },
-    {
-        icon: Users,
-        label: 'Platform Enrollments',
-        value: '5,240',
-        sub: '4,832 Attendees · 408 Organizers',
-        trend: 'up',
-        color: 'bg-slate-100 dark:bg-slate-700',
-        shadow: ''
-    },
-    {
-        icon: Ticket,
-        label: 'Ticket Transactions',
-        value: '₱ 219,500',
-        sub: '+18.7% vs last month',
-        trend: 'up',
-        color: 'bg-slate-100 dark:bg-slate-700',
-        shadow: ''
-    },
-];
-
 export default function MainDashboard({ currentUser, setActivePanel }) {
     return (
         <div className="animate-fade-in space-y-8">
             {/* ── Header ──────────────────────────────────────────────── */}
             <div className="relative rounded overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 lg:p-10">
-                
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -73,62 +42,11 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                 </div>
             </div>
 
-            {/* ── Stat Cards ────────────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {statCards.map(({ icon: Icon, label, value, sub, trend, color, shadow }, idx) => (
-                    <div
-                        key={idx}
-                        className="bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 p-6 group transition-all duration-300 relative overflow-hidden"
-                    >
-                        <div className="flex justify-between items-start relative z-10">
-                            <div>
-                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-                                <p className="text-2xl font-semibold text-slate-900 dark:text-white">{value}</p>
-                            </div>
-                            <div className={`p-3 rounded ${color} bg-slate-100 dark:bg-slate-700 border border-purple-100 dark:border-purple-800 text-purple-700 dark:text-purple-400 transform group-hover:scale-105 transition-transform duration-300`}>
-                                <Icon size={20} strokeWidth={2} />
-                            </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 relative z-10">
-                            <p className={`text-xs flex items-center gap-1 font-medium ${trend === 'up' ? 'text-purple-700 dark:text-purple-400' : 'text-slate-400'}`}>
-                                {trend === 'up' && <ArrowUpRight size={14} strokeWidth={2} />}
-                                {sub}
-                            </p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* ── Blueprint Layout Grid ─────────────────────────────────────── */}
+            {/* ── Main Layout Grid (Map + Upcoming Events) ─────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                {/* LEFT COLUMN: Map & Analytics (7 columns) */}
+                {/* LEFT COLUMN: Event Map (7 columns) */}
                 <div className="lg:col-span-7 space-y-8">
-                    {/* Event Performance */}
-                    <div className="bg-white dark:bg-slate-800 p-8 rounded border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                Key Metrics
-                            </h3>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-slate-100 dark:bg-slate-700 p-5 rounded border border-slate-200 dark:border-slate-600">
-                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Active Events</p>
-                                <p className="text-xl font-semibold mt-1 text-slate-900 dark:text-white">12</p>
-                            </div>
-                            <div className="bg-slate-100 dark:bg-slate-700 p-5 rounded border border-slate-200 dark:border-slate-600">
-                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Bookings</p>
-                                <p className="text-xl font-semibold mt-1 text-slate-900 dark:text-white">4,832</p>
-                            </div>
-                            <div className="bg-slate-100 dark:bg-slate-700 p-5 rounded border border-slate-200 dark:border-slate-600">
-                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Revenue (PHP)</p>
-                                <p className="text-xl font-semibold mt-1 text-slate-900 dark:text-white">19,500</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Venue Map */}
                     <div className="bg-white dark:bg-slate-800 p-8 rounded border border-slate-200 dark:border-slate-700">
                         <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
                             <MapPin size={16} className="text-purple-700 dark:text-purple-400" /> Event Map
@@ -160,7 +78,7 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: Ticket Event Stack (5 columns) */}
+                {/* RIGHT COLUMN: Upcoming Events (5 columns) */}
                 <div className="lg:col-span-5 space-y-8">
                     <div className="bg-white dark:bg-slate-800 p-8 rounded border border-slate-200 dark:border-slate-700 h-full">
                         <div className="flex justify-between items-center mb-6">
@@ -169,7 +87,7 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                             </h3>
                             <button className="text-sm font-medium text-purple-700 dark:text-purple-400 hover:text-purple-700 transition">View All</button>
                         </div>
-                        
+
                         <div className="space-y-4">
                             {[
                                 { title: 'Summer Tech Summit', date: 'JUN 20', time: '09:00 AM' },
@@ -182,7 +100,7 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                                         <span className="text-xs font-medium opacity-80">{event.date.split(' ')[0]}</span>
                                         <span className="text-lg font-semibold">{event.date.split(' ')[1]}</span>
                                     </div>
-                                    
+
                                     <div className="flex-1 p-4 flex justify-between items-center bg-white dark:bg-slate-800 relative">
                                         <div className="absolute left-0 top-2 bottom-2 w-px border-l border-slate-200 dark:border-slate-700"></div>
                                         <div className="pl-3">
