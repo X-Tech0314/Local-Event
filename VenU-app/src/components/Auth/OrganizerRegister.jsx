@@ -4,6 +4,7 @@ import { PHILIPPINE_GOVERNMENT_IDS, passwordRules } from '../../utils/constants.
 import { regions, getProvincesByRegion, getCityMunByProvince, getBarangayByMun } from 'phil-reg-prov-mun-brgy';
 import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 import FileDropzone from '../common/FileDropzone.jsx';
+import TermsAndPrivacyModal from './TermsAndPrivacyModal.jsx';
 
 export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, createRole, setCreateRole }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -46,6 +47,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   const [idReferenceNumber, setIdReferenceNumber] = useState('');
   const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
   const [tosConsent, setTosConsent] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Touched state
   const [touched, setTouched] = useState({});
@@ -826,7 +828,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         }}
                       />
                       <span className="text-white/60">
-                        I agree to the <strong className="text-[#A855F7] hover:underline">Terms of Service for Event Organizers</strong>.
+                        I agree to the <strong className="text-[#A855F7] hover:underline cursor-pointer" onClick={() => setShowTermsModal(true)}>Terms of Service for Event Organizers</strong>.
                       </span>
                     </label>
                   </div>
@@ -843,7 +845,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         }}
                       />
                       <span className="text-white/60">
-                        I consent to the collection and background verification of our uploaded official credentials in strict compliance with the <strong className="text-white">Philippine Data Privacy Act of 2012</strong>.
+                        I consent to the collection and background verification of our uploaded official credentials in strict compliance with the <strong className="text-white hover:underline cursor-pointer" onClick={() => setShowTermsModal(true)}>Philippine Data Privacy Act of 2012</strong>.
                       </span>
                     </label>
                   </div>
@@ -885,6 +887,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
           </button>
         </div>
       </form>
+      
+      <TermsAndPrivacyModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </div>
   );
 }

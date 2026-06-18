@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import OrganizerRegister from './OrganizerRegister.jsx';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../utils/constants.js';
 import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
+import TermsAndPrivacyModal from './TermsAndPrivacyModal.jsx';
 
 import PersonalDetails from './RegisterSteps/PersonalDetails.jsx';
 import AddressDetails from './RegisterSteps/AddressDetails.jsx';
@@ -38,6 +39,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const [idReferenceNumber, setIdReferenceNumber] = useState('');
   const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
   const [tosConsent, setTosConsent] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Wizard Step State
   const [currentStep, setCurrentStep] = useState(1);
@@ -251,7 +253,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                       onChange={(e) => { setTosConsent(e.target.checked); touch('tos'); }}
                     />
                     <span>
-                      I agree to the <strong className="text-[#A855F7] hover:underline">Terms of Service</strong> and acknowledge my responsibilities as an attendee.
+                      I agree to the <strong className="text-[#A855F7] hover:underline cursor-pointer" onClick={() => setShowTermsModal(true)}>Terms of Service</strong> and acknowledge my responsibilities as an attendee.
                     </span>
                   </label>
                   {touched.tos && !tosConsent && (
@@ -269,7 +271,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                     />
                     <span>
                       I agree to the collection and processing of my data in compliance with the{' '}
-                      <strong className="text-white/90">Philippine Data Privacy Act of 2012 (NPC)</strong>.
+                      <strong className="text-white/90 hover:underline cursor-pointer" onClick={() => setShowTermsModal(true)}>Philippine Data Privacy Act of 2012 (NPC)</strong>.
                     </span>
                   </label>
                   {touched.consent && !dataPrivacyConsent && (
@@ -340,6 +342,8 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
           </button>
         </div>
       </form>
+      
+      <TermsAndPrivacyModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </div>
   );
 }
