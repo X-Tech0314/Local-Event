@@ -167,21 +167,14 @@ function QrMockup() {
   );
 }
 
-function EventCard({ event, onSelect, onLocationClick, isSaved, onToggleSave }) {
+function EventCard({ event, onSelect, onPrivateEvent, onLocationClick, isSaved, onToggleSave }) {
   const eventId = event.eventId || event.id;
   return (
     <div
       onClick={() => {
         if (event.status === 'Published') {
           if (event.accessType === 'Private') {
-            const code = window.prompt("🔒 This is a Private Event. Please enter the Access Code:");
-            if (code !== null) {
-              if (event.verificationCode && code.toLowerCase() === event.verificationCode.toLowerCase()) {
-                onSelect(event);
-              } else {
-                alert("Incorrect Access Code. You cannot view this event.");
-              }
-            }
+            if (onPrivateEvent) onPrivateEvent(event);
           } else {
             onSelect(event);
           }
@@ -663,6 +656,9 @@ export default function AttendeeDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [search, setSearch] = useState('');
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [accessModalEvent, setAccessModalEvent] = useState(null);
+  const [accessCodeInput, setAccessCodeInput] = useState('');
+  const [accessCodeError, setAccessCodeError] = useState('');
   const [confirmedTicket, setConfirmedTicket] = useState(null);
   const [reviewingEvent, setReviewingEvent] = useState(null);
   const [selectedWalletCategory, setSelectedWalletCategory] = useState('All');
@@ -1238,6 +1234,11 @@ export default function AttendeeDashboard() {
                       key={event.eventId || event.id} 
                       event={event} 
                       onSelect={setSelectedEvent} 
+                      onPrivateEvent={(evt) => {
+                        setAccessModalEvent(evt);
+                        setAccessCodeInput('');
+                        setAccessCodeError('');
+                      }}
                       onLocationClick={() => handleLocationClick(event, index)}
                       isSaved={savedEvents.includes(event.eventId || event.id)}
                       onToggleSave={toggleSaveEvent}
@@ -1679,6 +1680,70 @@ export default function AttendeeDashboard() {
             addNotification("QR Scanned", `Search updated with code: ${data}`);
           }} 
         />
+      )}
+
+      {/* Custom Private Access Modal */}
+      {accessModalEvent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-none border border-purple-500/30 shadow-2xl w-full max-w-sm p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
+            <button 
+              onClick={() => setAccessModalEvent(null)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X size={20} />
+            </button>
+            <div className="flex flex-col items-center text-center mt-2 mb-6">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
+                <Lock size={24} className="text-purple-600 dark:text-purple-400" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Private Event</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Enter the access code for <span className="font-semibold">{accessModalEvent.title}</span>
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <input 
+                  type="text" 
+                  value={accessCodeInput}
+                  onChange={(e) => {
+                    setAccessCodeInput(e.target.value);
+                    setAccessCodeError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
+                        setAccessModalEvent(null);
+                        setSelectedEvent(accessModalEvent);
+                      } else {
+                        setAccessCodeError('Incorrect access code. Please try again.');
+                      }
+                    }
+                  }}
+                  placeholder="Enter Code" 
+                  className={`w-full bg-slate-50 dark:bg-slate-800 border ${accessCodeError ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded p-3 text-center text-lg font-bold tracking-widest text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 focus:ring-1 focus:ring-purple-700`}
+                />
+                {accessCodeError && <p className="text-xs text-red-500 font-medium text-center mt-2">{accessCodeError}</p>}
+              </div>
+              
+              <button 
+                onClick={() => {
+                  if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
+                    setAccessModalEvent(null);
+                    setSelectedEvent(accessModalEvent);
+                  } else {
+                    setAccessCodeError('Incorrect access code. Please try again.');
+                  }
+                }}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded transition-colors shadow-lg"
+              >
+                Access Event
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

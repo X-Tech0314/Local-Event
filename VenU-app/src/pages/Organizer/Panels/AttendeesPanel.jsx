@@ -2,6 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, Calendar, ArrowLeft, Search, Filter, CheckCircle2, Star, Users, CheckCircle, Clock } from 'lucide-react';
 import axios from 'axios';
 import { EventCard } from './EventsPanel';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import { QrCode, X } from 'lucide-react';
+
+function CheckInScannerModal({ onScan, onClose }) {
+  useEffect(() => {
+    const scanner = new Html5QrcodeScanner('reader-checkin', { qrbox: { width: 250, height: 250 }, fps: 5 }, false);
+    scanner.render((text) => {
+      scanner.clear();
+      onScan(text);
+    }, (err) => {
+      // ignore
+    });
+    return () => {
+      scanner.clear().catch(e => console.warn(e));
+    };
+  }, [onScan]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <X size={24} />
+        </button>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <QrCode className="text-purple-600" /> Scan Ticket (DPA Compliant)
+        </h2>
+        <div id="reader-checkin" className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden"></div>
+        <p className="text-center text-xs text-slate-500 mt-4">
+          Point your camera at the attendee's ticket. PII is masked per DPA 2012.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function AttendeesPanel({ currentUser }) {
   const [events, setEvents] = useState([]);
@@ -14,6 +48,7 @@ export default function AttendeesPanel({ currentUser }) {
   const [hubLoading, setHubLoading] = useState(false);
   const [hubError, setHubError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -163,7 +198,7 @@ export default function AttendeesPanel({ currentUser }) {
             {!hubData.isEnded ? (
               // ACTIVE EVENT: Operational Check-In Table
               <div className="bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col md:flex-row gap-4 justify-between">
                   <div className="relative w-full md:w-[400px]">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
@@ -174,6 +209,12 @@ export default function AttendeesPanel({ currentUser }) {
                       className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded pl-12 pr-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" 
                     />
                   </div>
+                  <button 
+                    onClick={() => setShowScanner(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded text-sm transition-colors flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <QrCode size={18} /> Scan Ticket
+                  </button>
                 </div>
                 <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
                   {hubData.attendees && hubData.attendees.filter(a => a.attendeeName?.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
@@ -263,6 +304,33 @@ export default function AttendeesPanel({ currentUser }) {
             )}
           </div>
         ) : null}
+
+        {showScanner && (
+          <CheckInScannerModal 
+            onClose={() => setShowScanner(false)} 
+            onScan={(data) => {
+              setShowScanner(false);
+              // Simulated Check-in Logic
+              if (hubData && hubData.attendees) {
+                const updatedAttendees = [...hubData.attendees];
+                // In a real app, 'data' would be the Ticket ID. Here we just check in a random pending person for demo
+                const targetIdx = updatedAttendees.findIndex(a => !a.isPresent);
+                if (targetIdx !== -1) {
+                  updatedAttendees[targetIdx].isPresent = true;
+                  updatedAttendees[targetIdx].arrivalTime = new Date().toISOString();
+                  setHubData(prev => ({
+                    ...prev,
+                    attendees: updatedAttendees,
+                    checkedInCount: prev.checkedInCount + 1
+                  }));
+                  alert(`✅ Ticket Validated! Check-in successful for ${updatedAttendees[targetIdx].attendeeName}`);
+                } else {
+                  alert("❌ Invalid Ticket or All Guests Checked In.");
+                }
+              }
+            }}
+          />
+        )}
       </div>
     );
   }

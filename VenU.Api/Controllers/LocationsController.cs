@@ -23,9 +23,9 @@ namespace VenU.Api.Controllers
         [AllowAnonymous] // Allow guests/explorers to see events
         public async Task<IActionResult> ExploreLocations([FromQuery] string search = null)
         {
-            // Only fetch Published and active events
+            // Only fetch non-draft active events
             var query = _context.Events
-                .Where(e => e.Status == "Published")
+                .Where(e => e.Status != "Draft")
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
