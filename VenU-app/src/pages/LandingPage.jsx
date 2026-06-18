@@ -293,9 +293,27 @@ export default function LandingPage() {
             onRegisterSubmit={async (data) => {
               try {
                 const role = data.role || createRole || 'Attendee';
-                const p = role === 'Organizer' ? data.personal : data;
+                const p = data.personal || data;
                 const addr = data.address || {};
                 const idVer = data.idVerification || {};
+                const orgProfile = data.orgProfile || {};
+
+                const uploadFile = async (file) => {
+                  if (!file) return '';
+                  const fd = new FormData();
+                  fd.append('file', file);
+                  const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/upload`, fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                  });
+                  return res.data.url;
+                };
+
+                const [idFrontPath, idBackPath, selfiePath, orgDocumentPath] = await Promise.all([
+                  uploadFile(idVer.front),
+                  uploadFile(idVer.back),
+                  uploadFile(idVer.selfie),
+                  uploadFile(orgProfile.document)
+                ]);
 
                 const payload = {
                   email: p?.email || '',
@@ -318,9 +336,13 @@ export default function LandingPage() {
                   idType: idVer.type || '',
                   idReferenceNumber: idVer.referenceNumber || '',
                   position: p?.position || '',
-                  orgType: data.orgProfile?.orgType || '',
-                  orgName: data.orgProfile?.companyName || data.orgProfile?.councilName || data.orgProfile?.universityName || '',
-                  tinNumber: data.orgProfile?.tinNumber || ''
+                  orgType: orgProfile.orgType || '',
+                  orgName: orgProfile.companyName || orgProfile.councilName || orgProfile.universityName || '',
+                  tinNumber: orgProfile.tinNumber || '',
+                  idFrontPath,
+                  idBackPath,
+                  selfiePath,
+                  orgDocumentPath
                 };
 
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, payload);

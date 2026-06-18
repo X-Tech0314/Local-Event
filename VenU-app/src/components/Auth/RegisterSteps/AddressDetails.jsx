@@ -1,25 +1,13 @@
-import React, { useMemo } from 'react';
-import { regions, getProvincesByRegion, getCityMunByProvince, getBarangayByMun } from 'phil-reg-prov-mun-brgy';
-
 export default function AddressDetails({
   houseNo, setHouseNo,
   streetName, setStreetName,
   subdivision, setSubdivision,
   zipCode, setZipCode,
-  region, setRegion,
-  province, setProvince,
-  city, setCity,
-  barangay, setBarangay,
+  regions, provinces, cities, barangays,
+  psgcLoading, noProvinceRegion, psgcSel,
+  selectRegion, selectProvince, selectCity, selectBarangay,
   touched, touch
 }) {
-
-  // Derive PSGC data based on selected names
-  const selectedReg = useMemo(() => regions.find(r => r.name === region), [region]);
-  const provs = useMemo(() => selectedReg ? getProvincesByRegion(selectedReg.reg_code) : [], [selectedReg]);
-  const selectedProv = useMemo(() => provs.find(p => p.name === province), [provs, province]);
-  const cities = useMemo(() => selectedProv ? getCityMunByProvince(selectedProv.prov_code) : [], [selectedProv]);
-  const selectedCity = useMemo(() => cities.find(c => c.name === city), [cities, city]);
-  const brgys = useMemo(() => selectedCity ? getBarangayByMun(selectedCity.mun_code) : [], [selectedCity]);
 
   return (
     <div>
@@ -108,57 +96,56 @@ export default function AddressDetails({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-white/70 mb-1.5">Region</label>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+              Region {psgcLoading.regions && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+            </label>
             <select
-              value={region}
+              value={psgcSel.regionCode}
               onChange={(e) => {
-                setRegion(e.target.value);
-                setProvince('');
-                setCity('');
-                setBarangay('');
+                selectRegion(e.target.value);
                 touch('region');
               }}
               onBlur={() => touch('region')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors [&>option]:bg-slate-950 [&>option]:text-white bg-slate-950/80 ${
-                touched.region && !region
+                touched.region && !psgcSel.regionCode
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
               }`}
             >
               <option value="">Select Region</option>
               {regions.map((r) => (
-                <option key={r.reg_code} value={r.name}>{r.name}</option>
+                <option key={r.code} value={r.code}>{r.name}</option>
               ))}
             </select>
-            {touched.region && !region && (
+            {touched.region && !psgcSel.regionCode && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a region.</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white/70 mb-1.5">Province</label>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+              Province {psgcLoading.provinces && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+            </label>
             <select
-              value={province}
-              disabled={!region}
+              value={psgcSel.provinceCode}
+              disabled={!psgcSel.regionCode || noProvinceRegion}
               onChange={(e) => {
-                setProvince(e.target.value);
-                setCity('');
-                setBarangay('');
+                selectProvince(e.target.value);
                 touch('province');
               }}
               onBlur={() => touch('province')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors [&>option]:bg-slate-950 [&>option]:text-white bg-slate-950/80 disabled:bg-slate-900/30 disabled:text-white/30 disabled:border-white/5 disabled:cursor-not-allowed ${
-                touched.province && region && !province
+                touched.province && psgcSel.regionCode && !psgcSel.provinceCode && !noProvinceRegion
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
               }`}
             >
               <option value="">Select Province</option>
-              {provs.map((p) => (
-                <option key={p.prov_code} value={p.name}>{p.name}</option>
+              {provinces.map((p) => (
+                <option key={p.code} value={p.code}>{p.name}</option>
               ))}
             </select>
-            {touched.province && region && !province && (
+            {touched.province && psgcSel.regionCode && !psgcSel.provinceCode && !noProvinceRegion && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a province.</p>
             )}
           </div>
@@ -166,51 +153,54 @@ export default function AddressDetails({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-white/70 mb-1.5">City / Municipality</label>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+              City / Municipality {psgcLoading.cities && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+            </label>
             <select
-              value={city}
-              disabled={!province}
+              value={psgcSel.cityMunCode}
+              disabled={!psgcSel.provinceCode && !noProvinceRegion}
               onChange={(e) => {
-                setCity(e.target.value);
-                setBarangay('');
+                selectCity(e.target.value);
                 touch('city');
               }}
               onBlur={() => touch('city')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors [&>option]:bg-slate-950 [&>option]:text-white bg-slate-950/80 disabled:bg-slate-900/30 disabled:text-white/30 disabled:border-white/5 disabled:cursor-not-allowed ${
-                touched.city && province && !city
+                touched.city && (psgcSel.provinceCode || noProvinceRegion) && !psgcSel.cityMunCode
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
               }`}
             >
               <option value="">Select City / Mun.</option>
               {cities.map((c) => (
-                <option key={c.mun_code} value={c.name}>{c.name}</option>
+                <option key={c.code} value={c.code}>{c.name}</option>
               ))}
             </select>
-            {touched.city && province && !city && (
+            {touched.city && (psgcSel.provinceCode || noProvinceRegion) && !psgcSel.cityMunCode && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a city or municipality.</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white/70 mb-1.5">Barangay</label>
+            <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+              Barangay {psgcLoading.barangays && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+            </label>
             <select
-              value={barangay}
-              disabled={!city}
-              onChange={(e) => { setBarangay(e.target.value); touch('barangay'); }}
+              value={psgcSel.barangayCode}
+              disabled={!psgcSel.cityMunCode}
+              onChange={(e) => { selectBarangay(e.target.value); touch('barangay'); }}
               onBlur={() => touch('barangay')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors [&>option]:bg-slate-950 [&>option]:text-white bg-slate-950/80 disabled:bg-slate-900/30 disabled:text-white/30 disabled:border-white/5 disabled:cursor-not-allowed ${
-                touched.barangay && city && !barangay
+                touched.barangay && psgcSel.cityMunCode && !psgcSel.barangayCode
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
               }`}
             >
               <option value="">Select Barangay</option>
-              {brgys.map((b, idx) => (
-                <option key={idx} value={b.name}>{b.name}</option>
+              {barangays.map((b) => (
+                <option key={b.code} value={b.code}>{b.name}</option>
               ))}
             </select>
-            {touched.barangay && city && !barangay && (
+            {touched.barangay && psgcSel.cityMunCode && !psgcSel.barangayCode && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Please select a barangay.</p>
             )}
           </div>

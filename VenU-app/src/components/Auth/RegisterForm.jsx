@@ -7,6 +7,7 @@ import TermsAndPrivacyModal from './TermsAndPrivacyModal.jsx';
 import PersonalDetails from './RegisterSteps/PersonalDetails.jsx';
 import AddressDetails from './RegisterSteps/AddressDetails.jsx';
 import IdVerification from './RegisterSteps/IdVerification.jsx';
+import usePsgc from '../../hooks/usePsgc.js';
 
 export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRole, setCreateRole }) {
   // Register Fields
@@ -27,10 +28,16 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const [streetName, setStreetName] = useState('');
   const [subdivision, setSubdivision] = useState('');
   const [zipCode, setZipCode] = useState('');
-  const [region, setRegion] = useState('');
-  const [province, setProvince] = useState('');
-  const [city, setCity] = useState('');
-  const [barangay, setBarangay] = useState('');
+
+  // PSGC cascading location hook
+  const {
+    regions, provinces, cities, barangays,
+    loading: psgcLoading,
+    noProvinceRegion,
+    psgcSel,
+    selectRegion, selectProvince, selectCity, selectBarangay,
+    getRegionName, getProvinceName, getCityName, getBarangayName,
+  } = usePsgc();
 
   // ID Verification
   const [idType, setIdType] = useState('');
@@ -83,10 +90,10 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
     houseNo.trim() &&
     streetName.trim() &&
     zipCode.trim() &&
-    region &&
-    province &&
-    city &&
-    barangay;
+    psgcSel.regionCode &&
+    (psgcSel.provinceCode || noProvinceRegion) &&
+    psgcSel.cityMunCode &&
+    psgcSel.barangayCode;
 
   const idRequiresBack = PHILIPPINE_GOVERNMENT_IDS.find(id => id.id === idType)?.hasBackSide;
   const isStep3Valid = idType && idFrontFile && (!idRequiresBack || idBackFile) && idReferenceNumber.trim() && isIdNumberValid(idType, idReferenceNumber);
@@ -98,16 +105,15 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
     e.preventDefault();
     if (onSubmit && canCreate) {
       onSubmit({
-        role: createRole,
-        firstName,
-        middleName,
-        lastName,
-        suffix,
-        dateOfBirth,
-        contactNumber,
-        email: createEmail,
-        password: createPassword,
-        address: { houseNo, streetName, subdivision, zipCode, region, province, city, barangay },
+        role: 'Attendee',
+        personal: { firstName, middleName, lastName, suffix, dateOfBirth, contactNumber, email: createEmail, password: createPassword },
+        address: { 
+          houseNo, streetName, subdivision, zipCode, 
+          region: getRegionName(psgcSel.regionCode), 
+          province: getProvinceName(psgcSel.provinceCode), 
+          city: getCityName(psgcSel.cityMunCode), 
+          barangay: getBarangayName(psgcSel.barangayCode) 
+        },
         idVerification: { type: idType, front: idFrontFile, back: idBackFile, referenceNumber: idReferenceNumber },
       });
     }
@@ -229,7 +235,13 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
           {currentStep === 2 && (
             <AddressDetails
-              {...{ houseNo, setHouseNo, streetName, setStreetName, subdivision, setSubdivision, zipCode, setZipCode, region, setRegion, province, setProvince, city, setCity, barangay, setBarangay, touched, touch }}
+              {...{ 
+                houseNo, setHouseNo, streetName, setStreetName, subdivision, setSubdivision, zipCode, setZipCode, 
+                regions, provinces, cities, barangays,
+                psgcLoading, noProvinceRegion, psgcSel,
+                selectRegion, selectProvince, selectCity, selectBarangay,
+                touched, touch 
+              }}
             />
           )}
 

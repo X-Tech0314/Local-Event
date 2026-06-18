@@ -669,15 +669,15 @@ export default function AttendeeDashboard() {
   const [mapCenter, setMapCenter] = useState(null);
   
   const [savedEvents, setSavedEvents] = useState(() => {
-    const saved = localStorage.getItem('vnu_user_saved_events');
+    const saved = localStorage.getItem(`vnu_user_saved_events_${currentUser.id}`);
     return saved ? JSON.parse(saved) : [];
   });
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [walletView, setWalletView] = useState('upcoming');
 
   React.useEffect(() => {
-    localStorage.setItem('vnu_user_saved_events', JSON.stringify(savedEvents));
-  }, [savedEvents]);
+    localStorage.setItem(`vnu_user_saved_events_${currentUser.id}`, JSON.stringify(savedEvents));
+  }, [savedEvents, currentUser.id]);
 
   const toggleSaveEvent = (e, eventId) => {
     e.stopPropagation();
@@ -792,21 +792,21 @@ export default function AttendeeDashboard() {
   }, []);
 
   const [tickets, setTickets] = useState(() => {
-    const savedTickets = localStorage.getItem('vnu_user_tickets');
+    const savedTickets = localStorage.getItem(`vnu_user_tickets_${currentUser.id}`);
     return savedTickets ? JSON.parse(savedTickets) : [];
   });
 
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem('vnu_user_notifications');
+    const saved = localStorage.getItem(`vnu_user_notifications_${currentUser.id}`);
     if (saved) return JSON.parse(saved);
     return [{ id: Date.now(), title: 'Welcome to VenU!', message: 'Explore local premium events in your area.', read: false, time: 'Just now' }];
   });
 
   React.useEffect(() => {
-    localStorage.setItem('vnu_user_notifications', JSON.stringify(notifications));
-  }, [notifications]);
+    localStorage.setItem(`vnu_user_notifications_${currentUser.id}`, JSON.stringify(notifications));
+  }, [notifications, currentUser.id]);
 
   const addNotification = (title, message) => {
     setNotifications(prev => [
@@ -913,7 +913,7 @@ export default function AttendeeDashboard() {
     setSelectedEvent(null);
     const updatedTickets = [newTicket, ...tickets];
     setTickets(updatedTickets);
-    localStorage.setItem('vnu_user_tickets', JSON.stringify(updatedTickets));
+    localStorage.setItem(`vnu_user_tickets_${currentUser.id}`, JSON.stringify(updatedTickets));
     setConfirmedTicket(newTicket);
 
     const qty = newTicket.quantity || 1;
@@ -925,7 +925,7 @@ export default function AttendeeDashboard() {
     if (window.confirm(`Are you sure you want to void and remove your pass for "${eventTitle}"?`)) {
       const updatedTickets = tickets.filter(t => t.ticketId !== ticketId);
       setTickets(updatedTickets);
-      localStorage.setItem('vnu_user_tickets', JSON.stringify(updatedTickets));
+      localStorage.setItem(`vnu_user_tickets_${currentUser.id}`, JSON.stringify(updatedTickets));
     }
   };
 

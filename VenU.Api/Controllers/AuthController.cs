@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Text;
 using VenU.Api.Data;
 using VenU.Api.Models;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 
 namespace VenU.Api.Controllers
 {
@@ -15,11 +17,13 @@ namespace VenU.Api.Controllers
     {
         private readonly VenUDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(VenUDbContext context, IConfiguration configuration)
+        public AuthController(VenUDbContext context, IConfiguration configuration, IWebHostEnvironment env)
         {
             _context = context;
             _configuration = configuration;
+            _env = env;
         }
 
         [HttpPost("register")]
@@ -51,14 +55,16 @@ namespace VenU.Api.Controllers
                 Barangay = request.Barangay ?? "",
                 IdType = request.IdType ?? "",
                 IdReferenceNumber = request.IdReferenceNumber ?? "",
-                IdFrontPath = "",
-                IdBackPath = "",
-                SelfiePath = "",
+                IdFrontPath = request.IdFrontPath ?? "",
+                IdBackPath = request.IdBackPath ?? "",
+                SelfiePath = request.SelfiePath ?? "",
                 Position = request.Position ?? "",
                 OrgType = request.OrgType ?? "",
                 OrgName = request.OrgName ?? "",
                 TinNumber = request.TinNumber ?? "",
-                OrgDocumentPath = ""
+                OrgDocumentPath = request.OrgDocumentPath ?? "",
+                IsVerified = false, // Back to false for real identity verification workflow
+                IsSuspended = false // Suspended is now a separate state
             };
 
             _context.Users.Add(user);
@@ -75,6 +81,11 @@ namespace VenU.Api.Controllers
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Unauthorized(new { Message = "Invalid email or password." });
+            }
+
+            if (user.IsSuspended)
+            {
+                return Unauthorized(new { Message = "Your account has been suspended. Please contact an administrator." });
             }
 
             var token = GenerateJwtToken(user);
@@ -121,6 +132,80 @@ namespace VenU.Api.Controllers
 
             return tokenHandler.WriteToken(token);
         }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            var cloudName = _configuration["Cloudinary:CloudName"];
+            var apiKey = _configuration["Cloudinary:ApiKey"];
+            var apiSecret = _configuration["Cloudinary:ApiSecret"];
+
+            bool useCloudinary = !string.IsNullOrEmpty(cloudName) && 
+                                 !string.IsNullOrEmpty(apiKey) && 
+                                 !string.IsNullOrEmpty(apiSecret) &&
+                                 cloudName != "your_cloud_name_here" &&
+                                 apiKey != "your_api_key_here" &&
+                                 apiSecret != "your_api_secret_here" &&
+                                 !cloudName.Contains("placeholder") &&
+                                 !cloudName.StartsWith("your_");
+
+            if (useCloudinary)
+            {
+                try
+                {
+                    var account = new Account(cloudName, apiKey, apiSecret);
+                    var cloudinary = new Cloudinary(account);
+
+                    using var stream = file.OpenReadStream();
+                    var uploadParams = new ImageUploadParams()
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        Folder = "venu_uploads"
+                    };
+
+                    var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                    if (uploadResult.Error != null)
+                    {
+                        return BadRequest($"Cloudinary upload error: {uploadResult.Error.Message}");
+                    }
+
+                    return Ok(new { url = uploadResult.SecureUrl.ToString() });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Cloudinary upload failed, falling back to local: {ex.Message}");
+                }
+            }
+
+            var wwwrootPath = _env.WebRootPath;
+            if (string.IsNullOrEmpty(wwwrootPath))
+            {
+                wwwrootPath = System.IO.Path.Combine(_env.ContentRootPath, "wwwroot");
+            }
+            var uploadsPath = System.IO.Path.Combine(wwwrootPath, "uploads");
+            
+            if (!System.IO.Directory.Exists(uploadsPath))
+            {
+                System.IO.Directory.CreateDirectory(uploadsPath);
+            }
+
+            var fileExtension = System.IO.Path.GetExtension(file.FileName);
+            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+            var filePath = System.IO.Path.Combine(uploadsPath, uniqueFileName);
+
+            using (var stream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var localUrl = $"{Request.Scheme}://{Request.Host}/uploads/{uniqueFileName}";
+            return Ok(new { url = localUrl });
+        }
     }
 
     public class RegisterDto
@@ -148,6 +233,10 @@ namespace VenU.Api.Controllers
         public string? OrgType { get; set; }
         public string? OrgName { get; set; }
         public string? TinNumber { get; set; }
+        public string? IdFrontPath { get; set; }
+        public string? IdBackPath { get; set; }
+        public string? SelfiePath { get; set; }
+        public string? OrgDocumentPath { get; set; }
     }
 
     public class LoginDto

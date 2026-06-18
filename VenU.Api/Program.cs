@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using VenU.Api.Data;
+using VenU.Api.Middlewares;
 
 // Load environment variables from .env if present
 var currentDir = Directory.GetCurrentDirectory();
@@ -213,6 +214,9 @@ app.UseStaticFiles(); // Serve static uploaded assets from wwwroot
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Enforce auto-logout for suspended accounts on every authenticated request
+app.UseMiddleware<SuspensionCheckMiddleware>();
 
 app.MapControllers();
 

@@ -39,6 +39,11 @@ namespace VenU.Api.Models
         public string ContactNumber { get; set; }
 
         public bool IsVerified { get; set; } = false;
+        
+        public bool IsSuspended { get; set; } = false;
+        
+        [MaxLength(255)]
+        public string? VerificationMessage { get; set; }
 
         // Location Info
         [MaxLength(100)]

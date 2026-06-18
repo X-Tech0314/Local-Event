@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { UploadCloud, User, Eye, EyeOff, Building, MapPin, ShieldAlert } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS, passwordRules } from '../../utils/constants.js';
-import { regions, getProvincesByRegion, getCityMunByProvince, getBarangayByMun } from 'phil-reg-prov-mun-brgy';
+import usePsgc from '../../hooks/usePsgc.js';
 import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 import FileDropzone from '../common/FileDropzone.jsx';
 import TermsAndPrivacyModal from './TermsAndPrivacyModal.jsx';
@@ -33,11 +33,17 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   const [streetName, setStreetName] = useState('');
   const [subdivision, setSubdivision] = useState('');
   const [zipCode, setZipCode] = useState('');
-  const [region, setRegion] = useState('');
-  const [province, setProvince] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [city, setCity] = useState('');
-  const [barangay, setBarangay] = useState('');
+
+  // PSGC cascading location hook
+  const {
+    regions, provinces, cities, barangays,
+    loading: psgcLoading,
+    noProvinceRegion,
+    psgcSel,
+    selectRegion, selectProvince, selectCity, selectBarangay,
+    getRegionName, getProvinceName, getCityName, getBarangayName,
+  } = usePsgc();
 
   // Step 4: ID Verification
   const [idType, setIdType] = useState('');
@@ -52,14 +58,6 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   // Touched state
   const [touched, setTouched] = useState({});
   const touch = (field) => setTouched((prev) => ({ ...prev, [field]: true }));
-
-  // Derive PSGC data based on selected names
-  const selectedReg = useMemo(() => regions.find(r => r.name === region), [region]);
-  const provs = useMemo(() => selectedReg ? getProvincesByRegion(selectedReg.reg_code) : [], [selectedReg]);
-  const selectedProv = useMemo(() => provs.find(p => p.name === province), [provs, province]);
-  const cities = useMemo(() => selectedProv ? getCityMunByProvince(selectedProv.prov_code) : [], [selectedProv]);
-  const selectedCity = useMemo(() => cities.find(c => c.name === city), [cities, city]);
-  const brgys = useMemo(() => selectedCity ? getBarangayByMun(selectedCity.mun_code) : [], [selectedCity]);
 
   const validation = validatePassword(password);
 
@@ -95,7 +93,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
     (orgType === 'LGU / Barangay / SK' && councilName.trim() && orgDocFile) ||
     (orgType === 'Accredited Student Organization' && universityName.trim() && orgDocFile);
 
-  const isStep3Valid = houseNo.trim() && streetName.trim() && zipCode.trim() && region && province && city && barangay;
+  const isStep3Valid = houseNo.trim() && streetName.trim() && zipCode.trim() && psgcSel.regionCode && (psgcSel.provinceCode || noProvinceRegion) && psgcSel.cityMunCode && psgcSel.barangayCode;
 
   const idRequiresBack = PHILIPPINE_GOVERNMENT_IDS.find(id => id.id === idType)?.hasBackSide;
   const isStep4Valid =
@@ -114,7 +112,13 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
       onSubmit({
         role: 'Organizer',
         personal: { firstName, lastName, position, dateOfBirth, contactNumber, email: corporateEmail, password },
-        address: { houseNo, streetName, subdivision, zipCode, region, province, city, barangay },
+        address: { 
+          houseNo, streetName, subdivision, zipCode, 
+          region: getRegionName(psgcSel.regionCode), 
+          province: getProvinceName(psgcSel.provinceCode), 
+          city: getCityName(psgcSel.cityMunCode), 
+          barangay: getBarangayName(psgcSel.barangayCode) 
+        },
         orgProfile: { orgType, companyName, tinNumber, councilName, universityName, document: orgDocFile },
         idVerification: { type: idType, front: idFrontFile, back: idBackFile, selfie: selfieFile, referenceNumber: idReferenceNumber },
       });
@@ -619,41 +623,38 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-800">
                   <div>
-                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Region</label>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+                      Region {psgcLoading.regions && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+                    </label>
                     <select
-                      value={region}
+                      value={psgcSel.regionCode}
                       onChange={(e) => {
-                        setRegion(e.target.value);
-                        setProvince('');
-                        setCity('');
-                        setBarangay('');
-                        touch('region');
+                        selectRegion(e.target.value);
                       }}
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select Region</option>
                       {regions.map((r) => (
-                        <option key={r.reg_code} value={r.name}>{r.name}</option>
+                        <option key={r.code} value={r.code}>{r.name}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Province</label>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+                      Province {psgcLoading.provinces && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+                    </label>
                     <select
-                      value={province}
-                      disabled={!region}
+                      value={psgcSel.provinceCode}
+                      disabled={!psgcSel.regionCode || noProvinceRegion}
                       onChange={(e) => {
-                        setProvince(e.target.value);
-                        setCity('');
-                        setBarangay('');
-                        touch('province');
+                        selectProvince(e.target.value);
                       }}
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none disabled:opacity-40 [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select Province</option>
-                      {provs.map((p) => (
-                        <option key={p.prov_code} value={p.name}>{p.name}</option>
+                      {provinces.map((p) => (
+                        <option key={p.code} value={p.code}>{p.name}</option>
                       ))}
                     </select>
                   </div>
@@ -661,38 +662,37 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-800">
                   <div>
-                    <label className="block text-xs font-semibold text-white/70 mb-1.5">City / Municipality</label>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+                      City / Municipality {psgcLoading.cities && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+                    </label>
                     <select
-                      value={city}
-                      disabled={!province}
+                      value={psgcSel.cityMunCode}
+                      disabled={!psgcSel.provinceCode && !noProvinceRegion}
                       onChange={(e) => {
-                        setCity(e.target.value);
-                        setBarangay('');
-                        touch('city');
+                        selectCity(e.target.value);
                       }}
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none disabled:opacity-40 [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select City / Mun.</option>
                       {cities.map((c) => (
-                        <option key={c.mun_code} value={c.name}>{c.name}</option>
+                        <option key={c.code} value={c.code}>{c.name}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Barangay</label>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5 flex items-center gap-1">
+                      Barangay {psgcLoading.barangays && <span className="text-[10px] text-[#A855F7] animate-pulse">Loading...</span>}
+                    </label>
                     <select
-                      value={barangay}
-                      disabled={!city}
-                      onChange={(e) => {
-                        setBarangay(e.target.value);
-                        touch('barangay');
-                      }}
+                      value={psgcSel.barangayCode}
+                      disabled={!psgcSel.cityMunCode}
+                      onChange={(e) => { selectBarangay(e.target.value); }}
                       className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-white text-sm outline-none disabled:opacity-40 [&>option]:bg-slate-950 [&>option]:text-white"
                     >
                       <option value="">Select Barangay</option>
-                      {brgys.map((b, idx) => (
-                        <option key={idx} value={b.name}>{b.name}</option>
+                      {barangays.map((b) => (
+                        <option key={b.code} value={b.code}>{b.name}</option>
                       ))}
                     </select>
                   </div>

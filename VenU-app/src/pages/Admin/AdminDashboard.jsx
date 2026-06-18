@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Moon, Sun, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../ThemeContext';
 import logo from "../../assets/venu-logo3-transparent.png";
@@ -9,6 +9,7 @@ import AdminDashboardHome from './Panels/AdminDashboardHome';
 import UserManagement from './Panels/UserManagement';
 import EventApprovals from './Panels/EventApprovals';
 import AdminManagement from './Panels/AdminManagement';
+import IdentityApprovals from './Panels/IdentityApprovals';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'superadmin'] },
         { id: 'users', label: 'User Management', icon: Users, roles: ['admin', 'superadmin'] },
+        { id: 'identity', label: 'Identity Approvals', icon: ShieldCheck, roles: ['admin', 'superadmin'] },
         { id: 'events', label: 'Event Approvals', icon: CalendarCheck, roles: ['admin', 'superadmin'] },
         { id: 'admins', label: 'Admin Management', icon: Crown, roles: ['superadmin'] },
     ];
@@ -147,6 +149,7 @@ export default function AdminDashboard() {
                 <div className="p-8 max-w-7xl mx-auto w-full">
                     {activeTab === 'dashboard' && <AdminDashboardHome pendingEvents={pendingEvents} loadingEvents={loadingEvents} setActiveTab={setActiveTab} />}
                     {activeTab === 'users' && <UserManagement />}
+                    {activeTab === 'identity' && <IdentityApprovals />}
                     {activeTab === 'events' && <EventApprovals pendingEvents={pendingEvents} loadingEvents={loadingEvents} handleEventAction={handleEventAction} />}
                     {activeTab === 'admins' && role === 'superadmin' && <AdminManagement />}
                 </div>
