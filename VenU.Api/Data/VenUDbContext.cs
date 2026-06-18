@@ -38,4 +38,3 @@ namespace VenU.Api.Data
         }
     }
 }
-// Trigger dotnet watch rebuild

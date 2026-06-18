@@ -11,7 +11,7 @@ namespace VenU.Api.Models
 
         [Required]
         [MaxLength(20)]
-        public string Role { get; set; } // "Attendee" or "Organizer"
+        public string Role { get; set; }
 
         [Required]
         [EmailAddress]
@@ -40,7 +40,6 @@ namespace VenU.Api.Models
 
         public bool IsVerified { get; set; } = false;
 
-        // Location Info
         [MaxLength(100)]
         public string HouseNo { get; set; }
 
@@ -65,7 +64,6 @@ namespace VenU.Api.Models
         [MaxLength(50)]
         public string Barangay { get; set; }
 
-        // ID Verification
         [MaxLength(50)]
         public string IdType { get; set; }
 
@@ -75,8 +73,7 @@ namespace VenU.Api.Models
         public string IdFrontPath { get; set; }
         public string IdBackPath { get; set; }
         public string SelfiePath { get; set; }
-
-        // Organizer specific details
+        
         [MaxLength(100)]
         public string? Position { get; set; }
 
@@ -92,5 +89,9 @@ namespace VenU.Api.Models
         public string? OrgDocumentPath { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Add this inside the User class
+        [MaxLength(20)]
+        public string Status { get; set; } = "Active"; // Active or Suspended
     }
 }

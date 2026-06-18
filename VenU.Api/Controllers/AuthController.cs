@@ -77,6 +77,11 @@ namespace VenU.Api.Controllers
                 return Unauthorized(new { Message = "Invalid email or password." });
             }
 
+            if (user.Status == "Suspended" || user.Status == "Deleted")
+            {
+                return Unauthorized(new { Message = "Your account has been suspended or Deleted" });
+            }
+
             var token = GenerateJwtToken(user);
 
             return Ok(new
