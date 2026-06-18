@@ -108,7 +108,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto dto)
         {
             if (!ModelState.IsValid)
@@ -161,7 +161,7 @@ namespace VenU.Api.Controllers
                     VenueImages = dto.VenueImages != null && dto.VenueImages.Count > 0
                         ? System.Text.Json.JsonSerializer.Serialize(dto.VenueImages)
                         : null,
-                    IsVerified = false, // Needs admin approval
+                    IsVerified = true, // Verify by default so everyone can see it
                     CreatedByOrganizerId = organizerId
                 };
                 _context.Venues.Add(newVenue);
@@ -264,7 +264,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> GetOrganizerEvents()
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -309,7 +309,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> UpdateEvent(Guid id, [FromBody] CreateEventDto dto)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -380,7 +380,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> UpdateEventStatus(Guid id, [FromBody] UpdateStatusDto dto)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -404,7 +404,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> DeleteEvent(Guid id)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -428,7 +428,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpGet("{id}/analytics")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> GetEventAnalytics(Guid id, [FromQuery] string search = null)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -487,7 +487,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpGet("{id}/management-summary")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> GetManagementSummary(Guid id)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>

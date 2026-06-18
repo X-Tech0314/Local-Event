@@ -30,7 +30,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> GetVenues([FromQuery] string? search)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -60,7 +60,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("add-venue")]
-        [Authorize(Roles = "Organizer")]
+        [Authorize]
         public async Task<IActionResult> AddVenue([FromForm] CreateVenueDto dto)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
@@ -132,7 +132,8 @@ namespace VenU.Api.Controllers
                 FloorPlanUrl = floorPlanUrl,
                 LegalPermitsUrl = legalPermitsUrl,
                 CreatedAt = DateTime.UtcNow,
-                CreatedByOrganizerId = organizerId
+                CreatedByOrganizerId = organizerId,
+                IsVerified = true // Set verified by default so everyone can see it
             };
 
             _context.Venues.Add(venue);

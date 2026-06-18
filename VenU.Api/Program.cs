@@ -5,6 +5,7 @@ using System.Text;
 using VenU.Api.Data;
 using VenU.Api.Middlewares;
 using VenU.Api.Models;
+using System.IdentityModel.Tokens.Jwt;
 
 // Load environment variables from .env if present
 var currentDir = Directory.GetCurrentDirectory();
@@ -70,6 +71,10 @@ builder.Services.AddCors(options =>
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["Key"];
+
+// Clear the default Microsoft claim type mappings so role claims aren't remapped
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,7 +90,8 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
+        RoleClaimType = "role"
     };
 });
 
@@ -187,6 +193,17 @@ using (var scope = app.Services.CreateScope())
 
         if (modified)
         {
+            context.SaveChanges();
+        }
+
+        // Also ensure all existing venues are verified
+        var unverifiedVenues = context.Venues.Where(v => !v.IsVerified).ToList();
+        if (unverifiedVenues.Any())
+        {
+            foreach (var v in unverifiedVenues)
+            {
+                v.IsVerified = true;
+            }
             context.SaveChanges();
         }
     }

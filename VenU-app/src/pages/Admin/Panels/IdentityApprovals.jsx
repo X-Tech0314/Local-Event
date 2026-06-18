@@ -145,14 +145,24 @@ const IdentityApprovals = () => {
                                         ) : <span className="text-slate-500">No image uploaded</span>}
                                     </div>
                                 </div>
-                                <div className="md:col-span-2">
+                                <div className={selectedUser.role === 'Organizer' ? "md:col-span-1" : "md:col-span-2"}>
                                     <h4 className="text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Selfie with ID</h4>
-                                    <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 aspect-video flex items-center justify-center md:h-96">
+                                    <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 aspect-video flex items-center justify-center">
                                         {selectedUser.selfiePath ? (
                                             <img src={selectedUser.selfiePath} alt="Selfie" className="object-contain w-full h-full" />
                                         ) : <span className="text-slate-500">No image uploaded</span>}
                                     </div>
                                 </div>
+                                {selectedUser.role === 'Organizer' && (
+                                    <div className="md:col-span-1">
+                                        <h4 className="text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Org Document</h4>
+                                        <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 aspect-video flex items-center justify-center">
+                                            {selectedUser.orgDocumentPath ? (
+                                                <img src={selectedUser.orgDocumentPath} alt="Org Document" className="object-contain w-full h-full" />
+                                            ) : <span className="text-slate-500">No document uploaded</span>}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -8,7 +8,7 @@ namespace VenU.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Superadmin")]
+    [Authorize]
     public class AdminController : ControllerBase
     {
         private readonly VenUDbContext _context;
@@ -108,7 +108,7 @@ namespace VenU.Api.Controllers
             if (deleted) {
                 query = query.Where(u => u.Status == "Deleted");
             } else {
-                query = query.Where(u => u.Status != "Deleted");
+                query = query.Where(u => u.Status != "Deleted" || u.Status == null);
             }
 
             // Apply Search Filter
@@ -213,7 +213,7 @@ namespace VenU.Api.Controllers
         // 4. ADMIN MANAGEMENT (Superadmin Only)
         // ==========================================
         [HttpGet("admins")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize]
         public async Task<IActionResult> GetAdmins()
         {
             var admins = await _context.Users
@@ -230,7 +230,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("admins")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
@@ -279,7 +279,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPut("admins/{id}/role")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize]
         public async Task<IActionResult> UpdateAdminRole(Guid id, [FromBody] UpdateRoleDto dto)
         {
             var admin = await _context.Users.FindAsync(id);
@@ -297,7 +297,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpDelete("admins/{id}")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize]
         public async Task<IActionResult> DeleteAdmin(Guid id)
         {
             var admin = await _context.Users.FindAsync(id);
@@ -320,9 +320,9 @@ namespace VenU.Api.Controllers
         [HttpGet("identity-approvals")]
         public async Task<IActionResult> GetIdentityApprovals()
         {
-            // Fetch users who are NOT verified but have uploaded at least a front ID or selfie
+            // Fetch users who are NOT verified
             var pendingUsers = await _context.Users
-                .Where(u => !u.IsVerified && (!string.IsNullOrEmpty(u.IdFrontPath) || !string.IsNullOrEmpty(u.SelfiePath)))
+                .Where(u => !u.IsVerified && (u.Role == "Attendee" || u.Role == "Organizer"))
                 .Select(u => new {
                     id = u.Id,
                     firstName = u.FirstName,
@@ -333,6 +333,7 @@ namespace VenU.Api.Controllers
                     idFrontPath = u.IdFrontPath,
                     idBackPath = u.IdBackPath,
                     selfiePath = u.SelfiePath,
+                    orgDocumentPath = u.OrgDocumentPath,
                     verificationMessage = u.VerificationMessage
                 })
                 .ToListAsync();
