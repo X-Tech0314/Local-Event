@@ -12,7 +12,7 @@ import html2canvas from 'html2canvas';
 import UserSettings from './Panels/UserSettings';
 
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -24,6 +24,37 @@ let DefaultIcon = L.icon({
   iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+
+function MapUpdater({ center }) {
+  const map = useMap();
+  React.useEffect(() => {
+    if (center) {
+      map.flyTo(center, 14, { duration: 1.5 });
+    }
+  }, [center, map]);
+  return null;
+}
+
+const cityCoordinates = {
+  'Imus': [14.4296, 120.9367],
+  'Dasmariñas': [14.3296, 120.9367],
+  'Bacoor': [14.4613, 120.9416],
+  'Silang': [14.2269, 120.9740],
+  'General Trias': [14.3855, 120.8805],
+  'Tagaytay': [14.1008, 120.9453],
+  'Makati': [14.5547, 121.0244],
+  'Manila': [14.5995, 120.9842],
+  'Default': [14.5995, 120.9842]
+};
+
+function getCoordinatesForEvent(event, index = 0) {
+  if (event.latitude && event.longitude) {
+    return [event.latitude, event.longitude];
+  }
+  const baseCoords = cityCoordinates[event.city] || cityCoordinates['Default'];
+  // Add slight offset so markers don't overlap perfectly if they have the same city
+  return [baseCoords[0] + (index * 0.002), baseCoords[1] - (index * 0.002)];
+}
 
 // ── Static Mock Data ──────────────────────────────────────────────────────────
 const mockEvents = [
@@ -105,7 +136,7 @@ function QrMockup() {
   );
 }
 
-function EventCard({ event, onSelect }) {
+function EventCard({ event, onSelect, onLocationClick }) {
   return (
     <div
       onClick={() => onSelect(event)}
@@ -142,7 +173,13 @@ function EventCard({ event, onSelect }) {
         </h4>
 
         <div className="space-y-3 mt-auto mb-6">
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
+          <p 
+            className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onLocationClick) onLocationClick(event);
+            }}
+          >
             <span className="p-2 rounded-none bg-slate-50 dark:bg-slate-900 text-purple-700 dark:text-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-900/30"><MapPin size={14} /></span> {event.barangay}
           </p>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-3">
@@ -202,7 +239,11 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Select Admission Tier</p>
             <div className="space-y-3">
               {event.ticketTiers.map((tier) => (
-                <label key={tier} className={`flex items-center justify-between p-4 rounded-none border-2 cursor-pointer ${selectedTier === tier ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}>
+                <label 
+                  key={tier} 
+                  onClick={() => setSelectedTier(tier)}
+                  className={`flex items-center justify-between p-4 rounded-none border-2 cursor-pointer ${selectedTier === tier ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
+                >
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === tier ? 'border-purple-500' : 'border-slate-300 dark:border-slate-600'}`}>
                       {selectedTier === tier && <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />}
@@ -393,6 +434,7 @@ export default function AttendeeDashboard() {
   const [selectedWalletCategory, setSelectedWalletCategory] = useState('All');
   const [liveEvents, setLiveEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [mapCenter, setMapCenter] = useState(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -478,7 +520,28 @@ export default function AttendeeDashboard() {
 
   const filteredTickets = tickets.filter((t) => {
     if (selectedWalletCategory === 'All') return true;
-    return t.event.category === selectedWalletCategory;
+    
+    const eventCat = (t.event.category || '').toLowerCase();
+    const filterCat = selectedWalletCategory.toLowerCase();
+
+    if (filterCat.includes('tech') && (eventCat.includes('tech') || eventCat.includes('innov'))) return true;
+    if (filterCat.includes('music') && (eventCat.includes('music') || eventCat.includes('concert'))) return true;
+    if (filterCat.includes('sport') && (eventCat.includes('sport') || eventCat.includes('athletic'))) return true;
+    if (filterCat.includes('business') && (eventCat.includes('business') || eventCat.includes('corp'))) return true;
+    if (filterCat.includes('birthday') && eventCat.includes('birthday')) return true;
+    if (filterCat.includes('wedding') && eventCat.includes('wedding')) return true;
+    
+    if (filterCat === 'others') {
+      if (!eventCat.includes('tech') && !eventCat.includes('innov') && 
+          !eventCat.includes('music') && !eventCat.includes('concert') &&
+          !eventCat.includes('sport') && !eventCat.includes('athletic') &&
+          !eventCat.includes('business') && !eventCat.includes('corp') &&
+          !eventCat.includes('birthday') && !eventCat.includes('wedding')) {
+        return true;
+      }
+    }
+    
+    return false;
   });
 
   const handleSuccess = (newTicket) => {
@@ -591,6 +654,12 @@ export default function AttendeeDashboard() {
     { name: 'Weddings', icon: Heart },
     { name: 'Others', icon: MoreHorizontal },
   ];
+
+  const handleLocationClick = (event, index = 0) => {
+    const coords = getCoordinatesForEvent(event, index);
+    setMapCenter(coords);
+    setActiveTab('map');
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-200 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
@@ -776,8 +845,13 @@ export default function AttendeeDashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {filtered.map((event) => (
-                    <EventCard key={event.id} event={event} onSelect={setSelectedEvent} />
+                  {filtered.map((event, index) => (
+                    <EventCard 
+                      key={event.id} 
+                      event={event} 
+                      onSelect={setSelectedEvent} 
+                      onLocationClick={() => handleLocationClick(event, index)}
+                    />
                   ))}
                 </div>
               )}
@@ -854,7 +928,15 @@ export default function AttendeeDashboard() {
                           </h3>
                           <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
                             <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date} @ {t.event.time}</p>
-                            <p className="flex items-center gap-1.5 truncate"><MapPin size={12} /> {t.event.barangay}</p>
+                            <p 
+                              className="flex items-center gap-1.5 truncate cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLocationClick(t.event);
+                              }}
+                            >
+                              <MapPin size={12} /> {t.event.barangay}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -908,15 +990,25 @@ export default function AttendeeDashboard() {
               </div>
 
               <div className="relative">
+                <button
+                  onClick={() => {
+                    const coords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
+                    setMapCenter(coords);
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-none font-bold text-sm shadow-xl absolute top-4 right-4 z-[400] transition-colors flex items-center gap-2"
+                >
+                  <MapPin size={16} /> Near Me
+                </button>
                 <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none overflow-hidden relative z-10 p-2">
                   <div className="h-[600px] w-full rounded-none overflow-hidden relative border border-slate-200 dark:border-slate-700">
-                    <MapContainer center={[14.3296, 120.9367]} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
+                    <MapContainer center={mapCenter || cityCoordinates['Default']} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
+                      <MapUpdater center={mapCenter} />
                       <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                       />
-                      {mockEvents.map((event, i) => (
-                        <Marker key={event.id} position={event.city === 'Imus' ? [14.4296, 120.9367] : [14.3296 + (i * 0.01), 120.9367 - (i * 0.01)]}>
+                      {(liveEvents.length > 0 ? liveEvents : mockEvents).map((event, i) => (
+                        <Marker key={event.id} position={getCoordinatesForEvent(event, i)}>
                           <Popup className="rounded-none overflow-hidden shadow-2xl border-0 p-0 m-0 w-[240px]">
                             <div className="font-sans">
                               <div className="h-24 w-full bg-slate-200 relative">
@@ -928,7 +1020,13 @@ export default function AttendeeDashboard() {
                               </div>
                               <div className="p-3">
                                 <h4 className="font-black text-slate-900 leading-tight mb-1 text-sm">{event.title}</h4>
-                                <p className="text-[11px] font-medium text-slate-500 mb-2 flex items-center gap-1"><MapPin size={10} /> {event.barangay}</p>
+                                <p className="text-[11px] font-medium text-slate-500 mb-3 flex items-center gap-1"><MapPin size={10} /> {event.barangay}</p>
+                                <button 
+                                  onClick={() => setSelectedEvent(event)}
+                                  className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest rounded-none shadow-sm transition-colors"
+                                >
+                                  Get Tickets
+                                </button>
                               </div>
                             </div>
                           </Popup>
