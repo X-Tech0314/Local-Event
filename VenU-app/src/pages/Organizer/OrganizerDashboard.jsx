@@ -29,10 +29,25 @@ export default function OrganizerDashboard() {
     const [activePanel, setActivePanel] = useState('dashboard');
     const [editEvent, setEditEvent] = useState(null);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: 'Welcome to VenU Organizer!', message: 'Start creating your first event today.', read: false, time: '2m ago' },
-        { id: 2, title: 'Profile Setup', message: 'Please complete your organizer profile and verification.', read: false, time: '1h ago' }
-    ]);
+    const [notifications, setNotifications] = useState(() => {
+        const saved = localStorage.getItem('vnu_organizer_notifications');
+        if (saved) return JSON.parse(saved);
+        return [
+            { id: 1, title: 'Welcome to VenU Organizer!', message: 'Start creating your first event today.', read: false, time: 'Just now' },
+            { id: 2, title: 'Profile Setup', message: 'Please complete your organizer profile and verification.', read: false, time: '1h ago' }
+        ];
+    });
+
+    React.useEffect(() => {
+        localStorage.setItem('vnu_organizer_notifications', JSON.stringify(notifications));
+    }, [notifications]);
+
+    const addNotification = (title, message) => {
+        setNotifications(prev => [
+            { id: Date.now(), title, message, read: false, time: 'Just now' },
+            ...prev
+        ]);
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -69,7 +84,7 @@ export default function OrganizerDashboard() {
             case 'attendees':  return <AttendeesPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'analytics':  return <AnalyticsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'settings':   return <SettingsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
-            case 'create-event': return <CreateEventPanel currentUser={currentUser} setActivePanel={setActivePanel} editEvent={editEvent} setEditEvent={setEditEvent} />;
+            case 'create-event': return <CreateEventPanel currentUser={currentUser} setActivePanel={setActivePanel} editEvent={editEvent} setEditEvent={setEditEvent} addNotification={addNotification} />;
             default:           return <MainDashboard currentUser={currentUser} setActivePanel={setActivePanel} />;
         }
     };
@@ -159,48 +174,43 @@ export default function OrganizerDashboard() {
 
                             {/* Notifications Dropdown */}
                             {showNotifications && (
-                                <div className="absolute top-full right-0 mt-4 w-[360px] bg-slate-50 dark:bg-slate-800 rounded shadow border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-fade-in origin-top-right">
-                                    <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-sm font-medium text-slate-900 dark:text-white">Notifications</h3>
-                                            {unreadCount > 0 && (
-                                                <span className="bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs px-2 py-0.5 rounded">{unreadCount} New</span>
-                                            )}
+                                <div className="absolute top-full right-0 mt-4 w-[360px] bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-none shadow-2xl border border-slate-100/50 dark:border-slate-700/50 z-50 overflow-hidden animate-fade-in origin-top-right">
+                                  <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+                                    <div className="flex items-center gap-2">
+                                      <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Notifications</h3>
+                                      {unreadCount > 0 && (
+                                        <span className="bg-purple-700 dark:bg-purple-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>
+                                      )}
+                                    </div>
+                                    {unreadCount > 0 && (
+                                      <button onClick={markAllRead} className="text-xs font-bold text-purple-700 dark:text-purple-500 hover:text-purple-700">
+                                        Mark all read
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="max-h-80 overflow-y-auto">
+                                    {notifications.length === 0 ? (
+                                      <div className="p-8 text-center">
+                                        <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-300">
+                                          <Bell size={20} />
                                         </div>
-                                        {unreadCount > 0 && (
-                                            <button onClick={markAllRead} className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white">
-                                                Mark all read
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="max-h-80 overflow-y-auto">
-                                        {notifications.length === 0 ? (
-                                            <div className="p-8 text-center">
-                                                <div className="w-12 h-12 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                                                    <Bell size={20} />
-                                                </div>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400">All caught up!</p>
-                                            </div>
-                                        ) : (
-                                            notifications.map(notif => (
-                                                <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
-                                                    {!notif.read && (
-                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r"></div>
-                                                    )}
-                                                    <div className="flex justify-between items-start mb-1.5 pl-2">
-                                                        <h4 className={`text-sm font-medium ${notif.read ? 'text-slate-500 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>{notif.title}</h4>
-                                                        <span className="text-xs text-slate-400 dark:text-slate-500">{notif.time}</span>
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 pl-2">{notif.message}</p>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                    <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-center">
-                                        <button onClick={() => { setShowNotifications(false); setActivePanel('settings'); }} className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white">
-                                            View All Notifications
-                                        </button>
-                                    </div>
+                                        <p className="text-sm font-bold text-slate-400">All caught up!</p>
+                                      </div>
+                                    ) : (
+                                      notifications.map(notif => (
+                                        <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                                          {!notif.read && (
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r-md"></div>
+                                          )}
+                                          <div className="flex justify-between items-start mb-1.5 pl-2">
+                                            <h4 className={`text-sm font-black ${notif.read ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>{notif.title}</h4>
+                                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{notif.time}</span>
+                                          </div>
+                                          <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed font-medium pl-2">{notif.message}</p>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
                                 </div>
                             )}
                         </div>

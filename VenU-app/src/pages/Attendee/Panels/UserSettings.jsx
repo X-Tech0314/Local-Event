@@ -29,6 +29,7 @@ export default function UserSettings({ currentUser }) {
     ...currentUser
   });
   const [activeTab, setActiveTab] = useState('profile');
+  const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function UserSettings({ currentUser }) {
         setIdNumber(res.data.idReferenceNumber || '');
         if (res.data.idFrontPath) setIdFront(res.data.idFrontPath);
         if (res.data.idBackPath) setIdBack(res.data.idBackPath);
+        if (res.data.selfiePath) setIdSelfie(res.data.selfiePath);
       } catch (err) {
         if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
           console.warn('Backend unavailable, using local mock data.');
@@ -77,10 +79,12 @@ export default function UserSettings({ currentUser }) {
       });
       alert('Profile updated successfully!');
       localStorage.setItem('user', JSON.stringify(form));
+      setIsEditing(false);
     } catch (err) {
       if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
         alert('Profile updated locally (Backend offline).');
         localStorage.setItem('user', JSON.stringify(form));
+        setIsEditing(false);
         return;
       }
       alert('Failed to update profile: ' + (err.response?.data?.message || err.message));
@@ -183,8 +187,10 @@ export default function UserSettings({ currentUser }) {
 
   const [idFront, setIdFront] = useState(null);
   const [idBack, setIdBack] = useState(null);
+  const [idSelfie, setIdSelfie] = useState(null);
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
+  const selfieInputRef = useRef(null);
 
   const [wallets, setWallets] = useState([]);
 
@@ -293,28 +299,30 @@ export default function UserSettings({ currentUser }) {
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const inputCls = "w-full border border-slate-200 dark:border-slate-600 rounded-none px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-700 dark:focus:border-purple-400 bg-white dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-700";
-  const labelCls = "block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5";
+  const labelCls = "block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2";
+  const inputCls = "w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:focus:border-purple-400 transition-all font-medium disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-500 disabled:dark:text-slate-400 disabled:cursor-not-allowed";
 
-  const Section = ({ title, children, className = "" }) => (
+  const Section = ({ title, children, className = "", action }) => (
     <div className={`bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-6 mb-6 ${className}`}>
-      <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-5 border-b border-slate-200 dark:border-slate-700 pb-3">{title}</h3>
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-5">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">{title}</h3>
+        {action && <div>{action}</div>}
+      </div>
       {children}
     </div>
   );
 
   const ToggleSwitch = ({ label, description, enabled, onChange, locked = false }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-700 last:border-0 group cursor-pointer" onClick={() => !locked && onChange(!enabled)}>
       <div className="pr-4">
-        <p className="text-sm font-semibold text-slate-800">{label}</p>
-        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        <p className={`text-sm font-bold transition-colors ${enabled ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300'}`}>{label}</p>
+        {description && <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{description}</p>}
       </div>
-      <button
-        onClick={() => !locked && onChange(!enabled)}
-        className={`w-11 h-6 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-700 dark:bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+      <div
+        className={`w-12 h-7 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-700 dark:bg-purple-500' : 'bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <div className={`w-4 h-4 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
-      </button>
+        <div className={`w-5 h-5 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+      </div>
     </div>
   );
 
@@ -326,9 +334,11 @@ export default function UserSettings({ currentUser }) {
   ];
 
   const SaveBtn = ({ label, onClick }) => (
-    <button onClick={onClick || handleSaveProfile} className="w-full mt-6 py-3 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95">
-      {label}
-    </button>
+    <div className="flex justify-end mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+      <button onClick={onClick || handleSaveProfile} className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all">
+        {label}
+      </button>
+    </div>
   );
 
   return (
@@ -362,7 +372,20 @@ export default function UserSettings({ currentUser }) {
         {activeTab === 'profile' && (
           <div className="animate-fade-in">
             {/* ── Basic Information (Profile Photo + Personal Info merged) ── */}
-            <Section title="Basic Information">
+            <Section 
+              title="Basic Information" 
+              action={
+                !isEditing ? (
+                  <button onClick={() => setIsEditing(true)} className="text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-none hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                    Edit Profile
+                  </button>
+                ) : (
+                  <button onClick={() => setIsEditing(false)} className="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                    Cancel
+                  </button>
+                )
+              }
+            >
               <div className="flex flex-col sm:flex-row gap-8">
 
                 {/* Clickable Profile Avatar */}
@@ -375,11 +398,11 @@ export default function UserSettings({ currentUser }) {
                     ref={photoInputRef}
                     onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }}
                   />
-                  <div
-                    className="relative w-24 h-24 bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-3xl overflow-hidden cursor-pointer group border-2 border-transparent hover:border-purple-400 dark:hover:border-purple-300"
-                    onClick={() => photoInputRef.current?.click()}
-                    title="Click to change photo"
-                  >
+                    <div
+                      className={`relative w-24 h-24 bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-3xl overflow-hidden group border-2 border-transparent hover:border-purple-400 dark:hover:border-purple-300 ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
+                      onClick={() => isEditing && photoInputRef.current?.click()}
+                      title={isEditing ? "Click to change photo" : ""}
+                    >
                     {profilePhoto
                       ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                       : (form.firstName?.charAt(0) || 'U')}
@@ -396,76 +419,75 @@ export default function UserSettings({ currentUser }) {
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className={labelCls}>First Name</label>
-                    <input className={inputCls} value={form.firstName} onChange={set('firstName')} placeholder="First Name" />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Last Name</label>
-                    <input className={inputCls} value={form.lastName} onChange={set('lastName')} placeholder="Last Name" />
+                    <input className={inputCls} value={form.firstName} onChange={set('firstName')} disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Middle Name</label>
-                    <input className={inputCls} value={form.middleName} onChange={set('middleName')} placeholder="Middle Name (optional)" />
+                    <input className={inputCls} value={form.middleName} onChange={set('middleName')} disabled={!isEditing} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Last Name</label>
+                    <input className={inputCls} value={form.lastName} onChange={set('lastName')} disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Suffix</label>
-                    <select className={inputCls} value={form.suffix} onChange={set('suffix')}>
-                      {['None', 'Jr.', 'Sr.', 'III', 'IV', 'V', 'VI'].map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                    <input className={inputCls} value={form.suffix} onChange={set('suffix')} placeholder="Jr., Sr., III" disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Date of Birth</label>
-                    <input type="date" className={inputCls} value={form.dateOfBirth || ''} onChange={set('dateOfBirth')} />
+                    <input type="date" className={inputCls} value={form.dateOfBirth} onChange={set('dateOfBirth')} disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Contact Number</label>
-                    <input className={inputCls} value={form.contactNumber} onChange={set('contactNumber')} placeholder="09XXXXXXXXX" />
+                    <input className={inputCls} value={form.contactNumber} onChange={set('contactNumber')} placeholder="+63" disabled={!isEditing} />
                   </div>
-
+                  <div className="sm:col-span-2">
+                    <label className={labelCls}>Email Address</label>
+                    <input type="email" value={form.email || ''} onChange={set('email')} className={inputCls} disabled />
+                  </div>
                 </div>
 
               </div>
-              <SaveBtn label="Save Basic Information" />
+              {isEditing && <SaveBtn label="Save Basic Information" />}
             </Section>
 
             {/* Address Details */}
             <Section title="Address Details">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
-                  <label className={labelCls}>House / Unit / Bldg. No.</label>
-                  <input className={inputCls} value={form.houseNo} onChange={set('houseNo')} placeholder="Block 1 Lot 2" />
+                  <label className={labelCls}>House / Unit / Block No.</label>
+                  <input className={inputCls} value={form.houseNo} onChange={set('houseNo')} placeholder="House No." disabled={!isEditing} />
                 </div>
-                <div>
+                 <div className="md:col-span-2">
                   <label className={labelCls}>Street Name</label>
-                  <input className={inputCls} value={form.streetName || ''} onChange={set('streetName')} placeholder="Lily St." />
+                  <input className={inputCls} value={form.streetName} onChange={set('streetName')} placeholder="Street Name" disabled={!isEditing} />
                 </div>
                 <div>
-                  <label className={labelCls}>Subdivision / Village (Optional)</label>
-                  <input className={inputCls} value={form.subdivision || ''} onChange={set('subdivision')} placeholder="Phase 3, Meadow Ville" />
+                  <label className={labelCls}>Subdivision / Village</label>
+                  <input className={inputCls} value={form.subdivision} onChange={set('subdivision')} placeholder="Subdivision" disabled={!isEditing} />
                 </div>
                 <div>
-                  <label className={labelCls}>ZIP Code</label>
-                  <input className={inputCls} value={form.zipCode || ''} onChange={set('zipCode')} placeholder="e.g. 1100" />
+                  <label className={labelCls}>Zip Code</label>
+                  <input className={inputCls} value={form.zipCode} onChange={set('zipCode')} placeholder="Zip Code" disabled={!isEditing} />
                 </div>
                 <div>
                   <label className={labelCls}>Region</label>
-                  <input className={inputCls} value={form.region} onChange={set('region')} placeholder="Region" />
+                  <input className={inputCls} value={form.region} onChange={set('region')} placeholder="Region" disabled={!isEditing} />
                 </div>
                 <div>
                   <label className={labelCls}>Province</label>
-                  <input className={inputCls} value={form.province} onChange={set('province')} placeholder="Province" />
+                  <input className={inputCls} value={form.province} onChange={set('province')} placeholder="Province" disabled={!isEditing} />
                 </div>
                 <div>
                   <label className={labelCls}>City / Municipality</label>
-                  <input className={inputCls} value={form.city} onChange={set('city')} placeholder="City / Municipality" />
+                  <input className={inputCls} value={form.city} onChange={set('city')} placeholder="City" disabled={!isEditing} />
                 </div>
-                <div className="sm:col-span-2 lg:col-span-3">
+                <div>
                   <label className={labelCls}>Barangay</label>
-                  <input className={inputCls} value={form.barangay} onChange={set('barangay')} placeholder="Barangay" />
+                  <input className={inputCls} value={form.barangay} onChange={set('barangay')} placeholder="Barangay" disabled={!isEditing} />
                 </div>
               </div>
-              <SaveBtn label="Save Address Details" />
+              {isEditing && <SaveBtn label="Save Address Details" />}
             </Section>
 
             {/* Personalized Preferences */}
@@ -495,7 +517,7 @@ export default function UserSettings({ currentUser }) {
                   );
                 })}
               </div>
-              <SaveBtn label="Save Preferences" />
+              {isEditing && <SaveBtn label="Save Preferences" />}
             </Section>
           </div>
         )}
@@ -519,7 +541,7 @@ export default function UserSettings({ currentUser }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelCls}>Verified ID Type</label>
-                  <select value={idType} onChange={(e) => { setIdType(e.target.value); setForm(prev => ({ ...prev, idType: e.target.value })); }} className={inputCls}>
+                  <select value={idType} onChange={(e) => { setIdType(e.target.value); setForm(prev => ({ ...prev, idType: e.target.value })); }} className={inputCls} disabled={!isEditing}>
                     <option value="">Select ID Type</option>
                     {PHILIPPINE_GOVERNMENT_IDS.map(id => (
                       <option key={id.id} value={id.id}>{id.name}</option>
@@ -528,41 +550,29 @@ export default function UserSettings({ currentUser }) {
                 </div>
                 <div>
                   <label className={labelCls}>ID Reference / Serial Number</label>
-                  <input className={inputCls} value={idNumber} onChange={(e) => { setIdNumber(e.target.value); setForm(prev => ({ ...prev, idReferenceNumber: e.target.value })); }} placeholder="e.g. P1234567A" />
+                  <input className={inputCls} value={idNumber} onChange={(e) => { setIdNumber(e.target.value); setForm(prev => ({ ...prev, idReferenceNumber: e.target.value })); }} placeholder="e.g. P1234567A" disabled={!isEditing} />
                 </div>
               </div>
-              <div className="flex flex-col gap-4 mt-5">
-                <div className="flex items-center justify-between border border-slate-200 rounded-none p-4 bg-slate-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">F</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">Front Side Document</p>
-                      <p className="text-xs text-slate-500">{idFront ? 'Uploaded' : 'No document uploaded'}</p>
-                    </div>
-                  </div>
-                  <input type="file" accept="image/*,application/pdf" className="hidden" ref={frontInputRef} onChange={(e) => handleIdUpload(e, setIdFront, 'idFrontPath')} />
-                  <div className="flex gap-2">
-                    {idFront && <button onClick={() => window.open(idFront, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
-                    <button onClick={() => frontInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
-                  </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                <div onClick={() => isEditing && frontInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
+                  {idFront ? <img src={idFront} alt="Front ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Front Side</p>}
+                  <input type="file" ref={frontInputRef} onChange={(e) => handleIdUpload(e, setIdFront, 'idFrontPath')} className="hidden" accept="image/*" />
                 </div>
-
+                
                 {idConfig?.hasBackSide && (
-                  <div className="flex items-center justify-between border border-slate-200 rounded-none p-4 bg-slate-50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">B</div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">Back Side Document</p>
-                        <p className="text-xs text-slate-500">{idBack ? 'Uploaded' : 'No document uploaded'}</p>
-                      </div>
-                    </div>
-                    <input type="file" accept="image/*,application/pdf" className="hidden" ref={backInputRef} onChange={(e) => handleIdUpload(e, setIdBack, 'idBackPath')} />
-                    <div className="flex gap-2">
-                      {idBack && <button onClick={() => window.open(idBack, '_blank')} className="text-sm font-medium text-slate-900 hover:underline">View</button>}
-                      <button onClick={() => backInputRef.current?.click()} className="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline">Update</button>
-                    </div>
+                  <div onClick={() => isEditing && backInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
+                    {idBack ? <img src={idBack} alt="Back ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Back Side</p>}
+                    <input type="file" ref={backInputRef} onChange={(e) => handleIdUpload(e, setIdBack, 'idBackPath')} className="hidden" accept="image/*" />
                   </div>
                 )}
+              </div>
+
+              <div className="mb-6">
+                <div onClick={() => isEditing && selfieInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
+                  {idSelfie ? <img src={idSelfie} alt="Selfie" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Selfie with ID</p>}
+                  <input type="file" ref={selfieInputRef} onChange={(e) => handleIdUpload(e, setIdSelfie, 'selfiePath')} className="hidden" accept="image/*" />
+                </div>
               </div>
               <SaveBtn label="Save Verification Details" onClick={handleSaveVerification} />
             </Section>
@@ -570,8 +580,8 @@ export default function UserSettings({ currentUser }) {
             {/* Accessibility & Statutory Discounts */}
             <Section title="Accessibility & Statutory Discounts">
               {idType.includes('senior') || idType.includes('pwd') ? (
-                <div className="bg-purple-50 text-purple-700 border border-purple-200 rounded-none px-4 py-3 flex items-center gap-3 text-sm font-semibold shadow-sm">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-xs">✓</span>
+                <div className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 rounded-none px-4 py-3 flex items-center gap-3 text-sm font-bold shadow-sm">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-none bg-purple-500 text-white text-xs">✓</span>
                   Statutory 20% Discount Automatically Applied to Paid Bookings
                 </div>
               ) : (
@@ -588,12 +598,12 @@ export default function UserSettings({ currentUser }) {
             <Section title="Linked Wallets & Method Repository">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {wallets.map(wallet => (
-                  <div key={wallet.id} className="bg-slate-50 border border-slate-200 rounded-none p-4 flex items-center justify-between">
+                  <div key={wallet.id} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full ${wallet.bg} flex items-center justify-center ${wallet.text} font-bold`}>{wallet.icon}</div>
+                      <div className={`w-10 h-10 rounded-none ${wallet.bg} flex items-center justify-center ${wallet.text} font-bold`}>{wallet.icon}</div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">{wallet.name}</p>
-                        <p className="text-xs font-mono text-slate-500">{wallet.value}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{wallet.name}</p>
+                        <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{wallet.value}</p>
                       </div>
                     </div>
                     <button onClick={() => setWalletToUnlink(wallet)} className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors">
@@ -602,8 +612,8 @@ export default function UserSettings({ currentUser }) {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-center mt-6 pt-4 border-t border-slate-100">
-                <button onClick={handleAddWallet} className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-none text-sm font-bold text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-1">
+              <div className="flex justify-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <button onClick={handleAddWallet} className="w-full py-3.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-none text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-500 transition-all flex items-center justify-center gap-1">
                   + Link New Payment Method
                 </button>
               </div>
@@ -645,11 +655,7 @@ export default function UserSettings({ currentUser }) {
           <div className="animate-fade-in">
             {/* Account Credentials */}
             <Section title="Account Credentials">
-              <div>
-                <label className={labelCls}>Email Address</label>
-                <input type="email" className={inputCls} value={form.email} onChange={set('email')} placeholder="you@email.com" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className={labelCls}>New Password</label>
                   <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={inputCls} placeholder="New Password" />
@@ -672,32 +678,34 @@ export default function UserSettings({ currentUser }) {
                   onChange={setTwoFactorEnabled}
                 />
               </div>
-              <div className="pt-4 mt-2">
-                <p className="text-sm font-semibold text-slate-800">Login Session Management</p>
-                <p className="text-xs text-slate-500 mt-1">Current Active Session: <span className="font-medium text-slate-700">Antigravity IDE Workspace Client</span></p>
-                <button className="text-xs font-medium text-slate-900 hover:text-slate-700 hover:underline mt-2 transition-all">
-                  Log out of all other devices
+              <div className="p-6 border border-slate-200 dark:border-slate-700 rounded-none bg-slate-50 dark:bg-slate-800 mt-4">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Active Sessions</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white mb-4">Current Session: <span className="text-slate-800 dark:text-slate-200 font-normal">Antigravity IDE Workspace Client</span></p>
+                <button onClick={() => alert("Successfully signed out of all other sessions")} className="px-6 py-2.5 rounded-none border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors active:scale-95">
+                  Sign Out All Other Sessions
                 </button>
               </div>
             </Section>
 
             {/* Data Privacy & Transcript Privileges */}
             <Section title="Data Privacy & Transcript Privileges">
-              <p className="text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-none border border-slate-100">
-                Your data is handled strictly compliant with the Philippine Data Privacy Act of 2012 (NPC). You retain full control over your stored transcripts and cached identity documents.
-              </p>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <button onClick={handlePrintTranscript} className="border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-400 font-medium text-sm px-5 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all shadow-sm active:scale-95 w-full md:w-auto text-center">
-                  Export Profile Metadata Transcript
-                </button>
-                <div className="flex-1 md:border-l md:border-slate-100 md:pl-6">
+              <div className="bg-slate-800 dark:bg-slate-800 text-white p-6 rounded-none mb-6 relative overflow-hidden">
+                <p className="text-sm font-medium text-slate-300 relative z-10">
+                  Your data is handled strictly compliant with the <strong className="text-white">Philippine Data Privacy Act of 2012 (NPC)</strong>. You retain full control over your stored transcripts and cached identity documents.
+                </p>
+              </div>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-200 dark:border-slate-700">
+                <div className="flex-1">
                   <ToggleSwitch
-                    label="Purge Encrypted Government ID Cache Post-Event"
+                    label="Auto-delete Documents Post-Event"
                     description="Automatically drop document files from server cache 30 days after an event finishes."
                     enabled={purgeCache}
                     onChange={setPurgeCache}
                   />
                 </div>
+                <button onClick={handlePrintTranscript} className="border border-purple-700 text-purple-700 dark:text-purple-400 font-bold text-xs px-6 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all active:scale-95 whitespace-nowrap">
+                  Export Profile Metadata Transcript
+                </button>
               </div>
             </Section>
 

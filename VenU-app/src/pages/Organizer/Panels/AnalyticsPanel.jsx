@@ -17,7 +17,7 @@ const DATE_PRESETS = [
 // Convert the selected range into actual start/end ISO strings for the API
 const computeRange = (range, customStart, customEnd) => {
     const now = new Date();
-    const end = new Date(now);
+    let end = new Date(now);
     end.setHours(23, 59, 59, 999);
     let start = new Date(now);
     start.setHours(0, 0, 0, 0);

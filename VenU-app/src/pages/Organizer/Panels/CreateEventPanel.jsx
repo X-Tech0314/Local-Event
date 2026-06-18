@@ -3,7 +3,7 @@ import { Upload, Image as ImageIcon, MapPin, Calendar, Clock, Users, Lock, Unloc
 import TicketPreview from '../../../components/TicketPreview';
 import usePsgc from '../../../hooks/usePsgc';
 
-export default function CreateEventPanel({ currentUser, setActivePanel, editEvent, setEditEvent }) {
+export default function CreateEventPanel({ currentUser, setActivePanel, editEvent, setEditEvent, addNotification }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,6 +58,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     ContactNumber: '',
     ContactEmail: '',
     MapUrl: '',
+    Latitude: '',
+    Longitude: '',
     SquareFootage: '',
     NumberOfFloors: '1',
     HasFireExit: false,
@@ -163,17 +165,41 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     const totalCapacity = parseInt(formData.Capacity) || 0;
     if (totalCapacity <= 0) return;
     
-    const numTiers = formData.TicketTiers.length;
-    if (numTiers === 0) return;
-
-    const baseAmount = Math.floor(totalCapacity / numTiers);
-    const remainder = totalCapacity % numTiers;
-
-    const updatedTiers = formData.TicketTiers.map((tier, index) => ({
-      ...tier,
-      Capacity: (index === numTiers - 1 ? baseAmount + remainder : baseAmount).toString()
-    }));
+    let sumAssigned = 0;
+    let unassignedIndices = [];
     
+    formData.TicketTiers.forEach((tier, index) => {
+      const cap = parseInt(tier.Capacity);
+      if (!isNaN(cap) && cap > 0) {
+        sumAssigned += cap;
+      } else {
+        unassignedIndices.push(index);
+      }
+    });
+
+    if (unassignedIndices.length === 0) {
+      // Re-allocate evenly if all are assigned
+      const baseAmount = Math.floor(totalCapacity / formData.TicketTiers.length);
+      const remainder = totalCapacity % formData.TicketTiers.length;
+      const updatedTiers = formData.TicketTiers.map((tier, index) => ({
+        ...tier,
+        Capacity: (index === formData.TicketTiers.length - 1 ? baseAmount + remainder : baseAmount).toString()
+      }));
+      setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
+      return;
+    }
+
+    const remainingCapacity = totalCapacity - sumAssigned;
+    if (remainingCapacity < 0) return;
+
+    const baseAmount = Math.floor(remainingCapacity / unassignedIndices.length);
+    const remainder = remainingCapacity % unassignedIndices.length;
+
+    const updatedTiers = [...formData.TicketTiers];
+    unassignedIndices.forEach((tierIndex, i) => {
+      updatedTiers[tierIndex].Capacity = (i === unassignedIndices.length - 1 ? baseAmount + remainder : baseAmount).toString();
+    });
+
     setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
   };
 
@@ -203,10 +229,10 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     try {
       const token = localStorage.getItem('token');
       
-      let lat = 0;
-      let lon = 0;
+      let lat = formData.Latitude ? parseFloat(formData.Latitude) : 0;
+      let lon = formData.Longitude ? parseFloat(formData.Longitude) : 0;
       
-      if (formData.VenueType === 'Physical') {
+      if (formData.VenueType === 'Physical' && (lat === 0 && lon === 0)) {
         let addressToGeocode = "";
         if (venueSource === 'custom') {
           addressToGeocode = `${formData.StreetAddress}, ${getBarangayName(formData.SelectedBarangay) || ''}, ${getCityName(formData.SelectedCity) || ''}, Philippines`;
@@ -285,6 +311,9 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       }
 
       setShowSuccessModal(true);
+      if (addNotification) {
+        addNotification('Event Created Successfully', `"${formData.EventTitle}" has been successfully published.`);
+      }
       setTimeout(() => {
         setActivePanel('events');
       }, 3000);
@@ -298,6 +327,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     const newErrors = {};
 
     if (step === 1) {
+      if (!formData.EventBannerUrl) newErrors.EventBannerUrl = "Event promotional image is required.";
       if (!formData.EventTitle.trim()) newErrors.EventTitle = "Event title is required.";
       if (formData.EventTitle.length > 100) newErrors.EventTitle = "Title cannot exceed 100 characters.";
       if (!formData.Description.trim()) newErrors.Description = "Description is required.";
@@ -357,6 +387,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           if (!formData.ContactNumber.trim()) newErrors.ContactNumber = "Contact number is required.";
           if (!formData.ContactEmail.trim()) newErrors.ContactEmail = "Contact email is required.";
           if (!formData.SquareFootage || parseInt(formData.SquareFootage) <= 0) newErrors.SquareFootage = "Valid square footage is required.";
+          if (!formData.Latitude) newErrors.Latitude = "Latitude is required.";
+          if (!formData.Longitude) newErrors.Longitude = "Longitude is required.";
         }
       }
       if (venueSource === 'custom' && (!formData.Capacity || parseInt(formData.Capacity) <= 0)) {
@@ -374,6 +406,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         formData.TicketTiers.forEach((tier, index) => {
           if (!tier.Name.trim()) newErrors[`TierName_${index}`] = "Tier name required.";
           if (!tier.Capacity || parseInt(tier.Capacity) <= 0) newErrors[`TierCapacity_${index}`] = "Valid capacity required.";
+          if (tier.Price === '' || isNaN(parseFloat(tier.Price)) || parseFloat(tier.Price) < 0) newErrors[`TierPrice_${index}`] = "Valid price required.";
           sumTickets += (parseInt(tier.Capacity) || 0);
         });
 
@@ -559,6 +592,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                   </>
                 )}
               </div>
+              {errors.EventBannerUrl && <span className="text-xs text-red-500 mt-1 block">{errors.EventBannerUrl}</span>}
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Event Title</label>
@@ -689,7 +723,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     min={getTodayDateString()}
                     value={formData.StartDate}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm dark:[color-scheme:dark]"
                   />
                   {errors.StartDate && <span className="text-xs text-red-500 mt-1 block">{errors.StartDate}</span>}
                 </div>
@@ -700,7 +734,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     name="StartTime"
                     value={formData.StartTime}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm dark:[color-scheme:dark]"
                   />
                   {errors.StartTime && <span className="text-xs text-red-500 mt-1 block">{errors.StartTime}</span>}
                 </div>
@@ -715,7 +749,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     min={formData.StartDate || getTodayDateString()}
                     value={formData.EndDate}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm dark:[color-scheme:dark]"
                   />
                   {errors.EndDate && <span className="text-xs text-red-500 mt-1 block">{errors.EndDate}</span>}
                 </div>
@@ -726,7 +760,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     name="EndTime"
                     value={formData.EndTime}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm dark:[color-scheme:dark]"
                   />
                   {errors.EndTime && <span className="text-xs text-red-500 mt-1 block">{errors.EndTime}</span>}
                 </div>
@@ -760,7 +794,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         min={getTodayDateString()}
                         value={formData.TicketSaleStart}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white dark:[color-scheme:dark]"
                       />
                       {errors.TicketSaleStart && <span className="text-xs text-red-500 mt-1 block">{errors.TicketSaleStart}</span>}
                     </div>
@@ -772,7 +806,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         min={formData.TicketSaleStart || getTodayDateString()}
                         value={formData.TicketSaleEnd}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white dark:[color-scheme:dark]"
                       />
                       {errors.TicketSaleEnd && <span className="text-xs text-red-500 mt-1 block">{errors.TicketSaleEnd}</span>}
                     </div>
@@ -1039,6 +1073,19 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
                       <div className="grid grid-cols-2 gap-3 mt-2">
                         <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Latitude</label>
+                          <input type="number" step="any" name="Latitude" value={formData.Latitude} onChange={handleInputChange} placeholder="e.g., 14.5995" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.Latitude && <span className="text-[10px] text-red-500">{errors.Latitude}</span>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Longitude</label>
+                          <input type="number" step="any" name="Longitude" value={formData.Longitude} onChange={handleInputChange} placeholder="e.g., 120.9842" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.Longitude && <span className="text-[10px] text-red-500">{errors.Longitude}</span>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Square Footage</label>
                           <input type="number" name="SquareFootage" value={formData.SquareFootage} onChange={handleInputChange} placeholder="e.g., 5000" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
                           {errors.SquareFootage && <span className="text-[10px] text-red-500">{errors.SquareFootage}</span>}
@@ -1175,6 +1222,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                             placeholder="VIP, General Admission, etc."
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           />
+                          {errors[`TierName_${index}`] && <span className="text-[10px] text-red-500">{errors[`TierName_${index}`]}</span>}
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Price Vector (PHP)</label>
@@ -1185,6 +1233,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                             placeholder="0 for Complimentary"
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           />
+                          {errors[`TierPrice_${index}`] && <span className="text-[10px] text-red-500">{errors[`TierPrice_${index}`]}</span>}
                         </div>
                       </div>
 
@@ -1198,6 +1247,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                             placeholder="Max allocations allowed"
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           />
+                          {errors[`TierCapacity_${index}`] && <span className="text-[10px] text-red-500">{errors[`TierCapacity_${index}`]}</span>}
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Validity Scope Matrix</label>

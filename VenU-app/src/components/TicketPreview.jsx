@@ -82,11 +82,11 @@ export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
         <div className="w-full flex justify-between text-center mb-2">
           <div>
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Date</p>
-            <p className="text-sm font-black text-slate-800">{eventData?.date || 'TBD'}</p>
+            <p className="text-sm font-black text-slate-800">{eventData?.date || eventData?.startDate || 'TBD'}</p>
           </div>
           <div>
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Time</p>
-            <p className="text-sm font-black text-slate-800">{eventData?.time || 'TBD'}</p>
+            <p className="text-sm font-black text-slate-800">{eventData?.time || eventData?.startTime || 'TBD'}</p>
           </div>
         </div>
 
