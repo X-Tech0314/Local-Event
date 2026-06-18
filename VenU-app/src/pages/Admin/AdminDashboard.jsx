@@ -1,0 +1,131 @@
+import React, { useState } from 'react';
+import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../ThemeContext';
+import { useNavigate } from 'react-router-dom';
+import logo from "../../assets/venu-logo3-transparent.png";
+
+// Import Panels
+import AdminDashboardHome from './Panels/AdminDashboardHome';
+import UserManagement from './Panels/UserManagement';
+import EventApprovals from './Panels/EventApprovals';
+import AdminManagement from './Panels/AdminManagement';
+
+// Mock Data for Events (Shared between Home and Approvals panels)
+const initialEvents = [
+    { id: 1, name: 'Tech Conference 2024', organizer: 'TechCorp', date: 'Aug 12, 2024' },
+    { id: 2, name: 'Summer Music Fest', organizer: 'LiveNation', date: 'Sep 05, 2024' },
+    { id: 3, name: 'Startup Pitch Night', organizer: 'InnovHub', date: 'Oct 20, 2024' },
+];
+
+export default function AdminDashboard() {
+    const { darkMode, toggleDarkMode } = useTheme();
+    const navigate = useNavigate();
+
+    const [role, setRole] = useState('superadmin'); // 'superadmin' or 'admin'
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [pendingEvents, setPendingEvents] = useState(initialEvents);
+
+    // Removed 'files' from the array
+    const navItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'superadmin'] },
+        { id: 'users', label: 'User Management', icon: Users, roles: ['admin', 'superadmin'] },
+        { id: 'events', label: 'Event Approvals', icon: CalendarCheck, roles: ['admin', 'superadmin'] },
+        { id: 'admins', label: 'Admin Management', icon: Crown, roles: ['superadmin'] },
+    ];
+
+    const toggleUserRole = () => {
+        const newRole = role === 'superadmin' ? 'admin' : 'superadmin';
+        setRole(newRole);
+        if (newRole === 'admin' && activeTab === 'admins') {
+            setActiveTab('dashboard');
+        }
+    };
+
+    const handleEventAction = (id) => {
+        setPendingEvents(pendingEvents.filter(e => e.id !== id));
+    };
+
+    return (
+        <div className="flex min-h-screen bg-slate-200 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
+            {/* Sidebar */}
+            <aside className="w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 p-6 flex flex-col justify-between z-40 shadow-2xl">
+                <div className="flex flex-col gap-8">
+                    <div className="flex items-center gap-2 select-none px-2 mb-2">
+                        <img src={logo} alt="VenU Logo" className="h-8 w-auto" />
+                        <span className="text-xl font-bold text-slate-900 dark:text-white">VenU Admin</span>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded">
+                        <div className="w-10 h-10 rounded-full bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-medium text-white text-sm shrink-0">
+                            {role === 'superadmin' ? <Crown size={18} /> : <Users size={18} />}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white leading-tight truncate">
+                                {role === 'superadmin' ? 'Superadmin' : 'Admin'} Account
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">System Control</p>
+                        </div>
+                    </div>
+
+                    <nav className="space-y-2">
+                        {navItems.map(({ id, label, icon: Icon, roles }) => {
+                            if (!roles.includes(role)) return null;
+                            const isActive = activeTab === id;
+                            return (
+                                <button
+                                    key={id}
+                                    onClick={() => setActiveTab(id)}
+                                    className={`w-full flex items-center gap-3 rounded-none px-4 py-3.5 text-sm font-bold transition-all ${isActive ? 'bg-purple-700 dark:bg-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-white/10' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border border-transparent'}`}
+                                >
+                                    <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500'} />
+                                    <span className="tracking-wide">{label}</span>
+                                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
+
+                <button
+                    onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/'); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-none text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
+                >
+                    <LogOut size={16} strokeWidth={2.5} /> Log Out
+                </button>
+            </aside>
+
+            {/* Main Content */}
+            <main className="ml-64 flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
+                {/* Topbar */}
+                <div className="sticky top-0 z-30 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between">
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                        {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                    </h1>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleDarkMode}
+                            className="p-2.5 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white transition-colors"
+                            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
+                        <button
+                            onClick={toggleUserRole}
+                            className="px-4 py-2 text-xs font-black uppercase tracking-widest bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-none transition-colors"
+                        >
+                            Simulate Login as: {role === 'superadmin' ? 'Admin' : 'Superadmin'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="p-8 max-w-7xl mx-auto w-full">
+                    {activeTab === 'dashboard' && <AdminDashboardHome pendingEvents={pendingEvents} setActiveTab={setActiveTab} />}
+                    {activeTab === 'users' && <UserManagement />}
+                    {activeTab === 'events' && <EventApprovals pendingEvents={pendingEvents} handleEventAction={handleEventAction} />}
+                    {/* Removed the File Manager render condition */}
+                    {activeTab === 'admins' && role === 'superadmin' && <AdminManagement />}
+                </div>
+            </main>
+        </div>
+    );
+}
