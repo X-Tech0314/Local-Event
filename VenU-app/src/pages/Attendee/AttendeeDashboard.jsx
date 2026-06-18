@@ -29,7 +29,7 @@ function MapUpdater({ center }) {
   const map = useMap();
   React.useEffect(() => {
     if (center) {
-      map.flyTo(center, 14, { duration: 1.5 });
+      map.flyTo(center, 17, { duration: 1.5 });
     }
   }, [center, map]);
   return null;
@@ -136,7 +136,8 @@ function QrMockup() {
   );
 }
 
-function EventCard({ event, onSelect, onLocationClick }) {
+function EventCard({ event, onSelect, onLocationClick, isSaved, onToggleSave }) {
+  const eventId = event.eventId || event.id;
   return (
     <div
       onClick={() => onSelect(event)}
@@ -145,6 +146,13 @@ function EventCard({ event, onSelect, onLocationClick }) {
       <div className="h-56 relative overflow-hidden">
         <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 z-10"></div>
         <img src={event.image} alt={event.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform" />
+
+        <button 
+          onClick={(e) => onToggleSave && onToggleSave(e, eventId)}
+          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border ${isSaved ? 'bg-purple-500/90 border-purple-400 text-white shadow-md' : 'bg-black/40 hover:bg-black/60 border-white/20 text-white/70 hover:text-white'} transition-all`}
+        >
+          <Heart size={16} fill={isSaved ? "currentColor" : "none"} strokeWidth={isSaved ? 0 : 2} />
+        </button>
 
         <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md bg-white/90 shadow-sm ${event.accessType === 'Private' ? 'text-purple-600 border-purple-200' : event.isPaid ? 'text-amber-600 border-amber-200' : 'text-emerald-600 border-emerald-200'}`}>
@@ -201,22 +209,100 @@ function EventCard({ event, onSelect, onLocationClick }) {
 function TicketingDrawer({ event, onClose, onSuccess }) {
   const [accessCode, setAccessCode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('gcash');
-  const [selectedTier, setSelectedTier] = useState(event.ticketTiers[0]);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const tiers = event.ticketTiers && event.ticketTiers.length > 0 ? event.ticketTiers : ["General Admission"];
+  const [selectedTier, setSelectedTier] = useState(tiers[0]);
   const codeMatches = accessCode === event.verificationCode;
+  const markerRef = React.useRef(null);
+  const isPaid = event.isPaid || event.price > 0;
+
+  const isPaymentValid = () => {
+    if (!isPaid) return true;
+    if (paymentMethod === 'gcash') return accountNumber.length === 11;
+    if (paymentMethod === 'gotyme') return accountNumber.length >= 8;
+    return false;
+  };
+
+  React.useEffect(() => {
+    // Small timeout to ensure map has initialized
+    const timer = setTimeout(() => {
+      if (markerRef.current) {
+        markerRef.current.openPopup();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCheckout = () => {
     onSuccess({
       event,
       ticketId: generateTicketId(),
       tier: selectedTier,
-      paymentMethod: event.isPaid ? paymentMethod : null,
+      quantity,
+      paymentMethod: isPaid ? paymentMethod : null,
+      accountNumber: isPaid ? accountNumber : null,
       claimedAt: new Date().toLocaleString()
     });
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex justify-end">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity" onClick={onClose} />
+    <div className="fixed inset-0 z-[70] flex justify-end overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <MapContainer 
+          center={[event.latitude || 14.5995, event.longitude || 120.9842]} 
+          zoom={16} 
+          scrollWheelZoom={false} 
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+        >
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+          <Marker position={[event.latitude || 14.5995, event.longitude || 120.9842]} ref={markerRef}>
+            <Popup className="rounded-none overflow-hidden shadow-2xl border-0 p-0 m-0 w-[300px]" autoPan={false}>
+              <div className="font-sans">
+                <div className="h-28 w-full bg-slate-200 relative">
+                  <img src={event.image} className="w-full h-full object-cover" alt="Venue" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 bg-purple-700 dark:bg-purple-500/80 rounded-none backdrop-blur-sm">
+                    {event.category}
+                  </span>
+                </div>
+                <div className="p-4 relative">
+                  {event.isRecommended && (
+                    <span className="absolute -top-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 shadow-sm rounded-none">
+                      <Star size={8} className="inline mr-1" />
+                      Recommended
+                    </span>
+                  )}
+                  <h4 className="font-black text-slate-900 leading-tight mb-1 text-base">{event.title}</h4>
+                  <p className="text-[11px] font-medium text-slate-500 mb-3 flex items-start gap-1 leading-tight"><MapPin size={10} className="shrink-0 mt-0.5" /> <span className="line-clamp-2">{event.address}</span></p>
+
+                  <div className="grid grid-cols-2 gap-2 text-[10px] mb-3">
+                    <div className="bg-slate-50 p-2 border border-slate-100 text-center">
+                      <span className="block font-black text-slate-400 uppercase tracking-widest text-[8px] mb-0.5">Capacity</span>
+                      <span className="font-bold text-slate-800">{event.capacity || 'N/A'}</span>
+                    </div>
+                    <div className="bg-slate-50 p-2 border border-slate-100 text-center">
+                      <span className="block font-black text-slate-400 uppercase tracking-widest text-[8px] mb-0.5">Rating</span>
+                      <span className="font-bold text-slate-800 flex items-center justify-center gap-0.5"><Star size={10} className="text-amber-500" fill="currentColor" /> {event.averageRating || 4.5} ({event.totalReviews || 12})</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-[10px] text-slate-600 mb-0 bg-slate-50 p-2 border border-slate-100">
+                    <p><span className="font-black text-slate-800">Contact:</span> {event.contactPerson || 'N/A'}</p>
+                    <p><span className="font-black text-slate-800">Details:</span> {event.contactDetails || 'N/A'}</p>
+                    <p><span className="font-black text-slate-800">Floors:</span> {event.numberOfFloors || 1}</p>
+                    <p><span className="font-black text-slate-800">Area:</span> {event.floorArea ? `${event.floorArea} sq m` : 'N/A'}</p>
+                    <p><span className="font-black text-slate-800">Ceiling:</span> {event.ceilingHeight ? `${event.ceilingHeight} m` : 'N/A'}</p>
+                    <p><span className="font-black text-slate-800">Best for:</span> <span className="capitalize">{event.recommendedFor || 'All events'}</span></p>
+                  </div>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        </MapContainer>
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity cursor-pointer" onClick={onClose} />
+      </div>
 
       <div className="w-full max-w-md bg-slate-50 dark:bg-slate-900 h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col animate-slide-in-right relative z-10 overflow-hidden">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between relative z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
@@ -226,7 +312,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             </span>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{event.title}</h2>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5">
-              <MapPin size={14} /> {event.barangay}
+              <MapPin size={14} /> {event.barangay || event.address}
             </p>
           </div>
           <button onClick={onClose} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -236,11 +322,24 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
         <div className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10 custom-scrollbar">
           <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Select Admission Tier</p>
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Select Admission Tier</p>
+              <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 shadow-inner">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors active:scale-95 border border-slate-200 dark:border-slate-600"
+                >-</button>
+                <span className="text-sm font-black text-slate-900 dark:text-white w-4 text-center">{quantity}</span>
+                <button 
+                  onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                  className="w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors active:scale-95 border border-slate-200 dark:border-slate-600"
+                >+</button>
+              </div>
+            </div>
             <div className="space-y-3">
-              {event.ticketTiers.map((tier) => (
-                <label
-                  key={tier}
+              {tiers.map((tier) => (
+                <label 
+                  key={tier} 
                   onClick={() => setSelectedTier(tier)}
                   className={`flex items-center justify-between p-4 rounded-none border-2 cursor-pointer ${selectedTier === tier ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
                 >
@@ -250,7 +349,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                     </div>
                     <span className={`text-sm font-bold ${selectedTier === tier ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{tier}</span>
                   </div>
-                  {event.isPaid && <span className={`font-black ${selectedTier === tier ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'}`}>₱{event.price}</span>}
+                  {isPaid && <span className={`font-black ${selectedTier === tier ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'}`}>₱{event.price}</span>}
                 </label>
               ))}
             </div>
@@ -284,7 +383,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             </div>
           )}
 
-          {event.isPaid && (
+          {isPaid && (
             <div>
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                 <CreditCard size={14} className="text-purple-500" /> Payment Method
@@ -302,24 +401,71 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                 ))}
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-none p-5">
-                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
-                  <span>Subtotal</span>
+              <div className="bg-white dark:bg-slate-800 p-5 border border-slate-200 dark:border-slate-700 mb-6 relative overflow-hidden group shadow-sm">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div className="flex gap-4 items-center mb-5">
+                  <div className="w-20 h-20 bg-white border-2 border-slate-200 p-1 shrink-0 shadow-sm relative group-hover:border-purple-300 transition-colors">
+                    {/* Mock QR Code using CSS grid patterns */}
+                    <div className="w-full h-full bg-[linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a),linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a)]" style={{backgroundSize: '10px 10px', backgroundPosition: '0 0, 5px 5px'}}></div>
+                    <div className="absolute inset-2 border-[3px] border-white pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent flex items-end justify-center pb-1 pointer-events-none">
+                      <span className="text-[6px] font-black uppercase text-slate-800 tracking-widest bg-white/50 px-1 backdrop-blur-sm">Scan to Pay</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pay To</p>
+                    <p className="text-sm font-black text-slate-800 dark:text-white uppercase leading-none mb-1 line-clamp-1">{event.contactPerson || event.organizer?.firstName || 'VenU Organizer'}</p>
+                    <p className="text-xs font-medium text-purple-600 dark:text-purple-400 tracking-wider font-mono bg-purple-50 dark:bg-purple-900/20 inline-block px-1.5 py-0.5 rounded-sm border border-purple-100 dark:border-purple-500/20">{paymentMethod === 'gcash' ? '0912 345 6789' : '102 391 848 102'}</p>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                    Your {paymentMethod === 'gcash' ? 'GCash Number' : 'Account Number'} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder={paymentMethod === 'gcash' ? "09XXXXXXXXX" : "Account Number"}
+                    maxLength={paymentMethod === 'gcash' ? 11 : 20}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border-2 px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-purple-500/20 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 ${
+                      accountNumber.length > 0 && !isPaymentValid()
+                        ? 'border-red-400 focus:border-red-500 text-red-600'
+                        : accountNumber.length > 0 && isPaymentValid()
+                          ? 'border-emerald-500 focus:border-emerald-600'
+                          : 'border-slate-200 dark:border-slate-700 focus:border-purple-500'
+                    }`}
+                  />
+                  {accountNumber.length > 0 && !isPaymentValid() && (
+                    <p className="text-[10px] text-red-500 mt-1.5 font-semibold">Invalid {paymentMethod === 'gcash' ? 'GCash number (11 digits required)' : 'account number'}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-none p-5 shadow-inner">
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2 font-medium">
+                  <span>Price per ticket</span>
                   <span>₱{event.price.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-4 font-medium">
-                  <span>Platform Fee</span>
-                  <span>₱0.00</span>
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
+                  <span>Quantity</span>
+                  <span>x {quantity}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-4 font-medium border-t border-dashed border-slate-200 dark:border-slate-700 pt-3">
+                  <span>Subtotal</span>
+                  <span>₱{(event.price * quantity).toLocaleString()}</span>
                 </div>
                 <div className="border-t border-slate-200 dark:border-slate-700 pt-4 flex justify-between items-end">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Due</span>
-                  <span className="text-2xl font-black text-slate-900 dark:text-white">₱{event.price.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-purple-700 dark:text-purple-400">₱{(event.price * quantity).toLocaleString()}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {!event.isPaid && event.accessType === 'Public' && (
+          {!isPaid && event.accessType === 'Public' && (
             <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-none p-6 text-center shadow-sm">
               <CheckCircle2 className="text-emerald-500 dark:text-emerald-400 mx-auto mb-3" size={36} strokeWidth={2.5} />
               <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400 mb-1">Free Admission Guaranteed</p>
@@ -340,8 +486,16 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             >
               {codeMatches ? 'Confirm Registration' : 'Enter Access Code'}
             </button>
-          ) : event.isPaid ? (
-            <button onClick={handleCheckout} className="w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95 flex justify-center items-center gap-2">
+          ) : isPaid ? (
+            <button 
+              disabled={!isPaymentValid()}
+              onClick={handleCheckout} 
+              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${
+                isPaymentValid()
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95' 
+                  : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
+              }`}
+            >
               <Lock size={16} /> Authorize Payment
             </button>
           ) : (
@@ -364,14 +518,19 @@ function TicketModal({ ticket, onClose }) {
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm animate-scale-in relative group perspective-1000">
         <div className="bg-white rounded-none overflow-hidden shadow-2xl relative z-10 transform transition-transform preserve-3d">
-          <div className={`bg-gradient-to-br ${ticket.event.color || 'from-purple-500 to-indigo-600'} p-6 pb-12 text-white text-center relative`}>
-            <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md">
-              <X size={14} strokeWidth={3} />
-            </button>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest mb-4 border border-white/20 shadow-inner">
-              <CheckCircle2 size={12} /> Confirmed
-            </span>
-            <h2 className="text-2xl font-black leading-tight">{ticket.event.title}</h2>
+          <div className="relative p-6 pb-12 text-white text-center overflow-hidden">
+            <div className="absolute inset-0 bg-slate-900">
+              {ticket.event?.image && (
+                <img src={ticket.event.image} alt="Event Banner" className="w-full h-full object-cover opacity-70 mix-blend-overlay" />
+              )}
+              <div className={`absolute inset-0 bg-gradient-to-br ${ticket.event?.color || 'from-purple-500 to-indigo-600'} opacity-80 mix-blend-multiply`}></div>
+            </div>
+            <div className="relative z-10">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest mb-4 border border-white/20 shadow-inner">
+                <CheckCircle2 size={12} /> Confirmed
+              </span>
+              <h2 className="text-2xl font-black leading-tight drop-shadow-md">{ticket.event.title}</h2>
+            </div>
           </div>
 
           <div className="relative flex justify-between items-center -mt-4 z-20">
@@ -427,14 +586,104 @@ import { useTheme } from '../../ThemeContext';
 export default function AttendeeDashboard() {
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
+  const savedUserStr = localStorage.getItem('user');
+  const loggedInUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+
+  const currentUser = {
+    id: loggedInUser?.Id || loggedInUser?.id || '',
+    email: loggedInUser?.Email || loggedInUser?.email || '',
+    role: loggedInUser?.Role || loggedInUser?.role || 'Attendee',
+    firstName: loggedInUser?.FirstName || loggedInUser?.firstName || 'Guest',
+    lastName: loggedInUser?.LastName || loggedInUser?.lastName || 'User',
+    contactNumber: loggedInUser?.ContactNumber || loggedInUser?.contactNumber || '',
+    region: loggedInUser?.Region || loggedInUser?.region || '',
+    province: loggedInUser?.Province || loggedInUser?.province || '',
+    city: loggedInUser?.City || loggedInUser?.city || '',
+    barangay: loggedInUser?.Barangay || loggedInUser?.barangay || '',
+    preferredCategories: []
+  };
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [search, setSearch] = useState('');
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [confirmedTicket, setConfirmedTicket] = useState(null);
+  const [reviewingEvent, setReviewingEvent] = useState(null);
   const [selectedWalletCategory, setSelectedWalletCategory] = useState('All');
+  const [otherCategoryQuery, setOtherCategoryQuery] = useState('');
   const [liveEvents, setLiveEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mapCenter, setMapCenter] = useState(null);
+  
+  const [savedEvents, setSavedEvents] = useState(() => {
+    const saved = localStorage.getItem('vnu_user_saved_events');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [walletView, setWalletView] = useState('upcoming');
+
+  React.useEffect(() => {
+    localStorage.setItem('vnu_user_saved_events', JSON.stringify(savedEvents));
+  }, [savedEvents]);
+
+  const toggleSaveEvent = (e, eventId) => {
+    e.stopPropagation();
+    setSavedEvents(prev => 
+      prev.includes(eventId) ? prev.filter(id => id !== eventId) : [...prev, eventId]
+    );
+  };
+  
+  const [mapEvents, setMapEvents] = useState([]);
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+
+  const dynamicGeocode = async (address) => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      }
+    } catch (e) {
+      console.error("Dynamic geocoding failed:", e);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const fetchMapEvents = async () => {
+      try {
+        const response = await fetch('http://localhost:5150/api/Locations/explore');
+        if (response.ok) {
+          const data = await response.json();
+          
+          const processedEvents = await Promise.all(data.map(async (event, index) => {
+             if (!event.latitude || event.latitude === 0 || !event.longitude || event.longitude === 0) {
+                // Throttle requests slightly based on index to avoid 429 Too Many Requests
+                await new Promise(r => setTimeout(r, index * 600));
+                
+                const coords = await dynamicGeocode(event.address);
+                if (coords) {
+                   event.latitude = coords.lat;
+                   event.longitude = coords.lon;
+                   event.isRecommended = true; 
+                } else {
+                   const baseCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
+                   event.latitude = baseCoords[0] + (index * 0.002);
+                   event.longitude = baseCoords[1] - (index * 0.002);
+                   event.isRecommended = true;
+                }
+             }
+             return event;
+          }));
+          
+          setMapEvents(processedEvents);
+        }
+      } catch (err) {
+        console.error("Failed to fetch map events:", err);
+      }
+    };
+    fetchMapEvents();
+  }, [currentUser.city]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -477,28 +726,24 @@ export default function AttendeeDashboard() {
     return savedTickets ? JSON.parse(savedTickets) : [];
   });
 
-  const savedUserStr = localStorage.getItem('user');
-  const loggedInUser = savedUserStr ? JSON.parse(savedUserStr) : null;
-
-  const currentUser = {
-    id: loggedInUser?.Id || loggedInUser?.id || '',
-    email: loggedInUser?.Email || loggedInUser?.email || '',
-    role: loggedInUser?.Role || loggedInUser?.role || 'Attendee',
-    firstName: loggedInUser?.FirstName || loggedInUser?.firstName || 'Guest',
-    lastName: loggedInUser?.LastName || loggedInUser?.lastName || 'User',
-    contactNumber: loggedInUser?.ContactNumber || loggedInUser?.contactNumber || '',
-    region: loggedInUser?.Region || loggedInUser?.region || '',
-    province: loggedInUser?.Province || loggedInUser?.province || '',
-    city: loggedInUser?.City || loggedInUser?.city || '',
-    barangay: loggedInUser?.Barangay || loggedInUser?.barangay || '',
-    preferredCategories: []
-  };
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Welcome to VenU!', message: 'Explore local premium events in your area.', read: false, time: '2m ago' },
-    { id: 2, title: 'Upcoming VIP Event', message: 'The Music Festival access codes are dispatching now.', read: false, time: '1h ago' }
-  ]);
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('vnu_user_notifications');
+    if (saved) return JSON.parse(saved);
+    return [{ id: Date.now(), title: 'Welcome to VenU!', message: 'Explore local premium events in your area.', read: false, time: 'Just now' }];
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('vnu_user_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const addNotification = (title, message) => {
+    setNotifications(prev => [
+      { id: Date.now(), title, message, read: false, time: 'Just now' },
+      ...prev
+    ]);
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
   const markAllRead = () => setNotifications(notifications.map(n => ({ ...n, read: true })));
@@ -512,11 +757,21 @@ export default function AttendeeDashboard() {
 
   const { events: recommended, scope } = getRecommendedEvents(liveEvents.length > 0 ? liveEvents : mockEvents, currentUser);
 
-  const filtered = recommended.filter((e) =>
-    e.title.toLowerCase().includes(search.toLowerCase()) ||
-    e.category.toLowerCase().includes(search.toLowerCase()) ||
-    e.barangay.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = recommended.filter((e) => {
+    const searchLower = search.toLowerCase();
+    const matchesSearch = 
+      e.title.toLowerCase().includes(searchLower) ||
+      e.category.toLowerCase().includes(searchLower) ||
+      (e.barangay && e.barangay.toLowerCase().includes(searchLower)) ||
+      (e.city && e.city.toLowerCase().includes(searchLower)) ||
+      (e.venueName && e.venueName.toLowerCase().includes(searchLower)) ||
+      (e.verificationCode && e.verificationCode.toLowerCase() === searchLower);
+      
+    if (showSavedOnly) {
+      return matchesSearch && savedEvents.includes(e.eventId || e.id);
+    }
+    return matchesSearch;
+  });
 
   const filteredTickets = tickets.filter((t) => {
     if (selectedWalletCategory === 'All') return true;
@@ -532,11 +787,15 @@ export default function AttendeeDashboard() {
     if (filterCat.includes('wedding') && eventCat.includes('wedding')) return true;
 
     if (filterCat === 'others') {
-      if (!eventCat.includes('tech') && !eventCat.includes('innov') &&
-        !eventCat.includes('music') && !eventCat.includes('concert') &&
-        !eventCat.includes('sport') && !eventCat.includes('athletic') &&
-        !eventCat.includes('business') && !eventCat.includes('corp') &&
-        !eventCat.includes('birthday') && !eventCat.includes('wedding')) {
+      if (!eventCat.includes('tech') && !eventCat.includes('innov') && 
+          !eventCat.includes('music') && !eventCat.includes('concert') &&
+          !eventCat.includes('sport') && !eventCat.includes('athletic') &&
+          !eventCat.includes('business') && !eventCat.includes('corp') &&
+          !eventCat.includes('birthday') && !eventCat.includes('wedding')) {
+          
+        if (otherCategoryQuery.trim() !== '') {
+          return eventCat.includes(otherCategoryQuery.toLowerCase().trim());
+        }
         return true;
       }
     }
@@ -544,12 +803,44 @@ export default function AttendeeDashboard() {
     return false;
   });
 
+  const mockPastTickets = React.useMemo(() => [
+    {
+      ticketId: 'VNU-PAST-001',
+      tier: 'VIP Pass',
+      event: {
+        eventId: 'past-1',
+        title: 'VenU Beta Launch Party',
+        date: 'December 10, 2025',
+        time: '8:00 PM',
+        barangay: 'BGC, Taguig',
+        image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80',
+        category: 'Music & Concerts'
+      }
+    }
+  ], []);
+
+  const groupedTickets = React.useMemo(() => {
+    const map = new Map();
+    filteredTickets.forEach(t => {
+      // Group strictly by title to prevent duplicates from mismatched local storage data structures
+      const key = (t.event.title || 'Unknown Event').trim().toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, { event: t.event, tickets: [] });
+      }
+      map.get(key).tickets.push(t);
+    });
+    return Array.from(map.values());
+  }, [filteredTickets]);
+
   const handleSuccess = (newTicket) => {
     setSelectedEvent(null);
     const updatedTickets = [newTicket, ...tickets];
     setTickets(updatedTickets);
     localStorage.setItem('vnu_user_tickets', JSON.stringify(updatedTickets));
     setConfirmedTicket(newTicket);
+
+    const qty = newTicket.quantity || 1;
+    addNotification('🎫 Ticket Confirmed', `Successfully purchased ${qty} pass${qty > 1 ? 'es' : ''} for ${newTicket.event.title}.`);
   };
 
   const handleDeleteTicket = (ticketId, eventTitle, e) => {
@@ -761,15 +1052,15 @@ export default function AttendeeDashboard() {
                       </div>
                     ) : (
                       notifications.map(notif => (
-                        <div key={notif.id} className={`p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50/80 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                        <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
                           {!notif.read && (
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r-md"></div>
                           )}
                           <div className="flex justify-between items-start mb-1.5 pl-2">
-                            <h4 className={`text-sm font-black ${notif.read ? 'text-slate-600' : 'text-slate-900'}`}>{notif.title}</h4>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{notif.time}</span>
+                            <h4 className={`text-sm font-black ${notif.read ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>{notif.title}</h4>
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{notif.time}</span>
                           </div>
-                          <p className="text-xs text-slate-500 leading-relaxed font-medium pl-2">{notif.message}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed font-medium pl-2">{notif.message}</p>
                         </div>
                       ))
                     )}
@@ -807,13 +1098,20 @@ export default function AttendeeDashboard() {
                         <Search size={20} strokeWidth={2.5} />
                       </div>
                       <input
+                        id="global-search-input"
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search events, venues, access codes..."
                         className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-sm outline-none px-2 pr-4"
                       />
-                      <button className="bg-white text-slate-900 px-4 py-2.5 rounded-none text-xs font-black uppercase tracking-widest hover:bg-slate-100 shadow-sm">
+                      <button 
+                        onClick={() => {
+                          const input = document.getElementById('global-search-input');
+                          if (input) input.focus();
+                        }}
+                        className="bg-white text-slate-900 px-4 py-2.5 rounded-none text-xs font-black uppercase tracking-widest hover:bg-slate-100 shadow-sm"
+                      >
                         Scan
                       </button>
                     </div>
@@ -821,15 +1119,27 @@ export default function AttendeeDashboard() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-8 px-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 px-2 gap-4">
                 <div>
                   <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-purple-700 dark:bg-purple-500 animate-pulse"></div> {scope}
                   </h2>
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 px-4 py-1.5 rounded-full shadow-sm">
-                  {filtered.length} event{filtered.length !== 1 ? 's' : ''} found
-                </span>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setShowSavedOnly(!showSavedOnly)}
+                    className={`text-xs font-bold uppercase tracking-wide px-4 py-2 flex items-center gap-2 transition-all ${
+                      showSavedOnly 
+                        ? 'bg-purple-600 text-white shadow-sm' 
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <Heart size={14} fill={showSavedOnly ? "currentColor" : "none"} /> Saved Favorites
+                  </button>
+                  <span className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 px-4 py-2 rounded-full shadow-sm">
+                    {filtered.length} event{filtered.length !== 1 ? 's' : ''} found
+                  </span>
+                </div>
               </div>
 
               {filtered.length === 0 ? (
@@ -846,11 +1156,13 @@ export default function AttendeeDashboard() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {filtered.map((event, index) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onSelect={setSelectedEvent}
+                    <EventCard 
+                      key={event.eventId || event.id} 
+                      event={event} 
+                      onSelect={setSelectedEvent} 
                       onLocationClick={() => handleLocationClick(event, index)}
+                      isSaved={savedEvents.includes(event.eventId || event.id)}
+                      onToggleSave={toggleSaveEvent}
                     />
                   ))}
                 </div>
@@ -866,32 +1178,63 @@ export default function AttendeeDashboard() {
                 </div>
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">My Tickets</h1>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Your purchased and saved event tickets.</p>
-              </div>
-
-              <div className="mb-10 bg-slate-50 dark:bg-slate-800/40 p-4 border border-slate-200 dark:border-slate-800 rounded-none">
-                <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Filter by Event Type</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {eventTypes.map((type) => {
-                    const TypeIcon = type.icon;
-                    const isSelected = selectedWalletCategory === type.name;
-                    return (
-                      <button
-                        key={type.name}
-                        onClick={() => setSelectedWalletCategory(type.name)}
-                        className={`flex items-center gap-3 p-3 text-sm font-bold border transition-all ${isSelected
-                          ? 'bg-purple-700 dark:bg-purple-600 border-purple-600 text-white shadow-md'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
-                          }`}
-                      >
-                        <TypeIcon size={16} className={isSelected ? 'text-white' : 'text-slate-400'} />
-                        <span className="truncate">{type.name}</span>
-                      </button>
-                    );
-                  })}
+                
+                <div className="flex justify-center mt-6">
+                  <div className="bg-slate-100 dark:bg-slate-800 p-1 flex items-center shadow-sm">
+                    <button
+                      onClick={() => setWalletView('upcoming')}
+                      className={`px-6 py-2 text-sm font-bold uppercase tracking-wide transition-colors ${walletView === 'upcoming' ? 'bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    >
+                      Upcoming Passes
+                    </button>
+                    <button
+                      onClick={() => setWalletView('past')}
+                      className={`px-6 py-2 text-sm font-bold uppercase tracking-wide transition-colors ${walletView === 'past' ? 'bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    >
+                      Past Event History
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {filteredTickets.length === 0 ? (
+              {walletView === 'upcoming' ? (
+                <>
+                  <div className="mb-10 bg-slate-50 dark:bg-slate-800/40 p-4 border border-slate-200 dark:border-slate-800 rounded-none">
+                    <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Filter by Event Type</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {eventTypes.map((type) => {
+                        const TypeIcon = type.icon;
+                        const isSelected = selectedWalletCategory === type.name;
+                        return (
+                          <button
+                            key={type.name}
+                            onClick={() => setSelectedWalletCategory(type.name)}
+                            className={`flex items-center gap-3 p-3 text-sm font-bold border transition-all ${isSelected
+                              ? 'bg-purple-700 dark:bg-purple-600 border-purple-600 text-white shadow-md'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                              }`}
+                          >
+                            <TypeIcon size={16} className={isSelected ? 'text-white' : 'text-slate-400'} />
+                            {type.name === 'Others' && isSelected ? (
+                              <input
+                                autoFocus
+                                type="text"
+                                value={otherCategoryQuery}
+                                onChange={(e) => setOtherCategoryQuery(e.target.value)}
+                                placeholder="Type category..."
+                                className="bg-transparent text-white placeholder:text-purple-200 outline-none w-full min-w-[100px]"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span className="truncate">{type.name}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {filteredTickets.length === 0 ? (
                 <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-16 text-center relative overflow-hidden group">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500"></div>
                   <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800" size={64} strokeWidth={1} />
@@ -909,21 +1252,25 @@ export default function AttendeeDashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredTickets.map((t) => (
+                  {groupedTickets.map((group) => {
+                    const t = group.tickets[0]; // Representative event
+                    const count = group.tickets.length;
+                    return (
                     <div
-                      key={t.ticketId}
-                      onClick={() => setConfirmedTicket(t)}
-                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden relative group cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
+                      key={group.event.eventId || group.event.title}
+                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden relative group hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
                     >
                       <div className="p-5 flex gap-4">
-                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden">
-                          <img src={t.event.image} alt="" className="w-full h-full object-cover" />
+                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-visible relative">
+                          <img src={t.event.image} alt="" className="w-full h-full object-cover shadow-sm" />
+                          {count > 1 && (
+                            <span className="absolute -top-3 -right-3 bg-purple-600 text-white font-black text-[10px] w-6 h-6 flex items-center justify-center rounded-full shadow-md ring-2 ring-slate-50 dark:ring-slate-800 z-10 animate-bounce-in">
+                              {count}
+                            </span>
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className="text-[9px] font-black tracking-widest text-purple-600 dark:text-purple-400 uppercase bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 border border-purple-100 dark:border-purple-800/50">
-                            {t.tier}
-                          </span>
-                          <h3 className="font-black text-slate-900 dark:text-white mt-1.5 truncate text-base leading-tight">
+                          <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
                             {t.event.title}
                           </h3>
                           <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -935,107 +1282,217 @@ export default function AttendeeDashboard() {
                                 handleLocationClick(t.event);
                               }}
                             >
-                              <MapPin size={12} /> {t.event.barangay}
+                              <MapPin size={12} /> {t.event.barangay || t.event.address}
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-slate-100 dark:bg-slate-900 px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                        <span className="font-mono text-xs font-black text-slate-700 dark:text-slate-300 tracking-wider">
-                          {t.ticketId}
-                        </span>
+                      <div className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
+                        {group.tickets.map(ticket => (
+                          <div key={ticket.ticketId} className="px-5 py-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[9px] font-black tracking-widest text-purple-600 dark:text-purple-400 uppercase bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 border border-purple-100 dark:border-purple-800/50 self-start rounded-none">
+                                {ticket.tier}
+                              </span>
+                              <span className="font-mono text-xs font-black text-slate-700 dark:text-slate-300 tracking-wider">
+                                {ticket.ticketId}
+                              </span>
+                            </div>
 
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            title="View Full Digital Pass"
-                            onClick={() => setConfirmedTicket(t)}
-                            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                          >
-                            <Eye size={14} strokeWidth={2.5} />
-                          </button>
-                          <button
-                            title="Download Ticket Image (.png)"
-                            onClick={(e) => handleDownloadTicket(t, e)}
-                            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                          >
-                            <Download size={14} strokeWidth={2.5} />
-                          </button>
-                          <button
-                            title="Void / Delete Pass"
-                            onClick={(e) => handleDeleteTicket(t.ticketId, t.event.title, e)}
-                            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                          >
-                            <Trash2 size={14} strokeWidth={2.5} />
-                          </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                title="View Full Digital Pass"
+                                onClick={() => setConfirmedTicket(ticket)}
+                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-none"
+                              >
+                                <Eye size={14} strokeWidth={2.5} />
+                              </button>
+                              <button
+                                title="Download Ticket Image (.png)"
+                                onClick={(e) => handleDownloadTicket(ticket, e)}
+                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors rounded-none"
+                              >
+                                <Download size={14} strokeWidth={2.5} />
+                              </button>
+                              <button
+                                title="Void / Delete Pass"
+                                onClick={(e) => handleDeleteTicket(ticket.ticketId, ticket.event.title, e)}
+                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-none"
+                              >
+                                <Trash2 size={14} strokeWidth={2.5} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )})}
+                </div>
+              )}
+              </>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                {mockPastTickets.map((t) => (
+                  <div
+                    key={t.ticketId}
+                    className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden flex flex-col justify-between opacity-80 hover:opacity-100 transition-opacity"
+                  >
+                    <div className="p-5 flex gap-4 grayscale hover:grayscale-0 transition-all">
+                      <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+                        <img src={t.event.image} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <CheckCircle2 size={24} className="text-white/80" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[9px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-900/50 px-2 py-0.5 border border-slate-300 dark:border-slate-700">
+                          {t.tier}
+                        </span>
+                        <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
+                          {t.event.title}
+                        </h3>
+                        <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date}</p>
+                          <p className="flex items-center gap-1.5"><MapPin size={12} /> {t.event.barangay}</p>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    <div className="bg-slate-100 dark:bg-slate-900 px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <span className="font-mono text-xs font-black text-slate-500 dark:text-slate-400 tracking-wider">
+                        {t.ticketId}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setReviewingEvent(t.event);
+                        }}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest shadow-sm rounded-none flex items-center gap-2 transition-colors"
+                      >
+                        <Star size={14} fill="currentColor" /> Leave Review
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             </div>
           )}
 
           {activeTab === 'map' && (
-            <div className="animate-fade-in">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-none">
-                  <MapPin size={24} strokeWidth={2.5} />
+            <div className="animate-fade-in flex flex-col md:flex-row h-[85vh] gap-6 max-w-full">
+              
+              {/* Left Column: List & Search */}
+              <div className="w-full md:w-[380px] flex flex-col bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden relative z-10 shrink-0">
+                <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
+                      <MapPin size={24} strokeWidth={2.5} />
+                    </div>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Locations</h1>
+                  </div>
+
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Search className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search locations or events..."
+                      value={mapSearchQuery}
+                      onChange={(e) => setMapSearchQuery(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-medium focus:outline-none focus:border-purple-500 transition-colors shadow-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Locations</h1>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Explore events happening around you on the map.</p>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-100/50 dark:bg-slate-900/50 p-4 space-y-3">
+                  {mapEvents
+                    .filter(e => e.title.toLowerCase().includes(mapSearchQuery.toLowerCase()) || e.address.toLowerCase().includes(mapSearchQuery.toLowerCase()) || e.venueName.toLowerCase().includes(mapSearchQuery.toLowerCase()))
+                    .map((event) => (
+                    <div 
+                      key={event.eventId} 
+                      onClick={() => setMapCenter([event.latitude, event.longitude])}
+                      className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-purple-500 hover:shadow-md transition-all group"
+                    >
+                      <h4 className="font-black text-slate-900 dark:text-white leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{event.title}</h4>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2 flex items-start gap-1.5 leading-snug">
+                        <MapPin size={12} className="shrink-0 mt-0.5 text-purple-500" /> 
+                        <span className="line-clamp-2">{event.venueName} - {event.address}</span>
+                      </p>
+                    </div>
+                  ))}
+                  {mapEvents.length === 0 && (
+                    <div className="text-center py-10 opacity-60">
+                      <MapPin size={32} className="mx-auto mb-2 text-slate-400" />
+                      <p className="text-sm font-bold text-slate-500">No events found</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    const coords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
-                    setMapCenter(coords);
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-none font-bold text-sm shadow-xl absolute top-4 right-4 z-[400] transition-colors flex items-center gap-2"
-                >
-                  <MapPin size={16} /> Near Me
-                </button>
-                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none overflow-hidden relative z-10 p-2">
-                  <div className="h-[600px] w-full rounded-none overflow-hidden relative border border-slate-200 dark:border-slate-700">
-                    <MapContainer center={mapCenter || cityCoordinates['Default']} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
-                      <MapUpdater center={mapCenter} />
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                      />
-                      {(liveEvents.length > 0 ? liveEvents : mockEvents).map((event, i) => (
-                        <Marker key={event.id} position={getCoordinatesForEvent(event, i)}>
-                          <Popup className="rounded-none overflow-hidden shadow-2xl border-0 p-0 m-0 w-[240px]">
-                            <div className="font-sans">
-                              <div className="h-24 w-full bg-slate-200 relative">
-                                <img src={event.image} className="w-full h-full object-cover" alt="Venue" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 bg-purple-700 dark:bg-purple-500/80 rounded-none backdrop-blur-sm">
-                                  {event.category}
-                                </span>
-                              </div>
-                              <div className="p-3">
-                                <h4 className="font-black text-slate-900 leading-tight mb-1 text-sm">{event.title}</h4>
-                                <p className="text-[11px] font-medium text-slate-500 mb-3 flex items-center gap-1"><MapPin size={10} /> {event.barangay}</p>
-                                <button
-                                  onClick={() => setSelectedEvent(event)}
-                                  className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest rounded-none shadow-sm transition-colors"
-                                >
-                                  Get Tickets
-                                </button>
-                              </div>
+              {/* Right Column: MapContainer */}
+              <div className="flex-1 relative border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 min-h-[400px]">
+                <div className="h-full w-full relative z-10">
+                  <MapContainer center={mapCenter || cityCoordinates['Default']} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                    <MapUpdater center={mapCenter} />
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    />
+                    {mapEvents.map((event, i) => (
+                      <Marker key={event.eventId} position={[event.latitude, event.longitude]}>
+                        <Popup className="rounded-none overflow-hidden shadow-2xl border-0 p-0 m-0 w-[300px]">
+                          <div className="font-sans">
+                            <div className="h-28 w-full bg-slate-200 relative">
+                              <img src={event.image} className="w-full h-full object-cover" alt="Venue" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                              <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 bg-purple-700 dark:bg-purple-500/80 rounded-none backdrop-blur-sm">
+                                {event.category}
+                              </span>
                             </div>
-                          </Popup>
-                        </Marker>
-                      ))}
-                    </MapContainer>
-                  </div>
+                            <div className="p-4 relative">
+                              {event.isRecommended && (
+                                <span className="absolute -top-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 shadow-sm rounded-none">
+                                  <Star size={8} className="inline mr-1" />
+                                  Recommended
+                                </span>
+                              )}
+                              <h4 className="font-black text-slate-900 leading-tight mb-1 text-base">{event.title}</h4>
+                              <p className="text-[11px] font-medium text-slate-500 mb-3 flex items-start gap-1 leading-tight"><MapPin size={10} className="shrink-0 mt-0.5" /> <span className="line-clamp-2">{event.address}</span></p>
+
+                              <div className="grid grid-cols-2 gap-2 text-[10px] mb-3">
+                                <div className="bg-slate-50 p-2 border border-slate-100 text-center">
+                                  <span className="block font-black text-slate-400 uppercase tracking-widest text-[8px] mb-0.5">Capacity</span>
+                                  <span className="font-bold text-slate-800">{event.capacity || 'N/A'}</span>
+                                </div>
+                                <div className="bg-slate-50 p-2 border border-slate-100 text-center">
+                                  <span className="block font-black text-slate-400 uppercase tracking-widest text-[8px] mb-0.5">Rating</span>
+                                  <span className="font-bold text-slate-800 flex items-center justify-center gap-0.5"><Star size={10} className="text-amber-500" fill="currentColor" /> {event.averageRating} ({event.totalReviews})</span>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1 text-[10px] text-slate-600 mb-4 bg-slate-50 p-2 border border-slate-100">
+                                <p><span className="font-black text-slate-800">Contact:</span> {event.contactPerson || 'N/A'}</p>
+                                <p><span className="font-black text-slate-800">Details:</span> {event.contactDetails || 'N/A'}</p>
+                                <p><span className="font-black text-slate-800">Floors:</span> {event.numberOfFloors || 1}</p>
+                                <p><span className="font-black text-slate-800">Area:</span> {event.floorArea ? `${event.floorArea} sq m` : 'N/A'}</p>
+                                <p><span className="font-black text-slate-800">Ceiling:</span> {event.ceilingHeight ? `${event.ceilingHeight} m` : 'N/A'}</p>
+                                <p><span className="font-black text-slate-800">Best for:</span> <span className="capitalize">{event.recommendedFor || 'All events'}</span></p>
+                              </div>
+
+                              <button onClick={() => setSelectedEvent(event)} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2 uppercase tracking-widest transition-colors shadow-sm">
+                                Buy Tickets
+                              </button>
+                            </div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
                 </div>
               </div>
+
             </div>
           )}
 
@@ -1057,6 +1514,51 @@ export default function AttendeeDashboard() {
           onClose={() => setConfirmedTicket(null)}
         />
       )}
+      {reviewingEvent && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-none w-full max-w-md shadow-2xl overflow-hidden animate-scale-in border border-slate-200 dark:border-slate-700">
+            <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Star className="text-amber-400" fill="currentColor" size={20} /> Leave a Review
+              </h3>
+              <button onClick={() => setReviewingEvent(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">How was your experience at</p>
+              <p className="text-base font-black text-slate-900 dark:text-white mb-6 leading-tight">{reviewingEvent.title}?</p>
+              
+              <div className="flex justify-center gap-2 mb-6">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button key={star} className="text-slate-300 hover:text-amber-400 transition-colors focus:outline-none focus:text-amber-400">
+                    <Star size={36} />
+                  </button>
+                ))}
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Detailed Feedback</label>
+                <textarea 
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-none p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500 transition-colors min-h-[100px]" 
+                  placeholder="Tell us what you loved about the event..."
+                ></textarea>
+              </div>
+
+              <button 
+                onClick={() => {
+                  setReviewingEvent(null);
+                  addNotification("⭐ Review Submitted", `Thank you for reviewing ${reviewingEvent.title}!`);
+                }}
+                className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black uppercase tracking-widest text-sm py-3.5 rounded-none shadow-md transition-all active:scale-95"
+              >
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

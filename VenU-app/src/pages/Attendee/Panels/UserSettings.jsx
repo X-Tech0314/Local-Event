@@ -467,6 +467,36 @@ export default function UserSettings({ currentUser }) {
               </div>
               <SaveBtn label="Save Address Details" />
             </Section>
+
+            {/* Personalized Preferences */}
+            <Section title="Personalized Preferences">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Select the types of events you are interested in to improve your Discovery recommendations.</p>
+              <div className="flex flex-wrap gap-3">
+                {['Music & Concerts', 'Tech & Innovation', 'Sports & Athletics', 'Business & Corporate', 'Arts & Culture', 'Food & Drink'].map(cat => {
+                  const current = form.preferredCategories || [];
+                  const isSelected = current.includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        setForm({
+                          ...form,
+                          preferredCategories: isSelected ? current.filter(c => c !== cat) : [...current, cat]
+                        });
+                      }}
+                      className={`px-4 py-2 border rounded-none text-sm font-bold transition-all ${
+                        isSelected 
+                          ? 'bg-purple-700 dark:bg-purple-500 border-purple-700 dark:border-purple-500 text-white shadow-sm'
+                          : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-purple-300 dark:hover:border-purple-400 hover:text-purple-700 dark:hover:text-purple-400'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+              <SaveBtn label="Save Preferences" />
+            </Section>
           </div>
         )}
 

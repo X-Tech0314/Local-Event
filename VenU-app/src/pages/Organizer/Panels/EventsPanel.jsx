@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trash2, Edit, Copy, ChevronDown, CheckCircle, Clock, Ban, Lock, MapPin, Calendar, Ticket, Tag, ArrowRight, Star, Settings, Plus, Search, Filter, BarChart3, AlertCircle } from 'lucide-react';
+import { Trash2, Edit, Copy, ChevronDown, CheckCircle, Clock, Ban, Lock, MapPin, Calendar, Ticket, Tag, ArrowRight, Star, Settings, Plus, Search, Filter, BarChart3, AlertCircle, Navigation, Building, ExternalLink } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import EventAnalyticsHub from './EventAnalyticsHub';
 import EventManagementModal from './EventManagementModal';
 
@@ -12,8 +17,24 @@ const STATUS_CONFIG = {
   Rescheduled: { label: 'Rescheduled', dot: 'bg-blue-500', badge: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30' },
 };
 
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+function MapUpdater({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) map.flyTo(center, 15, { duration: 1.5 });
+  }, [center, map]);
+  return null;
+}
+
 // ── Individual Event Card (hooks are valid here) ──────────────────
-export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAnalytics, onManage }) {
+export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, onViewAnalytics, onManage, onSelect }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(
     evt.status || (new Date(evt.startDateTime) > new Date() ? 'Published' : 'Done')
@@ -64,7 +85,7 @@ export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, on
   const fullAddress = [evt.streetAddress, evt.barangay, evt.city].filter(v => v && v !== 'N/A').join(', ');
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-800 hover:-translate-y-1 transition-all duration-300 group flex flex-col relative">
+    <div onClick={(e) => onSelect && onSelect(evt)} className="bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-800 hover:-translate-y-1 transition-all duration-300 group flex flex-col relative cursor-pointer">
 
       {/* Event Thumbnail */}
       <div className="h-48 relative bg-slate-100 dark:bg-slate-800">
@@ -94,7 +115,7 @@ export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, on
         {/* Status Dropdown — outside image clip so menu isn't cropped */}
         <div className="absolute top-4 right-4 z-30" ref={menuRef}>
           <button
-            onClick={() => setOpenMenu(o => !o)}
+            onClick={(e) => { e.stopPropagation(); setOpenMenu(o => !o); }}
             className="h-8 px-2.5 rounded-full bg-black/30 backdrop-blur-md flex items-center gap-1 text-white text-[10px] font-bold hover:bg-black/50 transition"
           >
             <ChevronDown size={12} /> Status
@@ -104,7 +125,7 @@ export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, on
               {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
                 <button
                   key={key}
-                  onClick={() => handleStatusChange(key)}
+                  onClick={(e) => { e.stopPropagation(); handleStatusChange(key); }}
                   className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center gap-2 transition-colors ${currentStatus === key
                     ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
@@ -151,7 +172,7 @@ export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, on
               <span className="text-xs text-slate-500 line-clamp-1">{fullAddress}</span>
               {microLocation && <span className="text-[10px] text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{microLocation}</span>}
               {evt.mapUrl && (
-                <a href={evt.mapUrl} target="_blank" rel="noopener noreferrer"
+                <a href={evt.mapUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                   className="text-[10px] text-slate-800 dark:text-slate-200 hover:text-slate-700 font-bold underline mt-1 flex items-center gap-1 w-max">
                   🗺️ View Map Location
                 </a>
@@ -233,20 +254,20 @@ export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, on
           <p className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500">ID: {String(evt.id).substring(0, 8)}</p>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => onViewAnalytics(evt.id)}
+              onClick={(e) => { e.stopPropagation(); onViewAnalytics(evt.id); }}
               className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
             >
               <BarChart3 size={13} strokeWidth={2.5} /> Analytics
             </button>
             <button
-              onClick={() => onDeleteClick(evt)}
+              onClick={(e) => { e.stopPropagation(); onDeleteClick(evt); }}
               className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
             >
               <Trash2 size={13} strokeWidth={2.5} /> Delete
             </button>
 
             <button
-              onClick={() => onManage(evt)}
+              onClick={(e) => { e.stopPropagation(); onManage(evt); }}
               className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1 group-hover:gap-2 transition-all hover:text-purple-700 dark:hover:text-purple-400"
             >
               Manage <Settings size={14} className="ml-0.5" />
@@ -266,10 +287,49 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
   const [eventToDelete, setEventToDelete] = useState(null);
   const [analyticsEventId, setAnalyticsEventId] = useState(null);
   const [managementEventId, setManagementEventId] = useState(null);
+  const [geocodedEvents, setGeocodedEvents] = useState([]);
+  const [mapCenter, setMapCenter] = useState([14.34, 120.94]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    if (events.length === 0) return;
+    const geocode = async () => {
+      const coded = [];
+      for (const evt of events) {
+        const addressQuery = [evt.streetAddress, evt.barangay, evt.city].filter(v => v && v !== 'N/A').join(', ');
+        if (!addressQuery) continue;
+        
+        const cacheKey = `geo_${addressQuery}`;
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          coded.push({ ...evt, ...JSON.parse(cached) });
+          continue;
+        }
+
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressQuery)}`);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+            sessionStorage.setItem(cacheKey, JSON.stringify(coords));
+            coded.push({ ...evt, ...coords });
+          }
+          await new Promise(r => setTimeout(r, 600)); // be nice to nominatim
+        } catch (e) {
+          console.warn('Geocoding failed for', addressQuery);
+        }
+      }
+      setGeocodedEvents(coded);
+      if (coded.length > 0) {
+        setMapCenter([coded[0].lat, coded[0].lon]);
+      }
+    };
+    geocode();
+  }, [events]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -332,6 +392,69 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
         </button>
       </div>
 
+      {/* Map Section */}
+      {!loading && events.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded overflow-hidden p-2">
+          <div className="relative">
+            <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-lg">
+              <Navigation size={16} className="text-purple-600" />
+              <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                {geocodedEvents.length} Mapped Event{geocodedEvents.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="h-[350px] w-full rounded overflow-hidden relative border border-slate-200 dark:border-slate-700">
+              <MapContainer
+                center={mapCenter}
+                zoom={14}
+                scrollWheelZoom={false}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                />
+                <MapUpdater center={mapCenter} />
+                {geocodedEvents.map((evt) => (
+                  <Marker key={evt.id} position={[evt.lat, evt.lon]}>
+                    <Popup className="rounded overflow-hidden border-0 p-0 m-0 w-[240px]">
+                      <div className="font-sans">
+                        <div className="h-24 w-full bg-slate-200 relative">
+                          {evt.bannerUrl ? (
+                            <img src={evt.bannerUrl} className="w-full h-full object-cover" alt={evt.title} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                              <Calendar size={24} className="text-slate-400" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                          <span className="absolute bottom-2 left-2 text-[10px] font-semibold text-white px-2 py-1 bg-purple-600/80 rounded backdrop-blur-sm">
+                            {evt.category}
+                          </span>
+                        </div>
+                        <div className="p-3">
+                          <h4 className="font-semibold text-slate-900 leading-tight mb-1 text-sm">{evt.title}</h4>
+                          <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1">
+                            <MapPin size={10} /> {[evt.barangay, evt.city].filter(Boolean).join(', ')}
+                          </p>
+                          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                            <span className="text-[10px] font-semibold text-slate-500">
+                              Cap: <span className="text-slate-800">{evt.maxCapacity || 'N/A'}</span>
+                            </span>
+                            <button onClick={() => setSelectedEvent(evt)} className="text-[10px] text-purple-600 font-bold flex items-center gap-0.5 hover:underline">
+                              Details <ExternalLink size={9} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search & Filter Bar */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-96">
@@ -381,6 +504,11 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
               onDeleteClick={setEventToDelete} 
               onViewAnalytics={setAnalyticsEventId} 
               onManage={(e) => setManagementEventId(e.id)}
+              onSelect={(evt) => {
+                setSelectedEvent(evt);
+                const geo = geocodedEvents.find(g => g.id === evt.id);
+                if (geo) setMapCenter([geo.lat, geo.lon]);
+              }}
             />
           ))}
         </div>
@@ -428,6 +556,90 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
               <button onClick={handleDeleteEvent} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors">
                 Delete Event
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setSelectedEvent(null)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="h-52 relative">
+              {selectedEvent.bannerUrl ? (
+                <img src={selectedEvent.bannerUrl} alt={selectedEvent.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                  <Calendar size={48} className="text-slate-300 dark:text-slate-600" />
+                </div>
+              )}
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="absolute top-3 right-3 z-30 bg-black/40 hover:bg-black/70 text-white p-1.5 rounded-full"
+              >
+                ✕
+              </button>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+              <div className="absolute bottom-4 left-4 z-20">
+                <span className="text-[10px] font-bold text-white bg-purple-600 px-2.5 py-1 rounded-full">{selectedEvent.category}</span>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedEvent.title}</h2>
+                <p className="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
+                  <MapPin size={14} className="text-purple-500" /> 
+                  {[selectedEvent.streetAddress, selectedEvent.barangay, selectedEvent.city].filter(Boolean).join(', ')}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Capacity</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white">{selectedEvent.maxCapacity || 'N/A'}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Status</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white mt-1">{selectedEvent.status || 'Published'}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Access</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white mt-1">{selectedEvent.accessType || 'Public'}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Rating</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white flex items-center justify-center gap-1">
+                    <span className="text-amber-500 text-sm">★</span> {selectedEvent.averageRating ? Number(selectedEvent.averageRating).toFixed(1) : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {selectedEvent.logisticsNotes && (
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Logistics Notes</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{selectedEvent.logisticsNotes}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                {selectedEvent.mapUrl && (
+                  <a
+                    href={selectedEvent.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm transition-colors"
+                  >
+                    <MapPin size={16} /> Open in Maps
+                  </a>
+                )}
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

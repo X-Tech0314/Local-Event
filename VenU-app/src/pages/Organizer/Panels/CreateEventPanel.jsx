@@ -184,10 +184,43 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     }
   };
 
+  const geocodeAddress = async (addressString) => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}&limit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      }
+    } catch (err) {
+      console.error("Geocoding failed:", err);
+    }
+    return { lat: 0, lon: 0 };
+  };
+
   const handleSubmitEvent = async () => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
+      
+      let lat = 0;
+      let lon = 0;
+      
+      if (formData.VenueType === 'Physical') {
+        let addressToGeocode = "";
+        if (venueSource === 'custom') {
+          addressToGeocode = `${formData.StreetAddress}, ${getBarangayName(formData.SelectedBarangay) || ''}, ${getCityName(formData.SelectedCity) || ''}, Philippines`;
+        } else if (formData.RegisteredVenueName) {
+          addressToGeocode = `${formData.RegisteredVenueName}, Philippines`;
+        }
+        
+        if (addressToGeocode) {
+          const coords = await geocodeAddress(addressToGeocode);
+          lat = coords.lat;
+          lon = coords.lon;
+        }
+      }
+
       const payload = {
         Title: formData.EventTitle,
         Description: formData.EventTitle, // Add actual description if added to UI later
@@ -215,8 +248,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         Province: formData.SelectedProvince,
         Region: formData.SelectedRegion,
         ZipCode: "",
-        Latitude: 0,
-        Longitude: 0,
+        Latitude: lat,
+        Longitude: lon,
         ContactPerson: formData.ContactPerson,
         ContactNumber: formData.ContactNumber,
         ContactEmail: formData.ContactEmail,
