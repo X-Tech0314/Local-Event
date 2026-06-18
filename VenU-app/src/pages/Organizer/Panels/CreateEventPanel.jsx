@@ -393,8 +393,11 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           if (!formData.Longitude) newErrors.Longitude = "Longitude is required.";
         }
       }
-      if (venueSource === 'custom' && (!formData.Capacity || parseInt(formData.Capacity) <= 0)) {
-        newErrors.Capacity = "Please enter a valid occupancy capacity.";
+      if (venueSource === 'custom') {
+        const cap = parseInt(formData.Capacity);
+        if (!cap || cap <= 0 || cap > 100000) {
+          newErrors.Capacity = "Capacity must be between 1 and 100,000.";
+        }
       }
     }
 
@@ -443,7 +446,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   };
 
   const processFile = async (file) => {
-    if (file && file.type.startsWith('image/')) {
+    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (file && validTypes.includes(file.type)) {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);

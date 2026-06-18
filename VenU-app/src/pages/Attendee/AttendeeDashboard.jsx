@@ -171,8 +171,23 @@ function EventCard({ event, onSelect, onLocationClick, isSaved, onToggleSave }) 
   const eventId = event.eventId || event.id;
   return (
     <div
-      onClick={() => onSelect(event)}
-      className="bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 group cursor-pointer relative flex flex-col h-full"
+      onClick={() => {
+        if (event.status === 'Published') {
+          if (event.accessType === 'Private') {
+            const code = window.prompt("🔒 This is a Private Event. Please enter the Access Code:");
+            if (code !== null) {
+              if (event.verificationCode && code.toLowerCase() === event.verificationCode.toLowerCase()) {
+                onSelect(event);
+              } else {
+                alert("Incorrect Access Code. You cannot view this event.");
+              }
+            }
+          } else {
+            onSelect(event);
+          }
+        }
+      }}
+      className={`bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group flex flex-col h-full ${event.status === 'Published' ? 'cursor-pointer' : 'opacity-80'}`}
     >
       <div className="h-56 relative overflow-hidden">
         <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 z-10"></div>
@@ -228,9 +243,20 @@ function EventCard({ event, onSelect, onLocationClick, isSaved, onToggleSave }) 
 
         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
-          <span className="text-sm font-black text-purple-700 dark:text-purple-500 flex items-center gap-1 group-hover:gap-2">
-            Get Tickets <ChevronRight size={16} strokeWidth={3} />
-          </span>
+          
+          {event.status === 'Published' ? (
+            <span className="text-sm font-black text-purple-700 dark:text-purple-500 flex items-center gap-1 group-hover:gap-2">
+              Get Tickets <ChevronRight size={16} strokeWidth={3} />
+            </span>
+          ) : (
+            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${
+              event.status === 'Done' ? 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' :
+              event.status === 'Full' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+              'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+            }`}>
+              {event.status}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -681,6 +707,21 @@ export default function AttendeeDashboard() {
     return null;
   };
 
+  const handleNearMe = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setMapCenter([position.coords.latitude, position.coords.longitude]);
+          addNotification("Location Found", "Map centered to your current location.");
+        },
+        (error) => {
+          console.error("Error getting location", error);
+          addNotification("Location Error", "Could not fetch your location.");
+        }
+      );
+    }
+  };
+
   useEffect(() => {
     const fetchMapEvents = async () => {
       try {
@@ -733,6 +774,7 @@ export default function AttendeeDashboard() {
             time: new Date(e.startDateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
             accessType: e.accessType,
             verificationCode: e.verificationCode,
+            status: e.status || "Published",
             isPaid: e.requiresTicket && e.ticketTiers.some(t => t.price > 0),
             price: e.ticketTiers.length > 0 ? Math.min(...e.ticketTiers.map(t => t.price)) : 0,
             ticketTiers: e.ticketTiers.length > 0 ? e.ticketTiers.map(t => t.tierName) : ["General Admission"],
@@ -794,21 +836,16 @@ export default function AttendeeDashboard() {
     
     let matchesSearch = false;
 
-    if (e.accessType === 'Private') {
-      // Private events ONLY show if the search matches their verification code exactly
-      matchesSearch = searchLower !== '' && e.verificationCode && e.verificationCode.toLowerCase() === searchLower;
+    if (searchLower === '') {
+      matchesSearch = true;
     } else {
-      // Public events show if no search, or if search matches their fields
-      if (searchLower === '') {
-        matchesSearch = true;
-      } else {
-        matchesSearch = 
-          e.title.toLowerCase().includes(searchLower) ||
-          e.category.toLowerCase().includes(searchLower) ||
-          (e.barangay && e.barangay.toLowerCase().includes(searchLower)) ||
-          (e.city && e.city.toLowerCase().includes(searchLower)) ||
-          (e.venueName && e.venueName.toLowerCase().includes(searchLower));
-      }
+      matchesSearch = 
+        e.title.toLowerCase().includes(searchLower) ||
+        e.category.toLowerCase().includes(searchLower) ||
+        (e.barangay && e.barangay.toLowerCase().includes(searchLower)) ||
+        (e.city && e.city.toLowerCase().includes(searchLower)) ||
+        (e.venueName && e.venueName.toLowerCase().includes(searchLower)) ||
+        (e.verificationCode && e.verificationCode.toLowerCase() === searchLower);
     }
       
     if (showSavedOnly) {
@@ -1474,6 +1511,13 @@ export default function AttendeeDashboard() {
 
               {/* Right Column: MapContainer */}
               <div className="flex-1 relative border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 min-h-[400px]">
+                <button 
+                  onClick={handleNearMe}
+                  className="absolute bottom-6 right-6 z-[400] bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-400 p-3 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform"
+                  title="Find My Location"
+                >
+                  <MapPin size={24} />
+                </button>
                 <div className="h-full w-full relative z-10">
                   <MapContainer center={mapCenter || cityCoordinates['Default']} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
                     <MapUpdater center={mapCenter} />

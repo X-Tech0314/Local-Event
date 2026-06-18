@@ -465,10 +465,6 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
           <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-all active:scale-95">
             <Filter size={16} /> Filters
           </button>
-          <div className="hidden md:flex border border-slate-200 dark:border-slate-700 rounded p-1 bg-slate-50 dark:bg-slate-800">
-            <button className="px-4 py-2 bg-white dark:bg-slate-700 rounded-lg text-sm font-bold text-slate-800 dark:text-white">Grid</button>
-            <button className="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition">List</button>
-          </div>
         </div>
       </div>
 

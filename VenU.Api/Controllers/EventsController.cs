@@ -256,7 +256,7 @@ namespace VenU.Api.Controllers
             var events = await _context.Events
                 .Include(e => e.TicketTiers)
                 .Include(e => e.Organizer)
-                .Where(e => e.Status == "Published")
+                .Where(e => e.Status != "Draft")
                 .OrderBy(e => e.StartDateTime)
                 .ToListAsync();
 
