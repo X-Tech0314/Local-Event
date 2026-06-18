@@ -1490,6 +1490,31 @@ export default function AttendeeDashboard() {
                       </Marker>
                     ))}
                   </MapContainer>
+                  
+                  {/* Floating "Near Me" Button - Exclusively for Global Radar Map */}
+                  <button
+                    onClick={() => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                            setMapCenter([position.coords.latitude, position.coords.longitude]);
+                          },
+                          (error) => {
+                            console.warn("Geolocation failed or denied, falling back to profile city coordinates", error);
+                            const userCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
+                            setMapCenter(userCoords);
+                          }
+                        );
+                      } else {
+                        const userCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
+                        setMapCenter(userCoords);
+                      }
+                    }}
+                    className="absolute top-4 right-4 z-[1000] flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 font-bold text-xs uppercase tracking-wider shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all"
+                  >
+                    <MapPin size={14} className="text-purple-600 dark:text-purple-400 animate-pulse" />
+                    Near Me
+                  </button>
                 </div>
               </div>
 
