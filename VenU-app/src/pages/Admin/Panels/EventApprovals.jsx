@@ -1,6 +1,8 @@
 import React from 'react';
 
-export default function EventApprovals({ pendingEvents, handleEventAction }) {
+export default function EventApprovals({ pendingEvents, loadingEvents, handleEventAction }) {
+    if (loadingEvents) return <div className="text-center py-10 text-slate-400">Loading pending events...</div>;
+
     return (
         <div className="animate-fade-in bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
             <table className="w-full text-left">
@@ -15,7 +17,7 @@ export default function EventApprovals({ pendingEvents, handleEventAction }) {
                 <tbody>
                     {pendingEvents.map(event => (
                         <tr key={event.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900/50">
-                            <td className="p-5 font-bold text-slate-900 dark:text-white">{event.name}</td>
+                            <td className="p-5 font-bold text-slate-900 dark:text-white">{event.name || event.title}</td>
                             <td className="p-5 text-sm font-medium text-slate-500">{event.organizer}</td>
                             <td className="p-5 text-sm font-medium text-slate-500">{event.date}</td>
                             <td className="p-5 text-right space-x-2">
