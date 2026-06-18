@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, MapPin, Ticket, Settings, Search, Lock,
   Tag, CheckCircle2, X, ChevronRight, Calendar, Clock,
@@ -78,15 +78,16 @@ const mockEvents = [
 ];
 
 function getRecommendedEvents(events, user) {
-  const byBarangay = events.filter(
-    (e) => e.barangay === user.barangay && (user.preferredCategories || []).includes(e.category)
-  );
-  if (byBarangay.length > 0) return { events: byBarangay, scope: `Near You in ${user.barangay}` };
+  // Sort events so that those in the same barangay come first, then same city, then others
+  const sortedEvents = [...events].sort((a, b) => {
+    if (a.barangay === user.barangay && b.barangay !== user.barangay) return -1;
+    if (a.barangay !== user.barangay && b.barangay === user.barangay) return 1;
+    if (a.city === user.city && b.city !== user.city) return -1;
+    if (a.city !== user.city && b.city === user.city) return 1;
+    return 0;
+  });
 
-  const byCity = events.filter((e) => e.city === user.city);
-  if (byCity.length > 0) return { events: byCity, scope: `Events in ${user.city || 'your city'}` };
-
-  return { events, scope: 'Trending Events Across the Philippines' };
+  return { events: sortedEvents, scope: 'All Events' };
 }
 
 function generateTicketId() {
@@ -390,6 +391,44 @@ export default function AttendeeDashboard() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [confirmedTicket, setConfirmedTicket] = useState(null);
   const [selectedWalletCategory, setSelectedWalletCategory] = useState('All');
+  const [liveEvents, setLiveEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('http://localhost:5150/api/Events/published');
+        if (response.ok) {
+          const data = await response.json();
+          const transformed = data.map(e => ({
+            id: e.id,
+            title: e.title,
+            category: e.category,
+            barangay: e.barangay,
+            city: e.city,
+            date: new Date(e.startDateTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            time: new Date(e.startDateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            accessType: e.accessType,
+            verificationCode: e.verificationCode,
+            isPaid: e.requiresTicket && e.ticketTiers.some(t => t.price > 0),
+            price: e.ticketTiers.length > 0 ? Math.min(...e.ticketTiers.map(t => t.price)) : 0,
+            ticketTiers: e.ticketTiers.length > 0 ? e.ticketTiers.map(t => t.tierName) : ["General Admission"],
+            image: e.bannerUrl || "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
+            color: "from-purple-500 to-indigo-600"
+          }));
+          setLiveEvents(transformed.length > 0 ? transformed : mockEvents);
+        } else {
+          setLiveEvents(mockEvents);
+        }
+      } catch (err) {
+        console.error("Failed to fetch events:", err);
+        setLiveEvents(mockEvents);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const [tickets, setTickets] = useState(() => {
     const savedTickets = localStorage.getItem('vnu_user_tickets');
@@ -429,7 +468,7 @@ export default function AttendeeDashboard() {
     { id: 'settings', label: 'Configuration', icon: Settings },
   ];
 
-  const { events: recommended, scope } = getRecommendedEvents(mockEvents, currentUser);
+  const { events: recommended, scope } = getRecommendedEvents(liveEvents.length > 0 ? liveEvents : mockEvents, currentUser);
 
   const filtered = recommended.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase()) ||

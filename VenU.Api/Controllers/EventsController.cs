@@ -250,6 +250,19 @@ namespace VenU.Api.Controllers
             return Ok(evt);
         }
 
+        [HttpGet("published")]
+        public async Task<IActionResult> GetPublishedEvents()
+        {
+            var events = await _context.Events
+                .Include(e => e.TicketTiers)
+                .Include(e => e.Organizer)
+                .Where(e => e.Status == "Published")
+                .OrderBy(e => e.StartDateTime)
+                .ToListAsync();
+
+            return Ok(events);
+        }
+
         [HttpGet]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> GetOrganizerEvents()
