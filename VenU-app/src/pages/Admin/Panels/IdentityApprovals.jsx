@@ -14,7 +14,10 @@ const IdentityApprovals = () => {
 
     const fetchPendingUsers = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
             setPendingUsers(res.data);
             setLoading(false);
         } catch (error) {
@@ -25,7 +28,10 @@ const IdentityApprovals = () => {
 
     const handleApprove = async (id) => {
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals/${id}/approve`);
+            const token = localStorage.getItem('token');
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals/${id}/approve`, {}, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
             setPendingUsers(pendingUsers.filter(u => u.id !== id));
             setSelectedUser(null);
         } catch (error) {
@@ -41,8 +47,11 @@ const IdentityApprovals = () => {
         }
 
         try {
+            const token = localStorage.getItem('token');
             await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals/${selectedUser.id}/reject`, {
                 reason: rejectReason
+            }, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
             });
             setPendingUsers(pendingUsers.filter(u => u.id !== selectedUser.id));
             setShowRejectModal(false);
