@@ -1,7 +1,7 @@
-import React from 'react';
-import { Calendar, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, ArrowRight, MapPin, Sparkles, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -14,13 +14,70 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const mockVenues = [
-    { id: 1, title: 'Grand Plaza Hall', capacity: '500 People', location: 'Downtown Hub', type: 'Indoor', coords: [14.33, 120.94] },
-    { id: 2, title: 'Sunset Open Amphitheater', capacity: '1,200 People', location: 'Coastal Ridge', type: 'Outdoor', coords: [14.34, 120.93] },
-    { id: 3, title: 'The Metro Tech Lab', capacity: '150 People', location: 'Silicon District', type: 'Hybrid', coords: [14.35, 120.95] }
-];
+// Helper component to adjust map bounds automatically
+const MapBounds = ({ markers }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (markers && markers.length > 0) {
+            const bounds = L.latLngBounds(markers.map(m => m.coords));
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }, [markers, map]);
+    return null;
+};
 
 export default function MainDashboard({ currentUser, setActivePanel }) {
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/events`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setEvents(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch events:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    // Prepare map markers
+    const mapMarkers = events
+        .filter(e => e.latitude && e.longitude)
+        .map(e => ({
+            id: e.id,
+            title: e.title,
+            type: e.venueType || 'Venue',
+            location: e.venueName || e.streetAddress || 'Location',
+            coords: [e.latitude, e.longitude]
+        }));
+
+    // Prepare upcoming events
+    const upcomingEvents = events
+        .filter(e => new Date(e.startDateTime) > new Date())
+        .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))
+        .slice(0, 4)
+        .map(e => {
+            const d = new Date(e.startDateTime);
+            const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+            const day = d.getDate().toString().padStart(2, '0');
+            return {
+                id: e.id,
+                title: e.title,
+                date: `${month} ${day}`,
+                time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            };
+        });
+
     return (
         <div className="animate-fade-in space-y-8">
             {/* ── Header ──────────────────────────────────────────────── */}
@@ -52,12 +109,18 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                             <MapPin size={16} className="text-purple-700 dark:text-purple-400" /> Event Map
                         </h3>
                         <div className="h-[340px] bg-slate-100 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 relative overflow-hidden">
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-800/80 z-20">
+                                    <Loader2 className="w-8 h-8 animate-spin text-purple-600 dark:text-purple-400" />
+                                </div>
+                            )}
                             <MapContainer center={[14.34, 120.94]} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 10 }}>
+                                <MapBounds markers={mapMarkers} />
                                 <TileLayer
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                                     url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                                 />
-                                {mockVenues.map((venue) => (
+                                {mapMarkers.map((venue) => (
                                     <Marker key={venue.id} position={venue.coords}>
                                         <Popup className="rounded overflow-hidden border border-slate-200 dark:border-slate-600">
                                             <div className="font-sans min-w-[160px] p-2">
@@ -89,30 +152,37 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                         </div>
 
                         <div className="space-y-4">
-                            {[
-                                { title: 'Summer Tech Summit', date: 'JUN 20', time: '09:00 AM' },
-                                { title: 'Beach Yoga Retreat', date: 'JUN 22', time: '06:30 AM' },
-                                { title: 'Jazz Night Live', date: 'JUN 24', time: '08:00 PM' },
-                                { title: 'Startup Pitch Deck', date: 'JUL 01', time: '02:00 PM' }
-                            ].map((event, idx) => (
-                                <div key={idx} className="flex bg-slate-50 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-700 dark:border-purple-500 transition-all cursor-pointer group overflow-hidden relative">
-                                    <div className="bg-purple-50 dark:bg-slate-600 w-20 flex flex-col items-center justify-center text-purple-700 dark:text-purple-300 py-3 relative">
-                                        <span className="text-xs font-medium opacity-80">{event.date.split(' ')[0]}</span>
-                                        <span className="text-lg font-semibold">{event.date.split(' ')[1]}</span>
-                                    </div>
-
-                                    <div className="flex-1 p-4 flex justify-between items-center bg-white dark:bg-slate-800 relative">
-                                        <div className="absolute left-0 top-2 bottom-2 w-px border-l border-slate-200 dark:border-slate-700"></div>
-                                        <div className="pl-3">
-                                            <p className="font-medium text-slate-900 dark:text-white group-hover:text-purple-700 dark:text-purple-400 dark:group-hover:text-purple-400 transition-colors">{event.title}</p>
-                                            <p className="text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">{event.time}</p>
-                                        </div>
-                                        <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-purple-100 dark:group-hover:bg-slate-600 group-hover:text-purple-700 dark:text-purple-400 transition-colors">
-                                            <ArrowRight size={14} />
-                                        </div>
-                                    </div>
+                            {loading ? (
+                                <div className="flex justify-center items-center py-10">
+                                    <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
                                 </div>
-                            ))}
+                            ) : upcomingEvents.length > 0 ? (
+                                upcomingEvents.map((event, idx) => (
+                                    <div key={idx} onClick={() => setActivePanel('events')} className="flex bg-slate-50 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-700 dark:border-purple-500 transition-all cursor-pointer group overflow-hidden relative">
+                                        <div className="bg-purple-50 dark:bg-slate-600 w-20 flex flex-col items-center justify-center text-purple-700 dark:text-purple-300 py-3 relative">
+                                            <span className="text-xs font-medium opacity-80">{event.date.split(' ')[0]}</span>
+                                            <span className="text-lg font-semibold">{event.date.split(' ')[1]}</span>
+                                        </div>
+
+                                        <div className="flex-1 p-4 flex justify-between items-center bg-white dark:bg-slate-800 relative">
+                                            <div className="absolute left-0 top-2 bottom-2 w-px border-l border-slate-200 dark:border-slate-700"></div>
+                                            <div className="pl-3">
+                                                <p className="font-medium text-slate-900 dark:text-white group-hover:text-purple-700 dark:text-purple-400 dark:group-hover:text-purple-400 transition-colors">{event.title}</p>
+                                                <p className="text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">{event.time}</p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-purple-100 dark:group-hover:bg-slate-600 group-hover:text-purple-700 dark:text-purple-400 transition-colors">
+                                                <ArrowRight size={14} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-10 border border-dashed border-slate-200 dark:border-slate-700 rounded bg-slate-50 dark:bg-slate-800/50">
+                                    <Calendar className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No upcoming events</p>
+                                    <p className="text-xs text-slate-500 mt-1">Create an event to see it here.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
