@@ -30,11 +30,11 @@ namespace VenU.Api.Middlewares
                     var dbContext = context.RequestServices.GetRequiredService<VenUDbContext>();
                     var user = await dbContext.Users.FindAsync(userId);
 
-                    if (user != null && user.IsSuspended)
+                    if (user != null && (user.Status == "Suspended" || user.Status == "Deleted"))
                     {
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                         context.Response.ContentType = "application/json";
-                        var result = JsonSerializer.Serialize(new { Message = "Your account has been suspended by an administrator." });
+                        var result = JsonSerializer.Serialize(new { Message = "Your account has been suspended or deleted by an administrator." });
                         await context.Response.WriteAsync(result);
                         return; // Short-circuit the pipeline
                     }
