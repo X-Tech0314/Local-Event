@@ -402,7 +402,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
                 {geocodedEvents.length} Mapped Event{geocodedEvents.length !== 1 ? 's' : ''}
               </span>
             </div>
-            <div className="h-[350px] w-full rounded overflow-hidden relative border border-slate-200 dark:border-slate-700">
+            <div className="h-[350px] w-full rounded overflow-hidden relative border border-slate-200 dark:border-slate-700 z-0">
               <MapContainer
                 center={mapCenter}
                 zoom={14}
@@ -614,6 +614,13 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
                   </p>
                 </div>
               </div>
+
+              {selectedEvent.accessType === 'Private' && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 flex flex-col items-center justify-center border border-purple-200 dark:border-purple-800/50">
+                  <p className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-1">Private Access Code</p>
+                  <p className="text-2xl font-mono font-black text-slate-900 dark:text-white tracking-[0.2em]">{selectedEvent.verificationCode || 'NOT SET'}</p>
+                </div>
+              )}
 
               {selectedEvent.logisticsNotes && (
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4">

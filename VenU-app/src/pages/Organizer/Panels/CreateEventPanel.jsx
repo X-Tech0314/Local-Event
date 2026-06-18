@@ -36,6 +36,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     Description: '',
     Category: '',
     Privacy: 'Public',
+    VerificationCode: '',
     StartDate: '',
     StartTime: '',
     EndDate: '',
@@ -286,6 +287,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         MapUrl: formData.MapUrl,
         VenueImages: formData.VenueImages || [],
         AccessType: formData.Privacy,
+        VerificationCode: formData.Privacy === 'Private' ? formData.VerificationCode : '',
         MaxCapacity: formData.Capacity ? parseInt(formData.Capacity) : 0,
         TicketTiers: enableTicketing ? formData.TicketTiers.map(t => ({
           TierName: t.Name,
@@ -708,6 +710,20 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     </div>
                   </button>
                 </div>
+                {formData.Privacy === 'Private' && (
+                  <div className="mt-4 animate-fade-in">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Private Access Code <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      name="VerificationCode"
+                      value={formData.VerificationCode}
+                      onChange={handleInputChange}
+                      placeholder="e.g. VIP2026"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">Attendees will need this exact code to view and register for this event.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1329,6 +1345,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                 capacity: formData.Capacity,
                 privacy: formData.Privacy,
                 accessType: formData.Privacy,
+                verificationCode: formData.Privacy === 'Private' ? formData.VerificationCode : '',
                 ticketType: enableTicketing && formData.TicketTiers.length > 0 ? formData.TicketTiers[0].ValidityScope : null,
                 ticketTiers: enableTicketing ? formData.TicketTiers : [],
                 venueType: formData.VenueType,

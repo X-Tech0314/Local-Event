@@ -108,7 +108,7 @@ export default function MainDashboard({ currentUser, setActivePanel }) {
                         <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
                             <MapPin size={16} className="text-purple-700 dark:text-purple-400" /> Event Map
                         </h3>
-                        <div className="h-[340px] bg-slate-100 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 relative overflow-hidden">
+                        <div className="h-[340px] bg-slate-100 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 relative overflow-hidden z-0">
                             {loading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-800/80 z-20">
                                     <Loader2 className="w-8 h-8 animate-spin text-purple-600 dark:text-purple-400" />

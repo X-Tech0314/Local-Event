@@ -10,6 +10,37 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 
 import UserSettings from './Panels/UserSettings';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+
+function QRScannerModal({ onScan, onClose }) {
+  useEffect(() => {
+    const scanner = new Html5QrcodeScanner('reader', { qrbox: { width: 250, height: 250 }, fps: 5 }, false);
+    scanner.render((text) => {
+      scanner.clear();
+      onScan(text);
+    }, (err) => {
+      // ignore
+    });
+    return () => {
+      scanner.clear().catch(e => console.warn("Scanner clear error", e));
+    };
+  }, [onScan]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <X size={24} />
+        </button>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <QrCode className="text-purple-600" /> Scan Access Code
+        </h2>
+        <div id="reader" className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden"></div>
+        <p className="text-center text-xs text-slate-500 mt-4">Point your camera at an event QR code to securely log the access code automatically.</p>
+      </div>
+    </div>
+  );
+}
 
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -610,6 +641,7 @@ export default function AttendeeDashboard() {
   const [reviewingEvent, setReviewingEvent] = useState(null);
   const [selectedWalletCategory, setSelectedWalletCategory] = useState('All');
   const [otherCategoryQuery, setOtherCategoryQuery] = useState('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [liveEvents, setLiveEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mapCenter, setMapCenter] = useState(null);
@@ -758,14 +790,26 @@ export default function AttendeeDashboard() {
   const { events: recommended, scope } = getRecommendedEvents(liveEvents.length > 0 ? liveEvents : mockEvents, currentUser);
 
   const filtered = recommended.filter((e) => {
-    const searchLower = search.toLowerCase();
-    const matchesSearch = 
-      e.title.toLowerCase().includes(searchLower) ||
-      e.category.toLowerCase().includes(searchLower) ||
-      (e.barangay && e.barangay.toLowerCase().includes(searchLower)) ||
-      (e.city && e.city.toLowerCase().includes(searchLower)) ||
-      (e.venueName && e.venueName.toLowerCase().includes(searchLower)) ||
-      (e.verificationCode && e.verificationCode.toLowerCase() === searchLower);
+    const searchLower = search.toLowerCase().trim();
+    
+    let matchesSearch = false;
+
+    if (e.accessType === 'Private') {
+      // Private events ONLY show if the search matches their verification code exactly
+      matchesSearch = searchLower !== '' && e.verificationCode && e.verificationCode.toLowerCase() === searchLower;
+    } else {
+      // Public events show if no search, or if search matches their fields
+      if (searchLower === '') {
+        matchesSearch = true;
+      } else {
+        matchesSearch = 
+          e.title.toLowerCase().includes(searchLower) ||
+          e.category.toLowerCase().includes(searchLower) ||
+          (e.barangay && e.barangay.toLowerCase().includes(searchLower)) ||
+          (e.city && e.city.toLowerCase().includes(searchLower)) ||
+          (e.venueName && e.venueName.toLowerCase().includes(searchLower));
+      }
+    }
       
     if (showSavedOnly) {
       return matchesSearch && savedEvents.includes(e.eventId || e.id);
@@ -1106,10 +1150,7 @@ export default function AttendeeDashboard() {
                         className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-sm outline-none px-2 pr-4"
                       />
                       <button 
-                        onClick={() => {
-                          const input = document.getElementById('global-search-input');
-                          if (input) input.focus();
-                        }}
+                        onClick={() => setShowQRScanner(true)}
                         className="bg-white text-slate-900 px-4 py-2.5 rounded-none text-xs font-black uppercase tracking-widest hover:bg-slate-100 shadow-sm"
                       >
                         Scan
@@ -1582,6 +1623,18 @@ export default function AttendeeDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+
+      {showQRScanner && (
+        <QRScannerModal 
+          onClose={() => setShowQRScanner(false)} 
+          onScan={(data) => {
+            setSearch(data);
+            setShowQRScanner(false);
+            addNotification("QR Scanned", `Search updated with code: ${data}`);
+          }} 
+        />
       )}
 
     </div>
