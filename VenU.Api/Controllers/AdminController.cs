@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VenU.Api.Data;
@@ -5,8 +6,9 @@ using VenU.Api.Models;
 
 namespace VenU.Api.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
+    [Authorize(Roles = "Admin,Superadmin")]
     public class AdminController : ControllerBase
     {
         private readonly VenUDbContext _context;
@@ -16,21 +18,9 @@ namespace VenU.Api.Controllers
             _context = context;
         }
 
-        [HttpGet("admins")]
-        public async Task<IActionResult> GetAdmins()
-        {
-            var admins = await _context.Users
-                .Where(u => u.Role == "Admin" || u.Role == "SuperAdmin")
-                .Select(u => new { 
-                    id = u.Id, 
-                    name = string.IsNullOrEmpty(u.LastName) ? u.FirstName : u.FirstName + " " + u.LastName, 
-                    email = u.Email, 
-                    role = u.Role 
-                })
-                .ToListAsync();
-            return Ok(admins);
-        }
-
+        // ==========================================
+        // 0. QUICK FIXES & UTILS
+        // ==========================================
         [HttpGet("fix-identities")]
         public async Task<IActionResult> FixIdentities()
         {
@@ -41,112 +31,292 @@ namespace VenU.Api.Controllers
                 if (string.IsNullOrEmpty(user.SelfiePath)) user.SelfiePath = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&q=80";
             }
             await _context.SaveChangesAsync();
-            return Ok($"Fixed {users.Count} users");
+            return Ok(new { Message = $"Fixed {users.Count} users" });
         }
 
-        [HttpPost("admins")]
-        public async Task<IActionResult> CreateAdmin([FromBody] AdminCreateDto req)
+        // ==========================================
+        // 1. DASHBOARD STATS
+        // ==========================================
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
         {
-            if (await _context.Users.AnyAsync(u => u.Email == req.Email))
-            {
-                return BadRequest(new { Message = "Email is already registered." });
-            }
+            var totalUsers = await _context.Users.CountAsync();
+            var activeEvents = await _context.Events.CountAsync(e => e.Status == "Published");
+            
+            decimal totalSales = 0;
 
-            var parts = req.Name?.Split(' ', 2) ?? new[] { "Admin" };
-            var firstName = parts[0];
-            var lastName = parts.Length > 1 ? parts[1] : "";
-
-            var user = new User
-            {
-                Email = req.Email ?? "",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-                Role = "Admin",
-                FirstName = firstName,
-                LastName = lastName,
-                IsVerified = true,
-                MiddleName = "",
-                Suffix = "",
-                ContactNumber = "",
-                HouseNo = "",
-                StreetName = "",
-                Subdivision = "",
-                ZipCode = "",
-                Region = "",
-                Province = "",
-                City = "",
-                Barangay = "",
-                IdType = "",
-                IdReferenceNumber = "",
-                IdFrontPath = "",
-                IdBackPath = "",
-                SelfiePath = ""
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { 
-                id = user.Id, 
-                name = user.FirstName + (string.IsNullOrEmpty(user.LastName) ? "" : " " + user.LastName), 
-                email = user.Email, 
-                role = user.Role 
+            return Ok(new {
+                totalUsers,
+                activeEvents,
+                totalSales
             });
         }
 
-        [HttpDelete("admins/{id}")]
-        public async Task<IActionResult> DeleteAdmin(Guid id)
+        // ==========================================
+        // 2. EVENT APPROVALS
+        // ==========================================
+        [HttpGet("events/pending")]
+        public async Task<IActionResult> GetPendingEvents()
         {
-            var admin = await _context.Users.FindAsync(id);
-            if (admin != null)
-            {
-                _context.Users.Remove(admin);
-                await _context.SaveChangesAsync();
-            }
-            return Ok(new { Message = "Admin deleted successfully" });
-        }
-
-        [HttpPut("admins/{id}/role")]
-        public async Task<IActionResult> UpdateAdminRole(Guid id, [FromBody] AdminRoleDto req)
-        {
-            var admin = await _context.Users.FindAsync(id);
-            if (admin != null)
-            {
-                admin.Role = req.Role;
-                await _context.SaveChangesAsync();
-            }
-            return Ok(new { Message = "Role updated successfully" });
-        }
-
-        [HttpGet("users")]
-        public async Task<IActionResult> GetUsers()
-        {
-            var users = await _context.Users
-                .Where(u => u.Role == "Attendee" || u.Role == "Organizer")
-                .Select(u => new { 
-                    id = u.Id, 
-                    firstName = u.FirstName, 
-                    lastName = u.LastName, 
-                    email = u.Email, 
-                    role = u.Role, 
-                    status = !u.IsSuspended ? "Active" : "Suspended",
-                    isVerified = u.IsVerified 
+            var pendingEvents = await _context.Events
+                .Include(e => e.Organizer)
+                .Where(e => e.Status == "Pending" || e.Status == "UnderReview")
+                .Select(e => new {
+                    id = e.Id,
+                    name = e.Title,
+                    organizer = e.Organizer.OrgName ?? (e.Organizer.FirstName + " " + e.Organizer.LastName),
+                    date = e.StartDateTime.ToString("MMM dd, yyyy")
                 })
                 .ToListAsync();
-            return Ok(users);
+
+            return Ok(new { events = pendingEvents }); // Wrapping in object for compatibility with frontend if expected
+        }
+
+        [HttpPut("events/{id}/approved")]
+        public async Task<IActionResult> ApproveEvent(Guid id)
+        {
+            return await UpdateEventStatus(id, "Published");
+        }
+
+        [HttpPut("events/{id}/rejected")]
+        public async Task<IActionResult> RejectEvent(Guid id)
+        {
+            return await UpdateEventStatus(id, "Rejected");
+        }
+
+        private async Task<IActionResult> UpdateEventStatus(Guid id, string status)
+        {
+            var evt = await _context.Events.FindAsync(id);
+            if (evt == null) return NotFound(new { message = "Event not found." });
+
+            evt.Status = status;
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { message = $"Event {status} successfully." });
+        }
+
+        // ==========================================
+        // 3. USER MANAGEMENT (with Recycle Bin)
+        // ==========================================
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers([FromQuery] string search = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] bool deleted = false)
+        {
+            var query = _context.Users
+                .Where(u => u.Role == "Attendee" || u.Role == "Organizer");
+
+            // Filter by Active or Deleted (Recycle Bin)
+            if (deleted) {
+                query = query.Where(u => u.Status == "Deleted");
+            } else {
+                query = query.Where(u => u.Status != "Deleted");
+            }
+
+            // Apply Search Filter
+            if (!string.IsNullOrEmpty(search))
+            {
+                var lowerSearch = search.ToLower();
+                query = query.Where(u => 
+                    (u.FirstName != null && u.FirstName.ToLower().Contains(lowerSearch)) || 
+                    (u.LastName != null && u.LastName.ToLower().Contains(lowerSearch)) ||
+                    ((u.FirstName ?? "") + " " + (u.LastName ?? "")).ToLower().Contains(lowerSearch)
+                );
+            }
+
+            // Get Total Count for Pagination logic
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            // Apply Pagination
+            var users = await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new {
+                    id = u.Id,
+                    firstName = u.FirstName,
+                    lastName = u.LastName,
+                    role = u.Role,
+                    status = u.Status
+                })
+                .ToListAsync();
+
+            return Ok(new { 
+                users, 
+                totalCount, 
+                totalPages, 
+                currentPage = page 
+            });
         }
 
         [HttpPut("users/{id}/status")]
-        public async Task<IActionResult> UpdateUserStatus(Guid id, [FromBody] UserStatusDto req)
+        public async Task<IActionResult> UpdateUserStatus(Guid id, [FromBody] UpdateStatusDto dto)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user != null)
-            {
-                user.IsSuspended = req.Status != "Active";
-                await _context.SaveChangesAsync();
-            }
-            return Ok(new { Message = "User status updated successfully" });
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.Status = dto.Status;
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { message = "User status updated successfully." });
         }
 
+        // SOFT DELETE (Move to Recycle Bin)
+        [HttpDelete("users/{id}")]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            if (user.Role == "Admin" || user.Role == "Superadmin")
+            {
+                return BadRequest(new { message = "Cannot delete admin accounts from here. Use Admin Management." });
+            }
+
+            user.Status = "Deleted";
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { message = "User moved to Recycle Bin." });
+        }
+
+        // RESTORE FROM RECYCLE BIN
+        [HttpPut("users/{id}/restore")]
+        public async Task<IActionResult> RestoreUser(Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.Status = "Active";
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { message = "User restored successfully." });
+        }
+
+        // PERMANENT DELETE (Remove from database entirely)
+        [HttpDelete("users/{id}/permanent")]
+        public async Task<IActionResult> PermanentDeleteUser(Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            try {
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "User permanently deleted from the database." });
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { message = "Cannot permanently delete this user because they have existing tickets or events tied to their account." });
+            }
+        }
+
+        // ==========================================
+        // 4. ADMIN MANAGEMENT (Superadmin Only)
+        // ==========================================
+        [HttpGet("admins")]
+        [Authorize(Roles = "Superadmin")]
+        public async Task<IActionResult> GetAdmins()
+        {
+            var admins = await _context.Users
+                .Where(u => u.Role == "Admin" || u.Role == "Superadmin")
+                .Select(u => new {
+                    id = u.Id,
+                    name = u.FirstName + " " + u.LastName,
+                    email = u.Email,
+                    role = u.Role 
+                })
+                .ToListAsync();
+
+            return Ok(admins);
+        }
+
+        [HttpPost("admins")]
+        [Authorize(Roles = "Superadmin")]
+        public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
+        {
+            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            {
+                return BadRequest(new { message = "An account with this email already exists." });
+            }
+
+            var newAdmin = new User
+            {
+                Id = Guid.NewGuid(),
+                Role = "Admin",
+                Email = dto.Email,
+                FirstName = dto.Name,
+                LastName = "",
+                MiddleName = "", 
+                Suffix = "",     
+                Status = "Active",
+                CreatedAt = DateTime.UtcNow,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                DateOfBirth = new DateTime(1990, 1, 1),
+                ContactNumber = "N/A",
+                HouseNo = "N/A",
+                StreetName = "N/A",
+                Subdivision = "N/A",
+                ZipCode = "N/A",
+                Region = "N/A",
+                Province = "N/A",
+                City = "N/A",
+                Barangay = "N/A",
+                IdType = "N/A",
+                IdReferenceNumber = "N/A",
+                IdFrontPath = "N/A",
+                IdBackPath = "N/A",
+                SelfiePath = "N/A",
+                OrgDocumentPath = "N/A"
+            };
+
+            _context.Users.Add(newAdmin);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                id = newAdmin.Id, 
+                name = newAdmin.FirstName, 
+                email = newAdmin.Email 
+            });
+        }
+
+        [HttpPut("admins/{id}/role")]
+        [Authorize(Roles = "Superadmin")]
+        public async Task<IActionResult> UpdateAdminRole(Guid id, [FromBody] UpdateRoleDto dto)
+        {
+            var admin = await _context.Users.FindAsync(id);
+            if (admin == null) return NotFound(new { message = "Admin not found." });
+
+            if (dto.Role != "Admin" && dto.Role != "Superadmin")
+            {
+                return BadRequest(new { message = "Invalid role specified." });
+            }
+
+            admin.Role = dto.Role;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Admin role updated successfully." });
+        }
+
+        [HttpDelete("admins/{id}")]
+        [Authorize(Roles = "Superadmin")]
+        public async Task<IActionResult> DeleteAdmin(Guid id)
+        {
+            var admin = await _context.Users.FindAsync(id);
+            if (admin == null) return NotFound(new { message = "Admin not found." });
+
+            if (admin.Role != "Admin" && admin.Role != "Superadmin")
+            {
+                return BadRequest(new { message = "This user is not an admin." });
+            }
+
+            _context.Users.Remove(admin);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Admin deleted successfully." });
+        }
+
+        // ==========================================
+        // 5. IDENTITY APPROVALS
+        // ==========================================
         [HttpGet("identity-approvals")]
         public async Task<IActionResult> GetIdentityApprovals()
         {
@@ -174,25 +344,20 @@ namespace VenU.Api.Controllers
         public async Task<IActionResult> ApproveIdentity(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            if (user == null) return NotFound(new { message = "User not found." });
 
             user.IsVerified = true;
             user.VerificationMessage = null;
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "Identity approved." });
-        }
-
-        public class RejectIdentityDto
-        {
-            public string Reason { get; set; }
+            return Ok(new { message = "Identity approved." });
         }
 
         [HttpPut("identity-approvals/{id}/reject")]
         public async Task<IActionResult> RejectIdentity(Guid id, [FromBody] RejectIdentityDto req)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            if (user == null) return NotFound(new { message = "User not found." });
 
             user.IsVerified = false;
             // Optionally clear the paths so they must upload again
@@ -202,72 +367,30 @@ namespace VenU.Api.Controllers
             user.VerificationMessage = req.Reason;
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "Identity rejected." });
-        }
-
-        [HttpGet("events/pending")]
-        public async Task<IActionResult> GetPendingEvents()
-        {
-            var events = await _context.Events
-                .Include(e => e.Organizer)
-                .Where(e => e.Status == "Pending" || e.Status == "UnderReview")
-                .Select(e => new {
-                    id = e.Id,
-                    name = e.Title,
-                    organizer = e.Organizer.FirstName + " " + e.Organizer.LastName,
-                    date = e.StartDateTime.ToString("MMM dd, yyyy")
-                })
-                .ToListAsync();
-            return Ok(new { events });
-        }
-
-        [HttpPut("events/{id}/{actionName}")]
-        public async Task<IActionResult> UpdateEventAction(Guid id, string actionName)
-        {
-            var evt = await _context.Events.FindAsync(id);
-            if (evt != null)
-            {
-                if (actionName.ToLower() == "approved")
-                    evt.Status = "Published";
-                else if (actionName.ToLower() == "rejected")
-                    evt.Status = "Rejected";
-
-                await _context.SaveChangesAsync();
-            }
-            return Ok(new { Message = "Event updated successfully" });
-        }
-
-        [HttpGet("stats")]
-        public async Task<IActionResult> GetAdminStats()
-        {
-            var totalUsers = await _context.Users.CountAsync(u => u.Role == "Attendee" || u.Role == "Organizer");
-            var activeEvents = await _context.Events.CountAsync(e => e.Status == "Published");
-            
-            // For now, simulate total sales or leave at 0 if no tickets are sold yet
-            var totalSales = 0;
-
-            return Ok(new {
-                totalUsers,
-                activeEvents,
-                totalSales
-            });
+            return Ok(new { message = "Identity rejected." });
         }
     }
 
-    public class AdminCreateDto
+    // DTOs
+    public class UpdateStatusDto
     {
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string Status { get; set; }
     }
 
-    public class AdminRoleDto
+    public class CreateAdminDto
     {
-        public string Role { get; set; } = string.Empty;
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 
-    public class UserStatusDto
+    public class UpdateRoleDto
     {
-        public string Status { get; set; } = string.Empty;
+        public string Role { get; set; }
+    }
+
+    public class RejectIdentityDto
+    {
+        public string Reason { get; set; }
     }
 }

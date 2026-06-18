@@ -63,8 +63,7 @@ namespace VenU.Api.Controllers
                 OrgName = request.OrgName ?? "",
                 TinNumber = request.TinNumber ?? "",
                 OrgDocumentPath = request.OrgDocumentPath ?? "",
-                IsVerified = false, // Back to false for real identity verification workflow
-                IsSuspended = false // Suspended is now a separate state
+                IsVerified = false // Back to false for real identity verification workflow
             };
 
             _context.Users.Add(user);
@@ -83,9 +82,9 @@ namespace VenU.Api.Controllers
                 return Unauthorized(new { Message = "Invalid email or password." });
             }
 
-            if (user.IsSuspended)
+            if (user.Status == "Suspended" || user.Status == "Deleted")
             {
-                return Unauthorized(new { Message = "Your account has been suspended. Please contact an administrator." });
+                return Unauthorized(new { Message = "Your account has been suspended or deleted. Please contact an administrator." });
             }
 
             var token = GenerateJwtToken(user);

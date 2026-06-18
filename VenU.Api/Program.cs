@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using VenU.Api.Data;
 using VenU.Api.Middlewares;
+using VenU.Api.Models;
 
 // Load environment variables from .env if present
 var currentDir = Directory.GetCurrentDirectory();
@@ -219,5 +220,50 @@ app.UseAuthorization();
 app.UseMiddleware<SuspensionCheckMiddleware>();
 
 app.MapControllers();
+
+// --- ADD THIS RIGHT ABOVE app.Run(); ---
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<VenUDbContext>();
+    
+    // Check if a Superadmin already exists
+    if (!context.Users.Any(u => u.Role == "Superadmin"))
+    {
+        var superAdmin = new User
+        {
+            Email = "superadmin@venu.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("SuperAdmin123!"),
+            Role = "Superadmin",
+            FirstName = "Super",
+            LastName = "Admin",
+            MiddleName = "", // Added
+            Suffix = "",     // Added
+            Status = "Active",
+            
+            // Fill required fields with dummy data
+            DateOfBirth = new DateTime(1990, 1, 1),
+            ContactNumber = "N/A",
+            HouseNo = "N/A",
+            StreetName = "N/A",
+            Subdivision = "N/A",
+            ZipCode = "N/A",
+            Region = "N/A",
+            Province = "N/A",
+            City = "N/A",
+            Barangay = "N/A",
+            IdType = "N/A",
+            IdReferenceNumber = "N/A",
+            IdFrontPath = "N/A",
+            IdBackPath = "N/A",
+            SelfiePath = "N/A",
+            OrgDocumentPath = "N/A"
+        };
+
+        context.Users.Add(superAdmin);
+        context.SaveChanges();
+    }
+}
 
 app.Run();
