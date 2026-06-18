@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../../ThemeContext';
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../ThemeContext';
 import logo from "../../assets/venu-logo3-transparent.png";
 
 // Import Panels
@@ -10,22 +10,23 @@ import UserManagement from './Panels/UserManagement';
 import EventApprovals from './Panels/EventApprovals';
 import AdminManagement from './Panels/AdminManagement';
 
-// Mock Data for Events (Shared between Home and Approvals panels)
-const initialEvents = [
-    { id: 1, name: 'Tech Conference 2024', organizer: 'TechCorp', date: 'Aug 12, 2024' },
-    { id: 2, name: 'Summer Music Fest', organizer: 'LiveNation', date: 'Sep 05, 2024' },
-    { id: 3, name: 'Startup Pitch Night', organizer: 'InnovHub', date: 'Oct 20, 2024' },
-];
-
 export default function AdminDashboard() {
-    const { darkMode, toggleDarkMode } = useTheme();
     const navigate = useNavigate();
+    const { darkMode, toggleDarkMode } = useTheme();
 
-    const [role, setRole] = useState('superadmin'); // 'superadmin' or 'admin'
+    // Get real role from localStorage
+    const savedUserStr = localStorage.getItem('user');
+    const loggedInUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+
+    // Bulletproof role extraction
+    const rawRole = loggedInUser?.Role || loggedInUser?.role || '';
+    const cleanRole = String(rawRole).trim().toLowerCase();
+    const [role, setRole] = useState(cleanRole === 'superadmin' ? 'superadmin' : 'admin');
+
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [pendingEvents, setPendingEvents] = useState(initialEvents);
+    const [pendingEvents, setPendingEvents] = useState([]);
+    const [loadingEvents, setLoadingEvents] = useState(true);
 
-    // Removed 'files' from the array
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'superadmin'] },
         { id: 'users', label: 'User Management', icon: Users, roles: ['admin', 'superadmin'] },
@@ -33,16 +34,46 @@ export default function AdminDashboard() {
         { id: 'admins', label: 'Admin Management', icon: Crown, roles: ['superadmin'] },
     ];
 
-    const toggleUserRole = () => {
-        const newRole = role === 'superadmin' ? 'admin' : 'superadmin';
-        setRole(newRole);
-        if (newRole === 'admin' && activeTab === 'admins') {
-            setActiveTab('dashboard');
-        }
-    };
+    // Fetch Pending Events
+    useEffect(() => {
+        let cancelled = false;
+        const fetchEvents = async () => {
+            setLoadingEvents(true);
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events/pending`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (!res.ok) throw new Error('Failed to fetch events');
+                const data = await res.json();
+                if (!cancelled) setPendingEvents(data.events || data || []);
+            } catch (err) {
+                console.error("Error fetching pending events:", err);
+            } finally {
+                if (!cancelled) setLoadingEvents(false);
+            }
+        };
+        fetchEvents();
+        return () => { cancelled = true; };
+    }, []);
 
-    const handleEventAction = (id) => {
-        setPendingEvents(pendingEvents.filter(e => e.id !== id));
+    // Handle Approve/Reject
+    const handleEventAction = async (id, action) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events/${id}/${action.toLowerCase()}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                setPendingEvents(pendingEvents.filter(e => e.id !== id));
+            }
+        } catch (err) {
+            console.error(`Failed to ${action} event:`, err);
+        }
     };
 
     return (
@@ -61,9 +92,9 @@ export default function AdminDashboard() {
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-slate-900 dark:text-white leading-tight truncate">
-                                {role === 'superadmin' ? 'Superadmin' : 'Admin'} Account
+                                {loggedInUser?.FirstName || 'Admin'} {loggedInUser?.LastName || ''}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">System Control</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 capitalize">{role} Account</p>
                         </div>
                     </div>
 
@@ -101,28 +132,22 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                         {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                     </h1>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
+                        {/* Dark Mode Toggle Button Restored */}
                         <button
                             onClick={toggleDarkMode}
-                            className="p-2.5 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white transition-colors"
+                            className="p-2.5 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-white"
                             title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                         >
                             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-                        </button>
-                        <button
-                            onClick={toggleUserRole}
-                            className="px-4 py-2 text-xs font-black uppercase tracking-widest bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-none transition-colors"
-                        >
-                            Simulate Login as: {role === 'superadmin' ? 'Admin' : 'Superadmin'}
                         </button>
                     </div>
                 </div>
 
                 <div className="p-8 max-w-7xl mx-auto w-full">
-                    {activeTab === 'dashboard' && <AdminDashboardHome pendingEvents={pendingEvents} setActiveTab={setActiveTab} />}
+                    {activeTab === 'dashboard' && <AdminDashboardHome pendingEvents={pendingEvents} loadingEvents={loadingEvents} setActiveTab={setActiveTab} />}
                     {activeTab === 'users' && <UserManagement />}
-                    {activeTab === 'events' && <EventApprovals pendingEvents={pendingEvents} handleEventAction={handleEventAction} />}
-                    {/* Removed the File Manager render condition */}
+                    {activeTab === 'events' && <EventApprovals pendingEvents={pendingEvents} loadingEvents={loadingEvents} handleEventAction={handleEventAction} />}
                     {activeTab === 'admins' && role === 'superadmin' && <AdminManagement />}
                 </div>
             </main>

@@ -263,9 +263,12 @@ export default function LandingPage() {
                 localStorage.setItem('user', JSON.stringify(user));
 
                 const rawRole = user.role || user.Role || response.data.role || response.data.Role || '';
-                const isOrganizer = String(rawRole).toLowerCase() === 'organizer';
+                const roleLower = String(rawRole).toLowerCase();
 
-                if (isOrganizer) {
+                // --- UPDATED REDIRECTION LOGIC ---
+                if (roleLower === 'superadmin' || roleLower === 'admin') {
+                  navigate('/admin');
+                } else if (roleLower === 'organizer') {
                   navigate('/dashboard');
                 } else {
                   navigate('/attendee');
@@ -278,7 +281,11 @@ export default function LandingPage() {
 
                   localStorage.setItem('token', 'mock-jwt-token');
                   localStorage.setItem('user', JSON.stringify({ id: 'mock-123', email: data.email, role, firstName: 'Mock', lastName: 'User' }));
-                  return navigate(role === 'Organizer' ? '/dashboard' : '/attendee');
+
+                  const roleLower = String(role).toLowerCase();
+                  if (roleLower === 'superadmin' || roleLower === 'admin') return navigate('/admin');
+                  if (roleLower === 'organizer') return navigate('/dashboard');
+                  return navigate('/attendee');
                 }
                 alert('Login failed: ' + (err.response?.data?.message || err.message));
               }
