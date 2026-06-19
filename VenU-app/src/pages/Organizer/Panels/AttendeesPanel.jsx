@@ -68,7 +68,7 @@ export default function AttendeesPanel({ currentUser }) {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5150'}/api/events`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setEvents(response.data);
@@ -84,7 +84,7 @@ export default function AttendeesPanel({ currentUser }) {
       setHubLoading(true);
       setHubError(null);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5150'}/api/events/${eventId}/management-summary`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/management-summary`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setHubData(response.data);

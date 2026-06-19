@@ -721,7 +721,7 @@ export default function AttendeeDashboard() {
   useEffect(() => {
     const fetchMapEvents = async () => {
       try {
-        const response = await fetch('http://localhost:5150/api/Locations/explore');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Locations/explore`);
         if (response.ok) {
           const data = await response.json();
           
@@ -757,7 +757,7 @@ export default function AttendeeDashboard() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('http://localhost:5150/api/Events/published');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Events/published`);
         if (response.ok) {
           const data = await response.json();
           const transformed = data.map(e => ({

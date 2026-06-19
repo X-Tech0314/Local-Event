@@ -18,7 +18,7 @@ export default function EventManagementModal({ eventId, onClose, onEdit }) {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:5150/api/events/${eventId}/management-summary`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/management-summary`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(response.data);
