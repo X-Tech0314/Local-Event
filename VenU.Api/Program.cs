@@ -62,9 +62,16 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactFrontend",
         policy =>
         {
-            policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+            policy.SetIsOriginAllowed(origin =>
+                {
+                    var host = new Uri(origin).Host;
+                    return host == "localhost"
+                        || host.EndsWith(".vercel.app")   // Vercel prod & preview URLs
+                        || host == "venu-app.vercel.app"; // explicit prod URL
+                })
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
 });
 
