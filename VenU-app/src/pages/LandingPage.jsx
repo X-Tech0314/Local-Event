@@ -277,7 +277,12 @@ export default function LandingPage() {
                 if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
                   const mockStoredUser = localStorage.getItem('mockUser_' + data.email);
                   const storedRole = mockStoredUser ? JSON.parse(mockStoredUser).role : null;
-                  const role = storedRole || (data.email.toLowerCase().includes('org') ? 'Organizer' : 'Attendee');
+                  let role = storedRole;
+                  if (!role) {
+                    if (data.email.toLowerCase().includes('admin')) role = 'Superadmin';
+                    else if (data.email.toLowerCase().includes('org')) role = 'Organizer';
+                    else role = 'Attendee';
+                  }
 
                   localStorage.setItem('token', 'mock-jwt-token');
                   localStorage.setItem('user', JSON.stringify({ id: 'mock-123', email: data.email, role, firstName: 'Mock', lastName: 'User' }));
