@@ -67,7 +67,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     HasFireExtinguishers: false,
     VenueImages: [],
     TicketTiers: [
-      { Name: 'General Admission', Price: 0, Capacity: '', ValidityScope: 'Full Event Access' }
+      { Name: 'General Admission', Price: '', Capacity: '', ValidityScope: 'Full Event Access' }
     ]
   });
 
@@ -158,7 +158,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   const addTicketTier = () => {
     setFormData(prev => ({
       ...prev,
-      TicketTiers: [...prev.TicketTiers, { Name: '', Price: 0, Capacity: '', ValidityScope: 'Full Event Access' }]
+      TicketTiers: [...prev.TicketTiers, { Name: '', Price: '', Capacity: '', ValidityScope: 'Full Event Access' }]
     }));
   };
 
@@ -355,12 +355,14 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       if (!formData.EndTime) newErrors.EndTime = "End time is required.";
 
       if (formData.StartTime && formData.EndTime) {
-        const startMinutes = convertTimeToMinutes(formData.StartTime);
-        const endMinutes = convertTimeToMinutes(formData.EndTime);
-        if (endMinutes <= startMinutes) {
-          newErrors.EndTime = "Daily end time must be after start time.";
-        } else if (endMinutes - startMinutes < 30) {
-          newErrors.EndTime = "Daily event window must be at least 30 minutes.";
+        if (formData.StartDate === formData.EndDate) {
+          const startMinutes = convertTimeToMinutes(formData.StartTime);
+          const endMinutes = convertTimeToMinutes(formData.EndTime);
+          if (endMinutes <= startMinutes) {
+            newErrors.EndTime = "Daily end time must be after start time.";
+          } else if (endMinutes - startMinutes < 30) {
+            newErrors.EndTime = "Daily event window must be at least 30 minutes.";
+          }
         }
       }
 
@@ -369,6 +371,9 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         if (!formData.TicketSaleEnd) newErrors.TicketSaleEnd = "Ticketing end date is required.";
         if (formData.TicketSaleStart && formData.TicketSaleEnd && formData.TicketSaleEnd < formData.TicketSaleStart) {
           newErrors.TicketSaleEnd = "Ticketing end date cannot be before start date.";
+        }
+        if (formData.EndDate && formData.TicketSaleEnd && formData.TicketSaleEnd > formData.EndDate) {
+          newErrors.TicketSaleEnd = "Ticketing end date cannot be after the event end date.";
         }
       }
     }
@@ -832,6 +837,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         type="date"
                         name="TicketSaleEnd"
                         min={formData.TicketSaleStart || getTodayDateString()}
+                        max={formData.EndDate}
                         value={formData.TicketSaleEnd}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white dark:[color-scheme:dark]"
@@ -1211,6 +1217,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         name="Capacity"
                         value={formData.Capacity}
                         onChange={handleInputChange}
+                        onBlur={handleSmartAllocate}
                         placeholder="e.g., 500"
                         className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
                       />
@@ -1286,7 +1293,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                           <input
                             type="number"
                             value={tier.Price}
-                            onChange={(e) => handleTierChange(index, 'Price', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => handleTierChange(index, 'Price', e.target.value === '' ? '' : parseFloat(e.target.value))}
                             placeholder="0 for Complimentary"
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           />
@@ -1301,6 +1308,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                             type="number"
                             value={tier.Capacity}
                             onChange={(e) => handleTierChange(index, 'Capacity', e.target.value)}
+                            onBlur={handleSmartAllocate}
                             placeholder="Max allocations allowed"
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           />

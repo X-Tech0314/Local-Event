@@ -115,7 +115,7 @@ export default function TicketPreview({ themeColor = '#a855f7', eventData }) {
             <div className="flex flex-col items-center justify-center text-center space-y-2">
               <Lock className="w-8 h-8 text-slate-700" />
               <div className="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Invite Code</div>
-              <div className="text-lg font-black text-slate-800 tracking-widest">A7X9-B2</div>
+              <div className="text-lg font-black text-slate-800 tracking-widest">{eventData?.verificationCode || 'NOT SET'}</div>
             </div>
           ) : (
             <div className="w-24 h-24 flex items-center justify-center">
