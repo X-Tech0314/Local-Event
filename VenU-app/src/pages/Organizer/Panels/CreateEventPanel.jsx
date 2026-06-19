@@ -260,7 +260,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         RequiresTicket: enableTicketing,
         DailyStartTime: `${formData.StartTime}:00`,
         DailyEndTime: `${formData.EndTime}:00`,
-        Status: "Published",
+        Status: "Pending",
         VenueSourcingMode: venueSource,
         RegisterVenueToDB: venueSource === 'custom',
         VenueId: venueSource === 'registered' ? formData.RegisteredVenueId || null : null,
@@ -314,7 +314,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
       setShowSuccessModal(true);
       if (addNotification) {
-        addNotification('Event Created Successfully', `"${formData.EventTitle}" has been successfully published.`);
+        addNotification('Event Submitted for Review', `"${formData.EventTitle}" has been submitted and is pending admin approval.`);
       }
       setTimeout(() => {
         setActivePanel('events');
@@ -386,7 +386,15 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           if (!formData.StreetAddress.trim()) newErrors.StreetAddress = "Street address is required.";
           if (formData.VenueImages.length < 3) newErrors.VenueImages = "Please upload at least 3 images for your custom venue.";
           if (!formData.ContactPerson.trim()) newErrors.ContactPerson = "Contact person is required.";
-          if (!formData.ContactNumber.trim()) newErrors.ContactNumber = "Contact number is required.";
+          if (!formData.ContactNumber.trim()) {
+            newErrors.ContactNumber = "Contact number is required.";
+          } else {
+            // Philippine mobile: 09XXXXXXXXX (11 digits) or +639XXXXXXXXX (12 chars)
+            const phPhone = /^(09\d{9}|\+639\d{9})$/;
+            if (!phPhone.test(formData.ContactNumber.trim().replace(/[-\s]/g, ''))) {
+              newErrors.ContactNumber = "Enter a valid PH number (e.g. 09171234567 or +639171234567).";
+            }
+          }
           if (!formData.ContactEmail.trim()) newErrors.ContactEmail = "Contact email is required.";
           if (!formData.SquareFootage || parseInt(formData.SquareFootage) <= 0) newErrors.SquareFootage = "Valid square footage is required.";
           if (!formData.Latitude) newErrors.Latitude = "Latitude is required.";
@@ -1074,9 +1082,38 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                           {errors.ContactPerson && <span className="text-[10px] text-red-500">{errors.ContactPerson}</span>}
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Contact Number</label>
-                          <input type="text" name="ContactNumber" value={formData.ContactNumber} onChange={handleInputChange} placeholder="Phone number" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
-                          {errors.ContactNumber && <span className="text-[10px] text-red-500">{errors.ContactNumber}</span>}
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Contact Number <span className="text-red-500">*</span></label>
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono select-none">🇵🇭</span>
+                            <input
+                              type="tel"
+                              name="ContactNumber"
+                              value={formData.ContactNumber}
+                              onChange={(e) => {
+                                // Allow only digits and leading +
+                                let raw = e.target.value.replace(/[^\d+]/g, '');
+                                // Enforce max: +639XXXXXXXXX (13) or 09XXXXXXXXX (11)
+                                if (raw.startsWith('+')) {
+                                  raw = '+' + raw.slice(1).replace(/\D/g, '').slice(0, 12);
+                                } else {
+                                  raw = raw.slice(0, 11);
+                                }
+                                setFormData(prev => ({ ...prev, ContactNumber: raw }));
+                                if (errors.ContactNumber) setErrors(prev => ({ ...prev, ContactNumber: null }));
+                              }}
+                              placeholder="09171234567"
+                              maxLength={13}
+                              className={`w-full pl-7 pr-2 p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${
+                                errors.ContactNumber
+                                  ? 'border-red-400 dark:border-red-500 focus:ring-red-400'
+                                  : 'border-slate-200 dark:border-slate-800'
+                              }`}
+                            />
+                          </div>
+                          {errors.ContactNumber
+                            ? <span className="text-[10px] text-red-500">{errors.ContactNumber}</span>
+                            : <span className="text-[10px] text-slate-400">Format: 09XXXXXXXXX or +639XXXXXXXXX</span>
+                          }
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3 mt-2">

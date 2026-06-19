@@ -194,7 +194,7 @@ namespace VenU.Api.Controllers
                 RequiresTicket = dto.RequiresTicket,
                 DailyStartTime = dto.DailyStartTime,
                 DailyEndTime = dto.DailyEndTime,
-                Status = dto.Status ?? "Published",
+                Status = "Pending", // Always start as Pending — admin must approve before publishing
                 
                 VenueId = finalVenueId,
                 VenueName = dto.VenueName ?? "",

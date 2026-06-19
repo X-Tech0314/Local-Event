@@ -3,12 +3,31 @@ import { useState, useEffect, useCallback } from 'react';
 const BASE = 'https://psgc.gitlab.io/api';
 const cache = {};
 
+/**
+ * Popular name aliases for PSGC barangays whose official names
+ * differ from how locals commonly refer to them.
+ * Key = official PSGC code, Value = array of alternate search terms.
+ */
+const BRGY_ALIASES = {
+  '137404124': ['diliman', 'up diliman', 'u.p. diliman'],   // U.P. Campus, QC
+  '137404125': ['up village', 'diliman village'],            // U.P. Village, QC
+  '137401006': ['dasmarinas village', 'dasma village', 'dasmarinas'],  // Dasmariñas, Makati
+  '137601011': ['fort bonifacio', 'bgc', 'bonifacio global city', 'the fort'],  // Fort Bonifacio, Taguig
+  '137601012': ['western bicutan', 'south supermarket'],     // Western Bicutan, Taguig
+  '133901003': ['ayala alabang', 'alabang', 'filinvest'],    // Ayala Alabang, Muntinlupa
+};
+
 async function psgcFetch(path) {
   if (cache[path]) return cache[path];
   const res = await fetch(`${BASE}${path}`);
   if (!res.ok) throw new Error(`PSGC fetch failed: ${path}`);
   const data = await res.json();
-  const sorted = data.sort((a, b) => a.name.localeCompare(b.name));
+  // Attach alias array to each barangay for enhanced search
+  const enriched = data.map(item => ({
+    ...item,
+    aliases: BRGY_ALIASES[item.code] || [],
+  }));
+  const sorted = enriched.sort((a, b) => a.name.localeCompare(b.name));
   cache[path] = sorted;
   return sorted;
 }
