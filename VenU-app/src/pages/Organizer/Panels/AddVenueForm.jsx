@@ -14,7 +14,7 @@ const Sel = ({ label, value, onChange, disabled, loading, children, error }) => 
       value={value}
       onChange={onChange}
       disabled={disabled || loading}
-      className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700 outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className={`w-full bg-slate-50 dark:bg-slate-800 p-3 rounded border outline-none transition-colors ${error ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-purple-500'} disabled:opacity-50 disabled:cursor-not-allowed`}
     >
       {children}
     </select>
@@ -70,6 +70,7 @@ const steps = ['Core & Contact', 'Location', 'Logistics', 'Legal & Files'];
 
 export default function AddVenueForm({ setViewMode }) {
   const [step, setStep] = useState(1);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '', type: '', floorArea: '', ceilingHeight: '',
     streetAddress: '', landmarks: '', latitude: '', longitude: '',
@@ -92,14 +93,128 @@ export default function AddVenueForm({ setViewMode }) {
     getRegionName, getProvinceName, getCityName, getBarangayName,
   } = usePsgc();
 
-  const set = (key, val) => setFormData(f => ({ ...f, [key]: val }));
+  // Updated set function to validate fields in real-time as the user types
+  const set = (key, val) => {
+    setFormData(f => ({ ...f, [key]: val }));
 
-  const nextStep = () => setStep(s => s + 1);
+    let error = null;
+
+    // Real-time validation rules
+    if (key === 'name' && !val.trim()) error = "Venue name is required.";
+    if (key === 'type' && !val) error = "Please select a venue type.";
+
+    // Realistic Floor Area Validation (10 to 500,000 sqm)
+    if (key === 'floorArea') {
+      if (!val) {
+        error = "Valid floor area is required.";
+      } else {
+        const area = parseFloat(val);
+        if (isNaN(area) || area < 10 || area > 500000) {
+          error = "Enter a realistic area (10 to 500,000 sqm).";
+        }
+      }
+    }
+
+    if (key === 'streetAddress' && !val.trim()) error = "Street address is required.";
+
+    if (key === 'representativeName' && val) {
+      const nameRegex = /^[A-Za-z\s.\-]+$/;
+      if (!nameRegex.test(val)) error = "Name can only contain letters, spaces, and basic punctuation (., -).";
+    }
+
+    if (key === 'ceilingHeight' && val) {
+      const h = parseFloat(val);
+      if (isNaN(h) || h < 2 || h > 100) error = "Enter a realistic height between 2 and 100 meters.";
+    }
+
+    if (key === 'mobileNumber' && val) {
+      const phPhone = /^(09\d{9}|\+639\d{9})$/;
+      if (!phPhone.test(val.trim().replace(/[-\s]/g, ''))) error = "Invalid PH mobile number (e.g., 09171234567).";
+    }
+
+    if (key === 'email' && val) {
+      const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      if (!gmailRegex.test(val)) error = "Email must be a valid Gmail address (e.g., name@gmail.com).";
+    }
+
+    setErrors(prev => ({ ...prev, [key]: error }));
+  };
+
+  const validateStep = (currentStep) => {
+    const tempErrors = {};
+
+    if (currentStep === 1) {
+      if (!formData.name.trim()) tempErrors.name = "Venue name is required.";
+      if (!formData.type) tempErrors.type = "Please select a venue type.";
+
+      // Realistic Floor Area Validation (10 to 500,000 sqm)
+      const area = parseFloat(formData.floorArea);
+      if (!formData.floorArea || isNaN(area) || area < 10 || area > 500000) {
+        tempErrors.floorArea = "Please enter a realistic floor area (10 to 500,000 sqm).";
+      }
+
+      // Representative Name Validation (Letters, spaces, periods, hyphens only)
+      if (formData.representativeName) {
+        const nameRegex = /^[A-Za-z\s.\-]+$/;
+        if (!nameRegex.test(formData.representativeName)) {
+          tempErrors.representativeName = "Name can only contain letters, spaces, and basic punctuation (., -).";
+        }
+      }
+
+      // Ceiling Height Validation (Realistic range: 2 to 100 meters)
+      if (formData.ceilingHeight) {
+        const h = parseFloat(formData.ceilingHeight);
+        if (isNaN(h) || h < 2 || h > 100) {
+          tempErrors.ceilingHeight = "Enter a realistic height between 2 and 100 meters.";
+        }
+      }
+
+      if (formData.mobileNumber) {
+        const phPhone = /^(09\d{9}|\+639\d{9})$/;
+        if (!phPhone.test(formData.mobileNumber.trim().replace(/[-\s]/g, ''))) {
+          tempErrors.mobileNumber = "Invalid PH mobile number (e.g., 09171234567).";
+        }
+      }
+
+      // Email Validation (Must be a standard @gmail.com format)
+      if (formData.email) {
+        const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        if (!gmailRegex.test(formData.email)) {
+          tempErrors.email = "Email must be a valid Gmail address (e.g., name@gmail.com).";
+        }
+      }
+    }
+
+    if (currentStep === 2) {
+      if (!psgcSel.regionCode) tempErrors.region = "Region is required.";
+      if (!psgcSel.cityMunCode) tempErrors.city = "City/Municipality is required.";
+      if (!formData.streetAddress.trim()) tempErrors.streetAddress = "Street address is required.";
+    }
+
+    if (currentStep === 4) {
+      if (files.galleryImages.length < 3) tempErrors.galleryImages = "Please upload at least 3 gallery images.";
+    }
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+
+  const nextStep = () => {
+    if (validateStep(step)) {
+      setStep(s => s + 1);
+    }
+  };
+
   const prevStep = () => setStep(s => s - 1);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateStep(step)) return;
+
     setLoading(true);
+
+    // Force a 500ms delay so the spinner has time to render and spin visually
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const payload = new FormData();
     Object.keys(formData).forEach(key => payload.append(key, formData[key]));
@@ -135,7 +250,8 @@ export default function AddVenueForm({ setViewMode }) {
     }
   };
 
-  const inputCls = "w-full bg-slate-50 dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700 outline-none focus:border-purple-500 transition-colors text-sm";
+  const baseInputCls = "w-full bg-slate-50 dark:bg-slate-800 p-3 rounded border outline-none focus:border-purple-500 transition-colors text-sm";
+  const inputCls = (fieldName) => `${baseInputCls} ${errors[fieldName] ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700'}`;
   const labelCls = "text-xs text-slate-500 dark:text-slate-400 font-bold mb-1 block";
 
   return (
@@ -175,11 +291,12 @@ export default function AddVenueForm({ setViewMode }) {
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className={labelCls}>Venue Name *</label>
-                <input required className={inputCls} value={formData.name} onChange={e => set('name', e.target.value)} placeholder="e.g. SMX Convention Center" />
+                <input required maxLength={50} className={inputCls('name')} value={formData.name} onChange={e => set('name', e.target.value)} placeholder="e.g. SMX Convention Center" />
+                {errors.name && <p className="text-[10px] text-red-400 mt-1">{errors.name}</p>}
               </div>
               <div>
                 <label className={labelCls}>Venue Type *</label>
-                <select required className={inputCls} value={formData.type} onChange={e => set('type', e.target.value)}>
+                <select required className={inputCls('type')} value={formData.type} onChange={e => set('type', e.target.value)}>
                   <option value="">Select Type</option>
                   <option value="Indoor">Indoor Space</option>
                   <option value="Outdoor">Outdoor / Open Air</option>
@@ -188,33 +305,39 @@ export default function AddVenueForm({ setViewMode }) {
                   <option value="Hotel Ballroom">Hotel Ballroom</option>
                   <option value="Function Hall">Function Hall</option>
                 </select>
+                {errors.type && <p className="text-[10px] text-red-400 mt-1">{errors.type}</p>}
               </div>
               <div>
                 <label className={labelCls}>Floor Area (sqm) *</label>
-                <input required type="number" min="1" className={inputCls} value={formData.floorArea} onChange={e => set('floorArea', e.target.value)} placeholder="e.g. 2500" />
+                <input required type="number" min="10" max="500000" className={inputCls('floorArea')} value={formData.floorArea} onChange={e => set('floorArea', e.target.value)} placeholder="e.g. 2500" />
+                {errors.floorArea && <p className="text-[10px] text-red-400 mt-1">{errors.floorArea}</p>}
               </div>
               <div>
                 <label className={labelCls}>Ceiling Height (meters)</label>
-                <input type="number" step="0.1" className={inputCls} value={formData.ceilingHeight} onChange={e => set('ceilingHeight', e.target.value)} placeholder="e.g. 8.5" />
+                <input type="number" step="0.1" className={inputCls('ceilingHeight')} value={formData.ceilingHeight} onChange={e => set('ceilingHeight', e.target.value)} placeholder="e.g. 8.5" />
+                {errors.ceilingHeight && <p className="text-[10px] text-red-400 mt-1">{errors.ceilingHeight}</p>}
               </div>
             </div>
 
             <div className="border-t border-slate-100 dark:border-slate-800 pt-5 grid grid-cols-2 gap-5">
               <div>
                 <label className={labelCls}>Representative Name</label>
-                <input className={inputCls} value={formData.representativeName} onChange={e => set('representativeName', e.target.value)} placeholder="Full name" />
+                <input maxLength={50} className={inputCls('representativeName')} value={formData.representativeName} onChange={e => set('representativeName', e.target.value)} placeholder="Full name" />
+                {errors.representativeName && <p className="text-[10px] text-red-400 mt-1">{errors.representativeName}</p>}
               </div>
               <div>
                 <label className={labelCls}>Mobile Number</label>
-                <input placeholder="09XX-XXX-XXXX" className={inputCls} value={formData.mobileNumber} onChange={e => set('mobileNumber', e.target.value)} />
+                <input maxLength={50} placeholder="09XX-XXX-XXXX" className={inputCls('mobileNumber')} value={formData.mobileNumber} onChange={e => set('mobileNumber', e.target.value)} />
+                {errors.mobileNumber && <p className="text-[10px] text-red-400 mt-1">{errors.mobileNumber}</p>}
               </div>
               <div>
                 <label className={labelCls}>Email Address</label>
-                <input type="email" className={inputCls} value={formData.email} onChange={e => set('email', e.target.value)} placeholder="venue@example.com" />
+                <input type="email" maxLength={50} className={inputCls('email')} value={formData.email} onChange={e => set('email', e.target.value)} placeholder="venue@gmail.com" />
+                {errors.email && <p className="text-[10px] text-red-400 mt-1">{errors.email}</p>}
               </div>
               <div>
                 <label className={labelCls}>Website URL</label>
-                <input type="url" className={inputCls} value={formData.websiteUrl} onChange={e => set('websiteUrl', e.target.value)} placeholder="https://..." />
+                <input type="url" maxLength={50} className={inputCls('websiteUrl')} value={formData.websiteUrl} onChange={e => set('websiteUrl', e.target.value)} placeholder="https://..." />
               </div>
             </div>
           </div>
@@ -239,6 +362,7 @@ export default function AddVenueForm({ setViewMode }) {
                 value={psgcSel.regionCode}
                 onChange={e => selectRegion(e.target.value)}
                 loading={psgcLoading.regions}
+                error={errors.region}
               >
                 <option value="">— Select Region —</option>
                 {regions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
@@ -251,6 +375,7 @@ export default function AddVenueForm({ setViewMode }) {
                 onChange={e => selectProvince(e.target.value)}
                 disabled={!psgcSel.regionCode || noProvinceRegion}
                 loading={psgcLoading.provinces}
+                error={errors.province}
               >
                 {noProvinceRegion
                   ? <option value="__direct__">N/A — Province-less Region (e.g. NCR)</option>
@@ -268,6 +393,7 @@ export default function AddVenueForm({ setViewMode }) {
                 onChange={e => selectCity(e.target.value)}
                 disabled={!psgcSel.provinceCode}
                 loading={psgcLoading.cities}
+                error={errors.city}
               >
                 <option value="">— Select City / Municipality —</option>
                 {cities.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
@@ -275,8 +401,9 @@ export default function AddVenueForm({ setViewMode }) {
 
               {/* Street Address */}
               <div>
-                <label className={labelCls}>Street / Building Address</label>
-                <input className={inputCls} value={formData.streetAddress} onChange={e => set('streetAddress', e.target.value)} placeholder="Unit/Bldg No., Street Name" />
+                <label className={labelCls}>Street / Building Address *</label>
+                <input maxLength={50} className={inputCls('streetAddress')} value={formData.streetAddress} onChange={e => set('streetAddress', e.target.value)} placeholder="Unit/Bldg No., Street Name" />
+                {errors.streetAddress && <p className="text-[10px] text-red-400 mt-1">{errors.streetAddress}</p>}
               </div>
             </div>
 
@@ -290,7 +417,7 @@ export default function AddVenueForm({ setViewMode }) {
 
             <div>
               <label className={labelCls}>Landmarks / Nearby Places</label>
-              <input className={inputCls} value={formData.landmarks} onChange={e => set('landmarks', e.target.value)} placeholder="e.g. Near Mall of Asia, beside SM" />
+              <input maxLength={50} className={inputCls('landmarks')} value={formData.landmarks} onChange={e => set('landmarks', e.target.value)} placeholder="e.g. Near Mall of Asia, beside SM" />
             </div>
 
             {/* Location preview */}
@@ -322,23 +449,23 @@ export default function AddVenueForm({ setViewMode }) {
             <div className="grid grid-cols-3 gap-5">
               <div>
                 <label className={labelCls}>Theater Capacity</label>
-                <input type="number" className={inputCls} value={formData.capacityTheater} onChange={e => set('capacityTheater', e.target.value)} placeholder="0" />
+                <input type="number" min="0" className={inputCls('capacityTheater')} value={formData.capacityTheater} onChange={e => set('capacityTheater', e.target.value)} placeholder="0" />
               </div>
               <div>
                 <label className={labelCls}>Banquet Capacity</label>
-                <input type="number" className={inputCls} value={formData.capacityBanquet} onChange={e => set('capacityBanquet', e.target.value)} placeholder="0" />
+                <input type="number" min="0" className={inputCls('capacityBanquet')} value={formData.capacityBanquet} onChange={e => set('capacityBanquet', e.target.value)} placeholder="0" />
               </div>
               <div>
                 <label className={labelCls}>Standing / Cocktail</label>
-                <input type="number" className={inputCls} value={formData.capacityStanding} onChange={e => set('capacityStanding', e.target.value)} placeholder="0" />
+                <input type="number" min="0" className={inputCls('capacityStanding')} value={formData.capacityStanding} onChange={e => set('capacityStanding', e.target.value)} placeholder="0" />
               </div>
               <div>
                 <label className={labelCls}>Parking Slots</label>
-                <input type="number" className={inputCls} value={formData.parkingSlots} onChange={e => set('parkingSlots', e.target.value)} placeholder="0" />
+                <input type="number" min="0" className={inputCls('parkingSlots')} value={formData.parkingSlots} onChange={e => set('parkingSlots', e.target.value)} placeholder="0" />
               </div>
               <div className="col-span-2">
                 <label className={labelCls}>Operating Hours</label>
-                <input className={inputCls} value={formData.operatingHours} onChange={e => set('operatingHours', e.target.value)} placeholder="e.g. Mon–Sun, 8:00 AM – 10:00 PM" />
+                <input maxLength={50} className={inputCls('operatingHours')} value={formData.operatingHours} onChange={e => set('operatingHours', e.target.value)} placeholder="e.g. Mon–Sun, 8:00 AM – 10:00 PM" />
               </div>
             </div>
 
@@ -367,11 +494,11 @@ export default function AddVenueForm({ setViewMode }) {
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className={labelCls}>FSIC Number (Fire Safety)</label>
-                <input className={inputCls} value={formData.fsicNumber} onChange={e => set('fsicNumber', e.target.value)} />
+                <input maxLength={50} className={inputCls('fsicNumber')} value={formData.fsicNumber} onChange={e => set('fsicNumber', e.target.value)} />
               </div>
               <div>
                 <label className={labelCls}>Mayor's Permit / Business Permit No.</label>
-                <input className={inputCls} value={formData.businessPermitNumber} onChange={e => set('businessPermitNumber', e.target.value)} />
+                <input maxLength={50} className={inputCls('businessPermitNumber')} value={formData.businessPermitNumber} onChange={e => set('businessPermitNumber', e.target.value)} />
               </div>
             </div>
 
@@ -393,11 +520,22 @@ export default function AddVenueForm({ setViewMode }) {
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                   Venue Gallery <span className="text-purple-500">(Min. 3 images required)</span>
                 </label>
-                <input type="file" multiple accept="image/*" onChange={e => setFiles(f => ({ ...f, galleryImages: Array.from(e.target.files) }))}
-                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 dark:file:bg-purple-900/50 dark:file:text-purple-400 hover:file:bg-purple-200 cursor-pointer" />
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={e => {
+                    const filesArray = Array.from(e.target.files);
+                    setFiles(f => ({ ...f, galleryImages: filesArray }));
+                    // Real-time validation for files
+                    setErrors(prev => ({ ...prev, galleryImages: filesArray.length < 3 ? "Please upload at least 3 gallery images." : null }));
+                  }}
+                  className={`text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 dark:file:bg-purple-900/50 dark:file:text-purple-400 hover:file:bg-purple-200 cursor-pointer ${errors.galleryImages ? 'border border-red-400 rounded-lg p-2' : ''}`}
+                />
                 {files.galleryImages.length > 0 && (
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{files.galleryImages.length} file(s) selected</p>
                 )}
+                {errors.galleryImages && <p className="text-[10px] text-red-400 mt-1">{errors.galleryImages}</p>}
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Floor Plan / Blueprint (PDF/IMG)</label>
@@ -430,9 +568,20 @@ export default function AddVenueForm({ setViewMode }) {
               Next <ChevronRight size={16} />
             </button>
           ) : (
-            <button type="submit" disabled={loading} className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5 disabled:opacity-50 text-sm">
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-              {loading ? 'Submitting...' : 'Submit Venue'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Submitting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} /> Submit Venue
+                </>
+              )}
             </button>
           )}
         </div>
