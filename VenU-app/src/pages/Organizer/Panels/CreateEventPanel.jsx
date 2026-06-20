@@ -7,6 +7,10 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAllocating, setIsAllocating] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingVenue, setIsUploadingVenue] = useState(false);
+
   const [dragActive, setDragActive] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [venueSource, setVenueSource] = useState('registered');
@@ -165,43 +169,52 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   const handleSmartAllocate = () => {
     const totalCapacity = parseInt(formData.Capacity) || 0;
     if (totalCapacity <= 0) return;
-    
-    let sumAssigned = 0;
-    let unassignedIndices = [];
-    
-    formData.TicketTiers.forEach((tier, index) => {
-      const cap = parseInt(tier.Capacity);
-      if (!isNaN(cap) && cap > 0) {
-        sumAssigned += cap;
-      } else {
-        unassignedIndices.push(index);
+
+    setIsAllocating(true);
+
+    // Small timeout to show spinner
+    setTimeout(() => {
+      let sumAssigned = 0;
+      let unassignedIndices = [];
+
+      formData.TicketTiers.forEach((tier, index) => {
+        const cap = parseInt(tier.Capacity);
+        if (!isNaN(cap) && cap > 0) {
+          sumAssigned += cap;
+        } else {
+          unassignedIndices.push(index);
+        }
+      });
+
+      if (unassignedIndices.length === 0) {
+        const baseAmount = Math.floor(totalCapacity / formData.TicketTiers.length);
+        const remainder = totalCapacity % formData.TicketTiers.length;
+        const updatedTiers = formData.TicketTiers.map((tier, index) => ({
+          ...tier,
+          Capacity: (index === formData.TicketTiers.length - 1 ? baseAmount + remainder : baseAmount).toString()
+        }));
+        setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
+        setIsAllocating(false);
+        return;
       }
-    });
 
-    if (unassignedIndices.length === 0) {
-      // Re-allocate evenly if all are assigned
-      const baseAmount = Math.floor(totalCapacity / formData.TicketTiers.length);
-      const remainder = totalCapacity % formData.TicketTiers.length;
-      const updatedTiers = formData.TicketTiers.map((tier, index) => ({
-        ...tier,
-        Capacity: (index === formData.TicketTiers.length - 1 ? baseAmount + remainder : baseAmount).toString()
-      }));
+      const remainingCapacity = totalCapacity - sumAssigned;
+      if (remainingCapacity < 0) {
+        setIsAllocating(false);
+        return;
+      }
+
+      const baseAmount = Math.floor(remainingCapacity / unassignedIndices.length);
+      const remainder = remainingCapacity % unassignedIndices.length;
+
+      const updatedTiers = [...formData.TicketTiers];
+      unassignedIndices.forEach((tierIndex, i) => {
+        updatedTiers[tierIndex].Capacity = (i === unassignedIndices.length - 1 ? baseAmount + remainder : baseAmount).toString();
+      });
+
       setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
-      return;
-    }
-
-    const remainingCapacity = totalCapacity - sumAssigned;
-    if (remainingCapacity < 0) return;
-
-    const baseAmount = Math.floor(remainingCapacity / unassignedIndices.length);
-    const remainder = remainingCapacity % unassignedIndices.length;
-
-    const updatedTiers = [...formData.TicketTiers];
-    unassignedIndices.forEach((tierIndex, i) => {
-      updatedTiers[tierIndex].Capacity = (i === unassignedIndices.length - 1 ? baseAmount + remainder : baseAmount).toString();
-    });
-
-    setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
+      setIsAllocating(false);
+    }, 500);
   };
 
   const removeTicketTier = (index) => {
@@ -229,10 +242,10 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
-      
+
       let lat = formData.Latitude ? parseFloat(formData.Latitude) : 0;
       let lon = formData.Longitude ? parseFloat(formData.Longitude) : 0;
-      
+
       if (formData.VenueType === 'Physical' && (lat === 0 && lon === 0)) {
         let addressToGeocode = "";
         if (venueSource === 'custom') {
@@ -240,7 +253,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         } else if (formData.RegisteredVenueName) {
           addressToGeocode = `${formData.RegisteredVenueName}, Philippines`;
         }
-        
+
         if (addressToGeocode) {
           const coords = await geocodeAddress(addressToGeocode);
           lat = coords.lat;
@@ -250,7 +263,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
       const payload = {
         Title: formData.EventTitle,
-        Description: formData.EventTitle, // Add actual description if added to UI later
+        Description: formData.EventTitle,
         Category: formData.Category,
         BannerUrl: formData.EventBannerUrl,
         StartDateTime: `${formData.StartDate}T${formData.StartTime}:00Z`,
@@ -354,14 +367,32 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       if (!formData.StartTime) newErrors.StartTime = "Start time is required.";
       if (!formData.EndTime) newErrors.EndTime = "End time is required.";
 
-      if (formData.StartTime && formData.EndTime) {
-        if (formData.StartDate === formData.EndDate) {
-          const startMinutes = convertTimeToMinutes(formData.StartTime);
-          const endMinutes = convertTimeToMinutes(formData.EndTime);
+      if (formData.StartTime && formData.EndTime && formData.StartDate && formData.EndDate) {
+        const startMinutes = convertTimeToMinutes(formData.StartTime);
+        const endMinutes = convertTimeToMinutes(formData.EndTime);
+
+        // Calculate difference in days
+        const d1 = new Date(formData.StartDate + 'T00:00:00');
+        const d2 = new Date(formData.EndDate + 'T00:00:00');
+        const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+          // 1-Day Event
           if (endMinutes <= startMinutes) {
-            newErrors.EndTime = "Daily end time must be after start time.";
+            newErrors.EndTime = "End time must be after start time for same-day events.";
           } else if (endMinutes - startMinutes < 30) {
             newErrors.EndTime = "Daily event window must be at least 30 minutes.";
+          }
+        } else if (diffDays === 1) {
+          // 2-Day Event (Overnight allowed)
+          if (endMinutes === startMinutes) {
+            newErrors.EndTime = "Start and end times cannot be exactly the same.";
+          }
+          // If endMinutes < startMinutes, it's an overnight event (e.g., 10 PM to 2 AM). We allow it.
+        } else if (diffDays > 1) {
+          // 3+ Day Event
+          if (endMinutes < startMinutes) {
+            newErrors.EndTime = "For events longer than 2 days, daily end time must not be before start time.";
           }
         }
       }
@@ -394,7 +425,6 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           if (!formData.ContactNumber.trim()) {
             newErrors.ContactNumber = "Contact number is required.";
           } else {
-            // Philippine mobile: 09XXXXXXXXX (11 digits) or +639XXXXXXXXX (12 chars)
             const phPhone = /^(09\d{9}|\+639\d{9})$/;
             if (!phPhone.test(formData.ContactNumber.trim().replace(/[-\s]/g, ''))) {
               newErrors.ContactNumber = "Enter a valid PH number (e.g. 09171234567 or +639171234567).";
@@ -420,7 +450,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       } else {
         const totalCapacity = parseInt(formData.Capacity) || 0;
         let sumTickets = 0;
-        
+
         formData.TicketTiers.forEach((tier, index) => {
           if (!tier.Name.trim()) newErrors[`TierName_${index}`] = "Tier name required.";
           if (!tier.Capacity || parseInt(tier.Capacity) <= 0) newErrors[`TierCapacity_${index}`] = "Valid capacity required.";
@@ -467,6 +497,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       };
       reader.readAsDataURL(file);
 
+      setIsUploadingBanner(true);
       const cloudName = "ditxaqwu6";
       const uploadPreset = "img-c-event";
       const uploadData = new FormData();
@@ -483,6 +514,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         }
       } catch (err) {
         console.error("Cloudinary banner upload failed", err);
+      } finally {
+        setIsUploadingBanner(false);
       }
     }
   };
@@ -506,31 +539,34 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const cloudName = "ditxaqwu6"; // Replace with your Cloudinary Cloud Name
-    const uploadPreset = "img-c-event"; // Replace with your Cloudinary Upload Preset
+    setIsUploadingVenue(true);
+    const cloudName = "ditxaqwu6";
+    const uploadPreset = "img-c-event";
 
     const uploadedUrls = [];
-    for (const file of files) {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("upload_preset", uploadPreset);
-      try {
+    try {
+      for (const file of files) {
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        uploadData.append("upload_preset", uploadPreset);
         const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
           method: "POST",
           body: uploadData,
         });
         const data = await res.json();
         if (data.secure_url) uploadedUrls.push(data.secure_url);
-      } catch (err) {
-        console.error("Cloudinary upload failed", err);
       }
-    }
 
-    setFormData(prev => ({
-      ...prev,
-      VenueImages: [...prev.VenueImages, ...uploadedUrls]
-    }));
-    if (errors.VenueImages) setErrors(prev => ({ ...prev, VenueImages: null }));
+      setFormData(prev => ({
+        ...prev,
+        VenueImages: [...prev.VenueImages, ...uploadedUrls]
+      }));
+      if (errors.VenueImages) setErrors(prev => ({ ...prev, VenueImages: null }));
+    } catch (err) {
+      console.error("Cloudinary upload failed", err);
+    } finally {
+      setIsUploadingVenue(false);
+    }
   };
 
   const removeVenueImage = (index) => {
@@ -580,9 +616,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all dynamic-dashed flex flex-col items-center justify-center min-h-[200px] relative overflow-hidden ${dragActive ? 'border-purple-600 bg-purple-50/50 dark:bg-purple-950/10' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
+                onClick={() => !isUploadingBanner && fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all dynamic-dashed flex flex-col items-center justify-center min-h-[200px] relative overflow-hidden ${dragActive ? 'border-purple-600 bg-purple-50/50 dark:bg-purple-950/10' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'} ${isUploadingBanner ? 'opacity-70 pointer-events-none' : ''}`}
               >
                 <input
                   ref={fileInputRef}
@@ -590,8 +625,14 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                   className="hidden"
                   accept="image/*"
                   onChange={handleFileChange}
+                  disabled={isUploadingBanner}
                 />
-                {imagePreview ? (
+                {isUploadingBanner ? (
+                  <div className="flex flex-col items-center text-purple-600">
+                    <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                    <p className="text-sm font-semibold">Uploading Media...</p>
+                  </div>
+                ) : imagePreview ? (
                   <>
                     <img src={imagePreview} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -992,9 +1033,9 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                             {noProvinceRegion
                               ? <option value="__direct__">N/A — Province-less Region (e.g. NCR)</option>
                               : <>
-                                  <option value="">Select Province</option>
-                                  {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                                </>
+                                <option value="">Select Province</option>
+                                {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                              </>
                             }
                           </select>
                           {errors.SelectedProvince && <span className="text-[10px] text-red-500">{errors.SelectedProvince}</span>}
@@ -1038,9 +1079,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                                 key={b.code}
                                 type="button"
                                 onClick={() => { selectBarangay(b.code); setBrgySearch(b.name); setFormData(prev => ({ ...prev, SelectedBarangay: b.name })); }}
-                                className={`w-full text-left px-2 py-1.5 text-[11px] hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors ${
-                                  psgcSel.barangayCode === b.code ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold' : 'text-slate-700 dark:text-slate-300'
-                                }`}
+                                className={`w-full text-left px-2 py-1.5 text-[11px] hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors ${psgcSel.barangayCode === b.code ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold' : 'text-slate-700 dark:text-slate-300'
+                                  }`}
                               >
                                 {b.name}
                               </button>
@@ -1096,9 +1136,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                               name="ContactNumber"
                               value={formData.ContactNumber}
                               onChange={(e) => {
-                                // Allow only digits and leading +
                                 let raw = e.target.value.replace(/[^\d+]/g, '');
-                                // Enforce max: +639XXXXXXXXX (13) or 09XXXXXXXXX (11)
                                 if (raw.startsWith('+')) {
                                   raw = '+' + raw.slice(1).replace(/\D/g, '').slice(0, 12);
                                 } else {
@@ -1109,11 +1147,10 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                               }}
                               placeholder="09171234567"
                               maxLength={13}
-                              className={`w-full pl-7 pr-2 p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${
-                                errors.ContactNumber
-                                  ? 'border-red-400 dark:border-red-500 focus:ring-red-400'
-                                  : 'border-slate-200 dark:border-slate-800'
-                              }`}
+                              className={`w-full pl-7 pr-2 p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${errors.ContactNumber
+                                ? 'border-red-400 dark:border-red-500 focus:ring-red-400'
+                                : 'border-slate-200 dark:border-slate-800'
+                                }`}
                             />
                           </div>
                           {errors.ContactNumber
@@ -1181,10 +1218,16 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                               </button>
                             </div>
                           ))}
-                          <label className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all">
-                            <Upload className="w-5 h-5 text-slate-400 mb-1" />
-                            <span className="text-[10px] text-slate-500 font-medium">Upload</span>
-                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleVenueImageUpload} />
+                          <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all ${isUploadingVenue ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {isUploadingVenue ? (
+                              <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                            ) : (
+                              <>
+                                <Upload className="w-5 h-5 text-slate-400 mb-1" />
+                                <span className="text-[10px] text-slate-500 font-medium">Upload</span>
+                              </>
+                            )}
+                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleVenueImageUpload} disabled={isUploadingVenue} />
                           </label>
                         </div>
                         {errors.VenueImages && <span className="text-[10px] text-red-500">{errors.VenueImages}</span>}
@@ -1247,9 +1290,10 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                   <button
                     type="button"
                     onClick={handleSmartAllocate}
-                    className="text-xs px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                    disabled={isAllocating}
+                    className="text-xs px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors flex items-center gap-1 disabled:opacity-50"
                   >
-                    ✨ Smart Auto-Allocate
+                    {isAllocating ? <Loader2 size={12} className="animate-spin" /> : '✨ Smart Auto-Allocate'}
                   </button>
                 )}
               </div>
@@ -1352,7 +1396,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
             <button
               type="button"
               onClick={prevStep}
-              disabled={currentStep === 1}
+              disabled={currentStep === 1 || isSubmitting}
               className="px-4 py-2 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl flex items-center space-x-1 disabled:opacity-50 transition-opacity text-sm font-medium"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -1365,7 +1409,11 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
               disabled={isSubmitting}
               className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl flex items-center space-x-1 text-sm font-medium transition-colors shadow-lg shadow-purple-600/10 disabled:opacity-50"
             >
-              <span>{currentStep === 4 ? (isSubmitting ? 'Publishing...' : 'Publish Event') : 'Continue'}</span>
+              {isSubmitting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <span>{currentStep === 4 ? 'Publish Event' : 'Continue'}</span>
+              )}
               {!isSubmitting && <ChevronRight className="w-4 h-4" />}
             </button>
           </div>
@@ -1437,7 +1485,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl transform scale-100 animate-slide-up relative">
-            <button 
+            <button
               onClick={() => setShowSuccessModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
             >

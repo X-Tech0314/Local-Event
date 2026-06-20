@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Camera, KeyRound, Eye, EyeOff, Building2, MapPin, FileText, UploadCloud, CheckCircle2, Shield, Bell, AlertTriangle } from 'lucide-react';
+import { User, Camera, KeyRound, Eye, EyeOff, Building2, MapPin, FileText, UploadCloud, CheckCircle2, Shield, Bell, AlertTriangle, Loader2 } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../../utils/constants.js';
 import axios from 'axios';
 
 export default function SettingsPanel({ currentUser }) {
- const [activeTab, setActiveTab] = useState('profile');
- 
+  const [activeTab, setActiveTab] = useState('profile');
+
   const [form, setForm] = useState({
     firstName: currentUser?.firstName || '',
     lastName: currentUser?.lastName || '',
@@ -20,234 +20,264 @@ export default function SettingsPanel({ currentUser }) {
   });
   const [isEditing, setIsEditing] = useState(false);
 
- useEffect(() => {
- const fetchUser = async () => {
- try {
- const token = localStorage.getItem('token');
- const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, {
- headers: { Authorization: `Bearer ${token}` }
- });
- setForm(prev => ({ ...prev, ...res.data }));
- if (res.data.idFrontPath) setIdFront(res.data.idFrontPath);
- if (res.data.idBackPath) setIdBack(res.data.idBackPath);
- if (res.data.selfiePath) setIdSelfie(res.data.selfiePath);
- if (res.data.orgDocumentPath) setOathDoc(res.data.orgDocumentPath);
- } catch (err) {
- console.error("Failed to fetch user data:", err);
- }
- };
- if (currentUser?.id) {
- fetchUser();
- }
- }, [currentUser]);
+  // Loading states for buttons
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingVerification, setIsSavingVerification] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isExportingTranscript, setIsExportingTranscript] = useState(false);
+  const [isSavingWallet, setIsSavingWallet] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
- const set = (field) => (e) => {
- setForm(prev => ({ ...prev, [field]: e.target.value }));
- };
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setForm(prev => ({ ...prev, ...res.data }));
+        if (res.data.idFrontPath) setIdFront(res.data.idFrontPath);
+        if (res.data.idBackPath) setIdBack(res.data.idBackPath);
+        if (res.data.selfiePath) setIdSelfie(res.data.selfiePath);
+        if (res.data.orgDocumentPath) setOathDoc(res.data.orgDocumentPath);
+      } catch (err) {
+        console.error("Failed to fetch user data:", err);
+      }
+    };
+    if (currentUser?.id) {
+      fetchUser();
+    }
+  }, [currentUser]);
 
- // Profile state
- const [profileImage, setProfileImage] = useState(null);
- const [showNewPassword, setShowNewPassword] = useState(false);
- const [showConfirmPassword, setShowConfirmPassword] = useState(false);
- const [newPassword, setNewPassword] = useState('');
- const [confirmPassword, setConfirmPassword] = useState('');
+  const set = (field) => (e) => {
+    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  };
 
- // Document state
- const [oathDoc, setOathDoc] = useState(null);
- const [idFront, setIdFront] = useState(null);
- const [idBack, setIdBack] = useState(null);
- const [idSelfie, setIdSelfie] = useState(null);
+  // Profile state
+  const [profileImage, setProfileImage] = useState(null);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
- // Notifications state
- const [emailAlerts, setEmailAlerts] = useState(true);
- const [smsAlerts, setSmsAlerts] = useState(false);
- const [marketingAlerts, setMarketingAlerts] = useState(false);
+  // Document state
+  const [oathDoc, setOathDoc] = useState(null);
+  const [idFront, setIdFront] = useState(null);
+  const [idBack, setIdBack] = useState(null);
+  const [idSelfie, setIdSelfie] = useState(null);
 
- // Security & Danger state
- const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
- const [purgeCache, setPurgeCache] = useState(false);
- const [showDangerModal, setShowDangerModal] = useState(false);
+  // Notifications state
+  const [emailAlerts, setEmailAlerts] = useState(true);
+  const [smsAlerts, setSmsAlerts] = useState(false);
+  const [marketingAlerts, setMarketingAlerts] = useState(false);
 
- // Wallet state
- const [wallets, setWallets] = useState([]);
- const [showAddWalletModal, setShowAddWalletModal] = useState(false);
- const [walletToUnlink, setWalletToUnlink] = useState(null);
- const [walletForm, setWalletForm] = useState({
- type: 'ewallet',
- provider: 'GCash',
- accountName: '',
- accountNumber: '',
- expiry: '',
- cvv: ''
- });
+  // Security & Danger state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [purgeCache, setPurgeCache] = useState(false);
+  const [showDangerModal, setShowDangerModal] = useState(false);
 
- const oathRef = useRef(null);
- const frontRef = useRef(null);
- const backRef = useRef(null);
- const selfieRef = useRef(null);
+  // Wallet state
+  const [wallets, setWallets] = useState([]);
+  const [showAddWalletModal, setShowAddWalletModal] = useState(false);
+  const [walletToUnlink, setWalletToUnlink] = useState(null);
+  const [walletForm, setWalletForm] = useState({
+    type: 'ewallet',
+    provider: 'GCash',
+    accountName: '',
+    accountNumber: '',
+    expiry: '',
+    cvv: ''
+  });
 
- const uploadFile = async (file) => {
- const token = localStorage.getItem('token');
- const formData = new FormData();
- formData.append('file', file);
- 
- const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formData, {
- headers: { 
- 'Authorization': `Bearer ${token}`,
- 'Content-Type': 'multipart/form-data'
- }
- });
- return res.data.url;
- };
+  const oathRef = useRef(null);
+  const frontRef = useRef(null);
+  const backRef = useRef(null);
+  const selfieRef = useRef(null);
 
- const handleImageChange = async (e) => {
- const file = e.target.files[0];
- if (file) {
- try {
- const url = await uploadFile(file);
- setProfileImage(url);
- } catch (err) {
- alert("Failed to upload profile image: " + err.message);
- }
- }
- };
+  const uploadFile = async (file) => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
 
- const handleFileChange = async (e, setter, formField) => {
- const file = e.target.files[0];
- if (file) {
- try {
- const url = await uploadFile(file);
- setter(url);
- if (formField) {
- setForm(prev => ({ ...prev, [formField]: url }));
- }
- } catch (err) {
- alert("Failed to upload document: " + err.message);
- }
- }
- };
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return res.data.url;
+  };
 
- const handleSave = async () => {
- try {
- const token = localStorage.getItem('token');
- await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, form, {
- headers: { Authorization: `Bearer ${token}` }
- });
- alert("Profile updated successfully!");
- const localUser = JSON.parse(localStorage.getItem('user') || '{}');
- localStorage.setItem('user', JSON.stringify({
- ...localUser,
- ...form,
- FirstName: form.firstName,
- LastName: form.lastName,
- ContactNumber: form.contactNumber,
- Region: form.region,
- Province: form.province,
- City: form.city,
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const url = await uploadFile(file);
+        setProfileImage(url);
+      } catch (err) {
+        alert("Failed to upload profile image: " + err.message);
+      }
+    }
+  };
+
+  const handleFileChange = async (e, setter, formField) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const url = await uploadFile(file);
+        setter(url);
+        if (formField) {
+          setForm(prev => ({ ...prev, [formField]: url }));
+        }
+      } catch (err) {
+        alert("Failed to upload document: " + err.message);
+      }
+    }
+  };
+
+  const handleSave = async (target = 'profile') => {
+    if (target === 'profile') setIsSavingProfile(true);
+    if (target === 'verification') setIsSavingVerification(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, form, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({
+        ...localUser,
+        ...form,
+        FirstName: form.firstName,
+        LastName: form.lastName,
+        ContactNumber: form.contactNumber,
+        Region: form.region,
+        Province: form.province,
+        City: form.city,
         Barangay: form.barangay
       }));
       setIsEditing(false);
+
+      // Delay alert slightly so spinner has time to render and spin
+      setTimeout(() => alert("Profile updated successfully!"), 100);
     } catch (err) {
- alert("Failed to update profile: " + (err.response?.data?.message || err.message));
- }
- };
+      setTimeout(() => alert("Failed to update profile: " + (err.response?.data?.message || err.message)), 100);
+    } finally {
+      if (target === 'profile') setIsSavingProfile(false);
+      if (target === 'verification') setIsSavingVerification(false);
+    }
+  };
 
- const handleUpdatePassword = async () => {
- if (!newPassword) {
- alert("Please enter a new password.");
- return;
- }
- if (newPassword !== confirmPassword) {
- alert("Passwords do not match.");
- return;
- }
- try {
- const token = localStorage.getItem('token');
- await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}/password`, { newPassword }, {
- headers: { Authorization: `Bearer ${token}` }
- });
- alert("Password updated successfully!");
- setNewPassword('');
- setConfirmPassword('');
- } catch (err) {
- alert("Failed to update password: " + (err.response?.data?.message || err.message));
- }
- };
+  const handleUpdatePassword = async () => {
+    if (!newPassword) {
+      alert("Please enter a new password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    setIsUpdatingPassword(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}/password`, { newPassword }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => alert("Password updated successfully!"), 100);
+    } catch (err) {
+      setTimeout(() => alert("Failed to update password: " + (err.response?.data?.message || err.message)), 100);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
 
- const handlePrintTranscript = () => {
- const printWindow = window.open('', '_blank');
- printWindow.document.write(`
- <html>
- <head>
- <title>Data Privacy Transcript</title>
- <style>
- body { font-family: sans-serif; padding: 40px; color: #333; }
- h1 { color: #A855F7; }
- .section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
- .label { font-weight: bold; color: #666; font-size: 12px; text-transform: ; }
- .val { font-size: 16px; margin-top: 4px; }
- </style>
- </head>
- <body>
- <h1>VenU Organizer Profile Metadata Transcript</h1>
- <p>Generated strictly compliant with the Philippine Data Privacy Act of 2012 (NPC).</p>
- <div class="section">
- <div class="label">Full Name</div>
- <div class="val">${currentUser?.firstName} ${currentUser?.lastName}</div>
- </div>
- <div class="section">
- <div class="label">Contact Email</div>
- <div class="val">${currentUser?.email}</div>
- </div>
- <div class="section">
- <div class="label">Role</div>
- <div class="val">Event Organizer</div>
- </div>
- </body>
- </html>
- `);
- printWindow.document.close();
- };
+  const handlePrintTranscript = () => {
+    setIsExportingTranscript(true);
+    setTimeout(() => {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Data Privacy Transcript</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #333; }
+            h1 { color: #A855F7; }
+            .section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+            .label { font-weight: bold; color: #666; font-size: 12px; text-transform: uppercase; }
+            .val { font-size: 16px; margin-top: 4px; }
+          </style>
+        </head>
+        <body>
+          <h1>VenU Organizer Profile Metadata Transcript</h1>
+          <p>Generated strictly compliant with the Philippine Data Privacy Act of 2012 (NPC).</p>
+          <div class="section">
+            <div class="label">Full Name</div>
+            <div class="val">${currentUser?.firstName} ${currentUser?.lastName}</div>
+          </div>
+          <div class="section">
+            <div class="label">Contact Email</div>
+            <div class="val">${currentUser?.email}</div>
+          </div>
+          <div class="section">
+            <div class="label">Role</div>
+            <div class="val">Event Organizer</div>
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setIsExportingTranscript(false);
+    }, 1000); // Simulate 1s processing time for spinner
+  };
 
- const submitNewWallet = () => {
- if (!walletForm.accountName || !walletForm.accountNumber) {
- alert("Please fill in the required fields (Account Name and Number).");
- return;
- }
+  const submitNewWallet = () => {
+    if (!walletForm.accountName || !walletForm.accountNumber) {
+      alert("Please fill in the required fields (Account Name and Number).");
+      return;
+    }
 
- let icon = walletForm.provider ? walletForm.provider[0].toUpperCase() : 'W';
- let bg = 'bg-slate-100';
- let text = 'text-slate-600';
- let maskedValue = '';
+    setIsSavingWallet(true);
 
- if (walletForm.type === 'ewallet') {
- bg = walletForm.provider === 'GCash' ? 'bg-blue-100' : 'bg-emerald-100';
- text = walletForm.provider === 'GCash' ? 'text-blue-600' : 'text-emerald-600';
- maskedValue = walletForm.accountNumber.length > 4 ? walletForm.accountNumber.substring(0, 4) + '******' + walletForm.accountNumber.slice(-2) : '****';
- } else if (walletForm.type === 'bank') {
- bg = 'bg-indigo-100';
- text = 'text-indigo-600';
- icon = 'B';
- maskedValue = '****' + walletForm.accountNumber.slice(-4);
- } else {
- bg = 'bg-slate-200';
- text = 'text-slate-800 dark:text-slate-200';
- icon = 'C';
- maskedValue = '**** **** **** ' + walletForm.accountNumber.slice(-4);
- }
+    // Simulate API Delay
+    setTimeout(() => {
+      let icon = walletForm.provider ? walletForm.provider[0].toUpperCase() : 'W';
+      let bg = 'bg-slate-100';
+      let text = 'text-slate-600';
+      let maskedValue = '';
 
- setWallets([...wallets, {
- id: Date.now().toString(),
- name: `${walletForm.provider}${walletForm.type === 'card' ? ' Card' : ''}`,
- icon: icon,
- bg: bg,
- text: text,
- value: maskedValue
- }]);
+      if (walletForm.type === 'ewallet') {
+        bg = walletForm.provider === 'GCash' ? 'bg-blue-100' : 'bg-emerald-100';
+        text = walletForm.provider === 'GCash' ? 'text-blue-600' : 'text-emerald-600';
+        maskedValue = walletForm.accountNumber.length > 4 ? walletForm.accountNumber.substring(0, 4) + '******' + walletForm.accountNumber.slice(-2) : '****';
+      } else if (walletForm.type === 'bank') {
+        bg = 'bg-indigo-100';
+        text = 'text-indigo-600';
+        icon = 'B';
+        maskedValue = '****' + walletForm.accountNumber.slice(-4);
+      } else {
+        bg = 'bg-slate-200';
+        text = 'text-slate-800 dark:text-slate-200';
+        icon = 'C';
+        maskedValue = '**** **** **** ' + walletForm.accountNumber.slice(-4);
+      }
 
- setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' });
- setShowAddWalletModal(false);
- };
+      setWallets([...wallets, {
+        id: Date.now().toString(),
+        name: `${walletForm.provider}${walletForm.type === 'card' ? ' Card' : ''}`,
+        icon: icon,
+        bg: bg,
+        text: text,
+        value: maskedValue
+      }]);
+
+      setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' });
+      setIsSavingWallet(false);
+      setShowAddWalletModal(false);
+    }, 1000); // Simulate 1s processing time for spinner
+  };
 
   const labelCls = "block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2";
   const inputCls = "w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:focus:border-purple-400 transition-all font-medium disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-500 disabled:dark:text-slate-400 disabled:cursor-not-allowed";
@@ -262,34 +292,44 @@ export default function SettingsPanel({ currentUser }) {
     </div>
   );
 
-  const SaveBtn = ({ label, onClick }) => (
+  const SaveBtn = ({ label, onClick, isLoading, loadingText }) => (
     <div className="flex justify-end mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
-      <button onClick={onClick || handleSave} className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all">
-        {label}
+      <button
+        onClick={onClick || handleSave}
+        disabled={isLoading}
+        className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 size={16} className="animate-spin" /> {loadingText || 'Saving...'}
+          </>
+        ) : (
+          label
+        )}
       </button>
     </div>
   );
 
- const ToggleSwitch = ({ label, description, enabled, onChange }) => (
- <div className="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 last:border-0 group cursor-pointer" onClick={() => onChange(!enabled)}>
- <div className="pr-4">
- <p className={`text-sm font-bold transition-colors ${enabled ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300'}`}>{label}</p>
- {description && <p className="text-xs font-medium text-slate-500 mt-1">{description}</p>}
- </div>
- <div
- className={`w-12 h-7 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-700 dark:bg-purple-500' : 'bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600'}`}
- >
- <div className={`w-5 h-5 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
- </div>
- </div>
- );
+  const ToggleSwitch = ({ label, description, enabled, onChange }) => (
+    <div className="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 last:border-0 group cursor-pointer" onClick={() => onChange(!enabled)}>
+      <div className="pr-4">
+        <p className={`text-sm font-bold transition-colors ${enabled ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300'}`}>{label}</p>
+        {description && <p className="text-xs font-medium text-slate-500 mt-1">{description}</p>}
+      </div>
+      <div
+        className={`w-12 h-7 rounded-full flex items-center transition-all px-1 shrink-0 ${enabled ? 'bg-purple-700 dark:bg-purple-500' : 'bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600'}`}
+      >
+        <div className={`w-5 h-5 rounded-full bg-white transition-all transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+      </div>
+    </div>
+  );
 
- const tabs = [
- { id: 'profile', label: 'Profile' },
- { id: 'verification', label: 'Billing & Verification' },
- { id: 'notifications', label: 'Notifications' },
- { id: 'security', label: 'Security' }
- ];
+  const tabs = [
+    { id: 'profile', label: 'Profile' },
+    { id: 'verification', label: 'Billing & Verification' },
+    { id: 'notifications', label: 'Notifications' },
+    { id: 'security', label: 'Security' }
+  ];
 
   return (
     <div className="w-full max-w-6xl mx-auto pb-10">
@@ -305,11 +345,10 @@ export default function SettingsPanel({ currentUser }) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-2.5 text-sm font-bold whitespace-nowrap flex-1 text-center ${
-              activeTab === tab.id
+            className={`px-6 py-2.5 text-sm font-bold whitespace-nowrap flex-1 text-center ${activeTab === tab.id
                 ? 'bg-purple-700 dark:bg-purple-500 text-white'
                 : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -320,8 +359,8 @@ export default function SettingsPanel({ currentUser }) {
         {/* ── PROFILE & IDENTITY TAB ── */}
         {activeTab === 'profile' && (
           <div className="animate-fade-in">
-            <Section 
-              title="Basic Information" 
+            <Section
+              title="Basic Information"
               action={
                 !isEditing ? (
                   <button onClick={() => setIsEditing(true)} className="text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-none hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
@@ -338,7 +377,7 @@ export default function SettingsPanel({ currentUser }) {
                 <div className="flex flex-col items-center gap-2 shrink-0">
                   <label className={labelCls}>Profile Picture</label>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" ref={selfieRef} />
-                  <div 
+                  <div
                     className={`relative w-24 h-24 bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-3xl overflow-hidden group border-2 border-transparent hover:border-purple-400 dark:hover:border-purple-300 ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
                     onClick={() => isEditing && selfieRef.current?.click()}
                     title={isEditing ? "Click to change photo" : ""}
@@ -358,19 +397,19 @@ export default function SettingsPanel({ currentUser }) {
                 <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className={labelCls}>First Name</label>
-                    <input type="text" value={form.firstName || ''} onChange={set('firstName')} className={inputCls} />
+                    <input type="text" value={form.firstName || ''} onChange={set('firstName')} className={inputCls} disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Last Name</label>
-                    <input type="text" value={form.lastName || ''} onChange={set('lastName')} className={inputCls} />
+                    <input type="text" value={form.lastName || ''} onChange={set('lastName')} className={inputCls} disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Role / Title</label>
-                    <input type="text" value={form.position || ''} onChange={set('position')} placeholder="e.g. Organizer" className={inputCls} />
+                    <input type="text" value={form.position || ''} onChange={set('position')} placeholder="e.g. Organizer" className={inputCls} disabled={!isEditing} />
                   </div>
                   <div>
                     <label className={labelCls}>Contact Number</label>
-                    <input type="text" value={form.contactNumber || ''} onChange={set('contactNumber')} placeholder="+63 9XX XXX XXXX" className={inputCls} />
+                    <input type="text" value={form.contactNumber || ''} onChange={set('contactNumber')} placeholder="+63 9XX XXX XXXX" className={inputCls} disabled={!isEditing} />
                   </div>
                   <div className="sm:col-span-2">
                     <label className={labelCls}>Email Address</label>
@@ -378,14 +417,14 @@ export default function SettingsPanel({ currentUser }) {
                   </div>
                 </div>
               </div>
-              {isEditing && <SaveBtn label="Save Profile" />}
+              {isEditing && <SaveBtn label="Save Profile" onClick={() => handleSave('profile')} isLoading={isSavingProfile} loadingText="Saving Profile..." />}
             </Section>
 
             <Section title="Organization Details">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                 <div>
                   <label className={labelCls}>Organization Type</label>
-                  <select value={form.orgType || 'LGU / Barangay / SK'} onChange={set('orgType')} className={`${inputCls} appearance-none ${isEditing ? 'cursor-pointer' : ''}`}>
+                  <select value={form.orgType || 'LGU / Barangay / SK'} onChange={set('orgType')} className={`${inputCls} appearance-none ${isEditing ? 'cursor-pointer' : ''}`} disabled={!isEditing}>
                     <option value="LGU / Barangay / SK">LGU / Barangay / SK</option>
                     <option value="Commercial/Private Business">Commercial/Private Business</option>
                     <option value="Accredited Student Organization">Accredited Student Organization</option>
@@ -393,7 +432,7 @@ export default function SettingsPanel({ currentUser }) {
                 </div>
                 <div>
                   <label className={labelCls}>Organization Name</label>
-                  <input type="text" value={form.orgName || ''} onChange={set('orgName')} placeholder="e.g. Genesis Events Corp." className={inputCls} />
+                  <input type="text" value={form.orgName || ''} onChange={set('orgName')} placeholder="e.g. Genesis Events Corp." className={inputCls} disabled={!isEditing} />
                 </div>
               </div>
               <div>
@@ -418,7 +457,7 @@ export default function SettingsPanel({ currentUser }) {
                   <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc, 'orgDocumentPath')} className="hidden" accept="image/*,.pdf" />
                 </div>
               </div>
-              {isEditing && <SaveBtn label="Update Organization" />}
+              {isEditing && <SaveBtn label="Update Organization" onClick={() => handleSave('profile')} isLoading={isSavingProfile} loadingText="Updating..." />}
             </Section>
           </div>
         )}
@@ -469,8 +508,16 @@ export default function SettingsPanel({ currentUser }) {
                   </button>
                 )}
                 {isEditing && (
-                  <button onClick={handleSave} className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all">
-                    Submit Verification
+                  <button
+                    onClick={() => handleSave('verification')}
+                    disabled={isSavingVerification}
+                    className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingVerification ? (
+                      <><Loader2 size={16} className="animate-spin" /> Submitting...</>
+                    ) : (
+                      "Submit Verification"
+                    )}
                   </button>
                 )}
               </div>
@@ -532,35 +579,35 @@ export default function SettingsPanel({ currentUser }) {
             </div>
 
             <Section title="Communication Preferences">
- <div className="space-y-2">
- <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
- <ToggleSwitch 
- label="Email Notifications" 
- description="Receive standard system logs: ticket sales, platform announcements, and schedule updates."
- enabled={emailAlerts} 
- onChange={setEmailAlerts} 
- />
- </div>
- <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
- <ToggleSwitch 
- label="SMS Alerts" 
- description="Direct text alerts for urgent payout failures, security breaches, or immediate action."
- enabled={smsAlerts} 
- onChange={setSmsAlerts} 
- />
- </div>
- <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
- <ToggleSwitch 
- label="Marketing & Promos" 
- description="Receive VenU organizer strategy guides, promotional offers, and newsletters."
- enabled={marketingAlerts} 
- onChange={setMarketingAlerts} 
- />
- </div>
- </div>
- </Section>
- </div>
- )}
+              <div className="space-y-2">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
+                  <ToggleSwitch
+                    label="Email Notifications"
+                    description="Receive standard system logs: ticket sales, platform announcements, and schedule updates."
+                    enabled={emailAlerts}
+                    onChange={setEmailAlerts}
+                  />
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
+                  <ToggleSwitch
+                    label="SMS Alerts"
+                    description="Direct text alerts for urgent payout failures, security breaches, or immediate action."
+                    enabled={smsAlerts}
+                    onChange={setSmsAlerts}
+                  />
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 hover:border-purple-500/30 transition-colors">
+                  <ToggleSwitch
+                    label="Marketing & Promos"
+                    description="Receive VenU organizer strategy guides, promotional offers, and newsletters."
+                    enabled={marketingAlerts}
+                    onChange={setMarketingAlerts}
+                  />
+                </div>
+              </div>
+            </Section>
+          </div>
+        )}
 
         {/* ── SECURITY & ACCESS TAB ── */}
         {activeTab === 'security' && (
@@ -586,7 +633,7 @@ export default function SettingsPanel({ currentUser }) {
                   </div>
                 </div>
               </div>
-              <SaveBtn label="Update Password" onClick={handleUpdatePassword} />
+              <SaveBtn label="Update Password" onClick={handleUpdatePassword} isLoading={isUpdatingPassword} loadingText="Updating Password..." />
             </Section>
 
             <Section title="Security Features">
@@ -598,7 +645,7 @@ export default function SettingsPanel({ currentUser }) {
                   onChange={setTwoFactorEnabled}
                 />
               </div>
-              
+
               <div className="p-6 border border-slate-200 dark:border-slate-700 rounded-none bg-slate-50 dark:bg-slate-800">
                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Active Sessions</p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white mb-4">Current Session: <span className="text-slate-800 dark:text-slate-200 font-normal">Windows (Browser)</span></p>
@@ -614,7 +661,7 @@ export default function SettingsPanel({ currentUser }) {
                   Your data traces are handled securely and compliant with the <strong className="text-white">Philippine Data Privacy Act of 2012 (NPC)</strong>. You retain control over your data.
                 </p>
               </div>
-              
+
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-200 dark:border-slate-700">
                 <div className="flex-1">
                   <ToggleSwitch
@@ -624,8 +671,16 @@ export default function SettingsPanel({ currentUser }) {
                     onChange={setPurgeCache}
                   />
                 </div>
-                <button onClick={handlePrintTranscript} className="border border-purple-700 text-purple-700 dark:text-purple-400 font-bold text-xs px-6 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all active:scale-95 whitespace-nowrap">
-                  Export Data
+                <button
+                  onClick={handlePrintTranscript}
+                  disabled={isExportingTranscript}
+                  className="border border-purple-700 text-purple-700 dark:text-purple-400 font-bold text-xs px-6 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExportingTranscript ? (
+                    <><Loader2 size={14} className="animate-spin" /> Exporting...</>
+                  ) : (
+                    "Export Data"
+                  )}
                 </button>
               </div>
             </Section>
@@ -662,7 +717,24 @@ export default function SettingsPanel({ currentUser }) {
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">Are you absolutely sure you want to permanently delete your account?</p>
             <div className="flex gap-4">
               <button onClick={() => setShowDangerModal(false)} className="flex-1 py-3 rounded-none border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">Cancel</button>
-              <button onClick={() => alert("Account Deletion Initiated.")} className="flex-1 py-3 rounded-none bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all active:scale-95">Confirm Delete</button>
+              <button
+                onClick={() => {
+                  setIsDeletingAccount(true);
+                  setTimeout(() => {
+                    alert("Account Deletion Initiated.");
+                    setIsDeletingAccount(false);
+                    setShowDangerModal(false);
+                  }, 1000);
+                }}
+                disabled={isDeletingAccount}
+                className="flex-1 py-3 rounded-none bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeletingAccount ? (
+                  <><Loader2 size={16} className="animate-spin" /> Deleting...</>
+                ) : (
+                  "Confirm Delete"
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -688,8 +760,8 @@ export default function SettingsPanel({ currentUser }) {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
           <div className="bg-white dark:bg-slate-800 rounded-none w-full max-w-lg overflow-hidden p-8 animate-scale-in border border-slate-200 dark:border-slate-700 shadow-xl">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2 uppercase tracking-wider">Add Payout Method</h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8 pb-4 border-b border-slate-200 dark:border-slate-700">Enter the details for your payout method.</p>
-            
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8 pb-4 border-t border-slate-200 dark:border-slate-700">Enter the details for your payout method.</p>
+
             <div className="space-y-5 text-left">
               <div>
                 <label className={labelCls}>Method Type</label>
@@ -740,11 +812,21 @@ export default function SettingsPanel({ currentUser }) {
             </div>
             <div className="flex gap-4 mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
               <button onClick={() => { setShowAddWalletModal(false); setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' }); }} className="flex-1 py-3 rounded-none border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">Cancel</button>
-              <button onClick={submitNewWallet} className="flex-1 py-3 rounded-none bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm transition-all active:scale-95">Save Method</button>
+              <button
+                onClick={submitNewWallet}
+                disabled={isSavingWallet}
+                className="flex-1 py-3 rounded-none bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingWallet ? (
+                  <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                ) : (
+                  "Save Method"
+                )}
+              </button>
             </div>
           </div>
         </div>
       )}
- </div>
- );
+    </div>
+  );
 }

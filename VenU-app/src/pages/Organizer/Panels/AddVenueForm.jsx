@@ -255,9 +255,9 @@ export default function AddVenueForm({ setViewMode }) {
                 {noProvinceRegion
                   ? <option value="__direct__">N/A — Province-less Region (e.g. NCR)</option>
                   : <>
-                      <option value="">— Select Province —</option>
-                      {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                    </>
+                    <option value="">— Select Province —</option>
+                    {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                  </>
                 }
               </Sel>
 
