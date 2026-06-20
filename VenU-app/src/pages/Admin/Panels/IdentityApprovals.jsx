@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Loader2 } from 'lucide-react'; // Added Loader2
 
 const IdentityApprovals = () => {
     const [pendingUsers, setPendingUsers] = useState([]);
@@ -7,6 +8,10 @@ const IdentityApprovals = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [rejectReason, setRejectReason] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(false);
+
+    // Loading states for submit buttons
+    const [isApproving, setIsApproving] = useState(false);
+    const [isRejecting, setIsRejecting] = useState(false);
 
     useEffect(() => {
         fetchPendingUsers();
@@ -27,6 +32,7 @@ const IdentityApprovals = () => {
     };
 
     const handleApprove = async (id) => {
+        setIsApproving(true); // Start loading
         try {
             const token = localStorage.getItem('token');
             await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals/${id}/approve`, {}, {
@@ -37,6 +43,8 @@ const IdentityApprovals = () => {
         } catch (error) {
             console.error('Error approving identity:', error);
             alert("Failed to approve identity.");
+        } finally {
+            setIsApproving(false); // Stop loading
         }
     };
 
@@ -46,6 +54,7 @@ const IdentityApprovals = () => {
             return;
         }
 
+        setIsRejecting(true); // Start loading
         try {
             const token = localStorage.getItem('token');
             await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/identity-approvals/${selectedUser.id}/reject`, {
@@ -60,10 +69,18 @@ const IdentityApprovals = () => {
         } catch (error) {
             console.error('Error rejecting identity:', error);
             alert("Failed to reject identity.");
+        } finally {
+            setIsRejecting(false); // Stop loading
         }
     };
 
-    if (loading) return <div className="text-gray-300 p-6">Loading pending approvals...</div>;
+    if (loading) {
+        return (
+            <div className="text-gray-300 p-6 flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin" /> Loading pending approvals...
+            </div>
+        );
+    }
 
     return (
         <div className="p-6">
@@ -92,9 +109,8 @@ const IdentityApprovals = () => {
                                         <div className="text-xs text-slate-400">{user.email}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                            user.role === 'Organizer' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.role === 'Organizer' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
+                                            }`}>
                                             {user.role}
                                         </span>
                                     </td>
@@ -102,7 +118,7 @@ const IdentityApprovals = () => {
                                         {user.idType || "Unknown"}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button 
+                                        <button
                                             onClick={() => setSelectedUser(user)}
                                             className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm font-medium transition-colors"
                                         >
@@ -126,7 +142,7 @@ const IdentityApprovals = () => {
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
-                        
+
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -167,17 +183,25 @@ const IdentityApprovals = () => {
                         </div>
 
                         <div className="p-6 border-t border-slate-700 flex justify-end space-x-4 sticky bottom-0 bg-slate-800 z-10">
-                            <button 
+                            <button
                                 onClick={() => setShowRejectModal(true)}
-                                className="px-6 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded font-medium transition-colors"
+                                disabled={isApproving}
+                                className="px-6 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded font-medium transition-colors disabled:opacity-50"
                             >
                                 Reject Identity
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleApprove(selectedUser.id)}
-                                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded font-medium transition-colors shadow-lg shadow-emerald-500/20"
+                                disabled={isApproving}
+                                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded font-medium transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Approve & Verify
+                                {isApproving ? (
+                                    <>
+                                        <Loader2 size={16} className="animate-spin" /> Approving...
+                                    </>
+                                ) : (
+                                    "Approve & Verify"
+                                )}
                             </button>
                         </div>
                     </div>
@@ -199,20 +223,28 @@ const IdentityApprovals = () => {
                             placeholder="e.g., The front ID is too blurry to read the details. Please upload a clearer photo."
                         ></textarea>
                         <div className="flex justify-end space-x-4">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowRejectModal(false);
                                     setRejectReason('');
                                 }}
-                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                                disabled={isRejecting}
+                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={handleReject}
-                                className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-medium transition-colors"
+                                disabled={isRejecting}
+                                className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Confirm Rejection
+                                {isRejecting ? (
+                                    <>
+                                        <Loader2 size={16} className="animate-spin" /> Rejecting...
+                                    </>
+                                ) : (
+                                    "Confirm Rejection"
+                                )}
                             </button>
                         </div>
                     </div>

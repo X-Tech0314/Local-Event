@@ -186,7 +186,7 @@ function EventCard({ event, onSelect, onPrivateEvent, onLocationClick, isSaved, 
         <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 z-10"></div>
         <img src={event.image} alt={event.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform" />
 
-        <button 
+        <button
           onClick={(e) => onToggleSave && onToggleSave(e, eventId)}
           className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border ${isSaved ? 'bg-purple-500/90 border-purple-400 text-white shadow-md' : 'bg-black/40 hover:bg-black/60 border-white/20 text-white/70 hover:text-white'} transition-all`}
         >
@@ -236,17 +236,16 @@ function EventCard({ event, onSelect, onPrivateEvent, onLocationClick, isSaved, 
 
         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
-          
+
           {event.status === 'Published' ? (
             <span className="text-sm font-black text-purple-700 dark:text-purple-500 flex items-center gap-1 group-hover:gap-2">
               Get Tickets <ChevronRight size={16} strokeWidth={3} />
             </span>
           ) : (
-            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${
-              event.status === 'Done' ? 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' :
+            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${event.status === 'Done' ? 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' :
               event.status === 'Full' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-              'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-            }`}>
+                'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+              }`}>
               {event.status}
             </span>
           )}
@@ -299,10 +298,10 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-[70] flex justify-end overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <MapContainer 
-          center={[event.latitude || 14.5995, event.longitude || 120.9842]} 
-          zoom={16} 
-          scrollWheelZoom={false} 
+        <MapContainer
+          center={[event.latitude || 14.5995, event.longitude || 120.9842]}
+          zoom={16}
+          scrollWheelZoom={false}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
         >
@@ -375,12 +374,12 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             <div className="flex justify-between items-center mb-3">
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Select Admission Tier</p>
               <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 shadow-inner">
-                <button 
+                <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors active:scale-95 border border-slate-200 dark:border-slate-600"
                 >-</button>
                 <span className="text-sm font-black text-slate-900 dark:text-white w-4 text-center">{quantity}</span>
-                <button 
+                <button
                   onClick={() => setQuantity(Math.min(10, quantity + 1))}
                   className="w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors active:scale-95 border border-slate-200 dark:border-slate-600"
                 >+</button>
@@ -388,8 +387,8 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
             </div>
             <div className="space-y-3">
               {tiers.map((tier) => (
-                <label 
-                  key={tier} 
+                <label
+                  key={tier}
                   onClick={() => setSelectedTier(tier)}
                   className={`flex items-center justify-between p-4 rounded-none border-2 cursor-pointer ${selectedTier === tier ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
                 >
@@ -453,11 +452,11 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
               <div className="bg-white dark:bg-slate-800 p-5 border border-slate-200 dark:border-slate-700 mb-6 relative overflow-hidden group shadow-sm">
                 <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-2xl pointer-events-none"></div>
-                
+
                 <div className="flex gap-4 items-center mb-5">
                   <div className="w-20 h-20 bg-white border-2 border-slate-200 p-1 shrink-0 shadow-sm relative group-hover:border-purple-300 transition-colors">
                     {/* Mock QR Code using CSS grid patterns */}
-                    <div className="w-full h-full bg-[linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a),linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a)]" style={{backgroundSize: '10px 10px', backgroundPosition: '0 0, 5px 5px'}}></div>
+                    <div className="w-full h-full bg-[linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a),linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a)]" style={{ backgroundSize: '10px 10px', backgroundPosition: '0 0, 5px 5px' }}></div>
                     <div className="absolute inset-2 border-[3px] border-white pointer-events-none"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent flex items-end justify-center pb-1 pointer-events-none">
                       <span className="text-[6px] font-black uppercase text-slate-800 tracking-widest bg-white/50 px-1 backdrop-blur-sm">Scan to Pay</span>
@@ -480,13 +479,12 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                     onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder={paymentMethod === 'gcash' ? "09XXXXXXXXX" : "Account Number"}
                     maxLength={paymentMethod === 'gcash' ? 11 : 20}
-                    className={`w-full bg-slate-50 dark:bg-slate-900 border-2 px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-purple-500/20 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 ${
-                      accountNumber.length > 0 && !isPaymentValid()
-                        ? 'border-red-400 focus:border-red-500 text-red-600'
-                        : accountNumber.length > 0 && isPaymentValid()
-                          ? 'border-emerald-500 focus:border-emerald-600'
-                          : 'border-slate-200 dark:border-slate-700 focus:border-purple-500'
-                    }`}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border-2 px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-purple-500/20 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 ${accountNumber.length > 0 && !isPaymentValid()
+                      ? 'border-red-400 focus:border-red-500 text-red-600'
+                      : accountNumber.length > 0 && isPaymentValid()
+                        ? 'border-emerald-500 focus:border-emerald-600'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-purple-500'
+                      }`}
                   />
                   {accountNumber.length > 0 && !isPaymentValid() && (
                     <p className="text-[10px] text-red-500 mt-1.5 font-semibold">Invalid {paymentMethod === 'gcash' ? 'GCash number (11 digits required)' : 'account number'}</p>
@@ -537,14 +535,13 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
               {codeMatches ? 'Confirm Registration' : 'Enter Access Code'}
             </button>
           ) : isPaid ? (
-            <button 
+            <button
               disabled={!isPaymentValid()}
-              onClick={handleCheckout} 
-              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${
-                isPaymentValid()
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95' 
-                  : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
-              }`}
+              onClick={handleCheckout}
+              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${isPaymentValid()
+                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'
+                : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
+                }`}
             >
               <Lock size={16} /> Authorize Payment
             </button>
@@ -667,7 +664,7 @@ export default function AttendeeDashboard() {
   const [liveEvents, setLiveEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mapCenter, setMapCenter] = useState(null);
-  
+
   const [savedEvents, setSavedEvents] = useState(() => {
     const saved = localStorage.getItem(`vnu_user_saved_events_${currentUser.id}`);
     return saved ? JSON.parse(saved) : [];
@@ -681,11 +678,11 @@ export default function AttendeeDashboard() {
 
   const toggleSaveEvent = (e, eventId) => {
     e.stopPropagation();
-    setSavedEvents(prev => 
+    setSavedEvents(prev =>
       prev.includes(eventId) ? prev.filter(id => id !== eventId) : [...prev, eventId]
     );
   };
-  
+
   const [mapEvents, setMapEvents] = useState([]);
   const [mapSearchQuery, setMapSearchQuery] = useState('');
 
@@ -724,27 +721,27 @@ export default function AttendeeDashboard() {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Locations/explore`);
         if (response.ok) {
           const data = await response.json();
-          
+
           const processedEvents = await Promise.all(data.map(async (event, index) => {
-             if (!event.latitude || event.latitude === 0 || !event.longitude || event.longitude === 0) {
-                // Throttle requests slightly based on index to avoid 429 Too Many Requests
-                await new Promise(r => setTimeout(r, index * 600));
-                
-                const coords = await dynamicGeocode(event.address);
-                if (coords) {
-                   event.latitude = coords.lat;
-                   event.longitude = coords.lon;
-                   event.isRecommended = true; 
-                } else {
-                   const baseCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
-                   event.latitude = baseCoords[0] + (index * 0.002);
-                   event.longitude = baseCoords[1] - (index * 0.002);
-                   event.isRecommended = true;
-                }
-             }
-             return event;
+            if (!event.latitude || event.latitude === 0 || !event.longitude || event.longitude === 0) {
+              // Throttle requests slightly based on index to avoid 429 Too Many Requests
+              await new Promise(r => setTimeout(r, index * 600));
+
+              const coords = await dynamicGeocode(event.address);
+              if (coords) {
+                event.latitude = coords.lat;
+                event.longitude = coords.lon;
+                event.isRecommended = true;
+              } else {
+                const baseCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
+                event.latitude = baseCoords[0] + (index * 0.002);
+                event.longitude = baseCoords[1] - (index * 0.002);
+                event.isRecommended = true;
+              }
+            }
+            return event;
           }));
-          
+
           setMapEvents(processedEvents);
         }
       } catch (err) {
@@ -829,13 +826,13 @@ export default function AttendeeDashboard() {
 
   const filtered = recommended.filter((e) => {
     const searchLower = search.toLowerCase().trim();
-    
+
     let matchesSearch = false;
 
     if (searchLower === '') {
       matchesSearch = true;
     } else {
-      matchesSearch = 
+      matchesSearch =
         e.title.toLowerCase().includes(searchLower) ||
         e.category.toLowerCase().includes(searchLower) ||
         (e.barangay && e.barangay.toLowerCase().includes(searchLower)) ||
@@ -843,7 +840,7 @@ export default function AttendeeDashboard() {
         (e.venueName && e.venueName.toLowerCase().includes(searchLower)) ||
         (e.verificationCode && e.verificationCode.toLowerCase() === searchLower);
     }
-      
+
     if (showSavedOnly) {
       return matchesSearch && savedEvents.includes(e.eventId || e.id);
     }
@@ -864,12 +861,12 @@ export default function AttendeeDashboard() {
     if (filterCat.includes('wedding') && eventCat.includes('wedding')) return true;
 
     if (filterCat === 'others') {
-      if (!eventCat.includes('tech') && !eventCat.includes('innov') && 
-          !eventCat.includes('music') && !eventCat.includes('concert') &&
-          !eventCat.includes('sport') && !eventCat.includes('athletic') &&
-          !eventCat.includes('business') && !eventCat.includes('corp') &&
-          !eventCat.includes('birthday') && !eventCat.includes('wedding')) {
-          
+      if (!eventCat.includes('tech') && !eventCat.includes('innov') &&
+        !eventCat.includes('music') && !eventCat.includes('concert') &&
+        !eventCat.includes('sport') && !eventCat.includes('athletic') &&
+        !eventCat.includes('business') && !eventCat.includes('corp') &&
+        !eventCat.includes('birthday') && !eventCat.includes('wedding')) {
+
         if (otherCategoryQuery.trim() !== '') {
           return eventCat.includes(otherCategoryQuery.toLowerCase().trim());
         }
@@ -1040,13 +1037,17 @@ export default function AttendeeDashboard() {
             <span className="text-xl font-bold text-slate-900 dark:text-white">VenU</span>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-none shadow-inner">
-            <div className="w-10 h-10 rounded-full bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_10px_rgba(168,85,247,0.5)] shrink-0 border border-white/10">
-              {currentUser.firstName.charAt(0)}
+          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 p-3 rounded-lg">
+            <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white text-sm shrink-0">
+              {currentUser.firstName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{currentUser.firstName}</p>
-              <p className="text-[10px] font-black text-purple-700 dark:text-purple-500 uppercase tracking-widest mt-1">Explorer Node</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">
+                {currentUser.firstName} {currentUser.lastName}
+              </p>
+              <p className="text-xs font-normal text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                {currentUser.role} Account
+              </p>
             </div>
           </div>
 
@@ -1182,7 +1183,7 @@ export default function AttendeeDashboard() {
                         placeholder="Search events, venues, access codes..."
                         className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-sm outline-none px-2 pr-4"
                       />
-                      <button 
+                      <button
                         onClick={() => setShowQRScanner(true)}
                         className="bg-white text-slate-900 px-4 py-2.5 rounded-none text-xs font-black uppercase tracking-widest hover:bg-slate-100 shadow-sm"
                       >
@@ -1200,13 +1201,12 @@ export default function AttendeeDashboard() {
                   </h2>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button 
+                  <button
                     onClick={() => setShowSavedOnly(!showSavedOnly)}
-                    className={`text-xs font-bold uppercase tracking-wide px-4 py-2 flex items-center gap-2 transition-all ${
-                      showSavedOnly 
-                        ? 'bg-purple-600 text-white shadow-sm' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
-                    }`}
+                    className={`text-xs font-bold uppercase tracking-wide px-4 py-2 flex items-center gap-2 transition-all ${showSavedOnly
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                      }`}
                   >
                     <Heart size={14} fill={showSavedOnly ? "currentColor" : "none"} /> Saved Favorites
                   </button>
@@ -1230,10 +1230,10 @@ export default function AttendeeDashboard() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {filtered.map((event, index) => (
-                    <EventCard 
-                      key={event.eventId || event.id} 
-                      event={event} 
-                      onSelect={setSelectedEvent} 
+                    <EventCard
+                      key={event.eventId || event.id}
+                      event={event}
+                      onSelect={setSelectedEvent}
                       onPrivateEvent={(evt) => {
                         setAccessModalEvent(evt);
                         setAccessCodeInput('');
@@ -1257,7 +1257,7 @@ export default function AttendeeDashboard() {
                 </div>
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">My Tickets</h1>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Your purchased and saved event tickets.</p>
-                
+
                 <div className="flex justify-center mt-6">
                   <div className="bg-slate-100 dark:bg-slate-800 p-1 flex items-center shadow-sm">
                     <button
@@ -1314,153 +1314,154 @@ export default function AttendeeDashboard() {
                   </div>
 
                   {filteredTickets.length === 0 ? (
-                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-16 text-center relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500"></div>
-                  <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800" size={64} strokeWidth={1} />
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Tickets Found</h3>
-                  <p className="text-sm font-medium text-slate-400 mt-2 mb-8 max-w-sm mx-auto">
-                    {tickets.length === 0
-                      ? "You haven't purchased any tickets yet. Browse events to find something you like."
-                      : "No passes match this specific event type filter."}
-                  </p>
-                  {tickets.length === 0 && (
-                    <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-none bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
-                      <Search size={16} /> Explore Events
-                    </button>
+                    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-16 text-center relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500"></div>
+                      <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800" size={64} strokeWidth={1} />
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Tickets Found</h3>
+                      <p className="text-sm font-medium text-slate-400 mt-2 mb-8 max-w-sm mx-auto">
+                        {tickets.length === 0
+                          ? "You haven't purchased any tickets yet. Browse events to find something you like."
+                          : "No passes match this specific event type filter."}
+                      </p>
+                      {tickets.length === 0 && (
+                        <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-none bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
+                          <Search size={16} /> Explore Events
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {groupedTickets.map((group) => {
+                        const t = group.tickets[0]; // Representative event
+                        const count = group.tickets.length;
+                        return (
+                          <div
+                            key={group.event.eventId || group.event.title}
+                            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden relative group hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
+                          >
+                            <div className="p-5 flex gap-4">
+                              <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-visible relative">
+                                <img src={t.event.image} alt="" className="w-full h-full object-cover shadow-sm" />
+                                {count > 1 && (
+                                  <span className="absolute -top-3 -right-3 bg-purple-600 text-white font-black text-[10px] w-6 h-6 flex items-center justify-center rounded-full shadow-md ring-2 ring-slate-50 dark:ring-slate-800 z-10 animate-bounce-in">
+                                    {count}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
+                                  {t.event.title}
+                                </h3>
+                                <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date} @ {t.event.time}</p>
+                                  <p
+                                    className="flex items-center gap-1.5 truncate cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleLocationClick(t.event);
+                                    }}
+                                  >
+                                    <MapPin size={12} /> {t.event.barangay || t.event.address}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
+                              {group.tickets.map(ticket => (
+                                <div key={ticket.ticketId} className="px-5 py-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors">
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black tracking-widest text-purple-600 dark:text-purple-400 uppercase bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 border border-purple-100 dark:border-purple-800/50 self-start rounded-none">
+                                      {ticket.tier}
+                                    </span>
+                                    <span className="font-mono text-xs font-black text-slate-700 dark:text-slate-300 tracking-wider">
+                                      {ticket.ticketId}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                      title="View Full Digital Pass"
+                                      onClick={() => setConfirmedTicket(ticket)}
+                                      className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-none"
+                                    >
+                                      <Eye size={14} strokeWidth={2.5} />
+                                    </button>
+                                    <button
+                                      title="Download Ticket Image (.png)"
+                                      onClick={(e) => handleDownloadTicket(ticket, e)}
+                                      className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors rounded-none"
+                                    >
+                                      <Download size={14} strokeWidth={2.5} />
+                                    </button>
+                                    <button
+                                      title="Void / Delete Pass"
+                                      onClick={(e) => handleDeleteTicket(ticket.ticketId, ticket.event.title, e)}
+                                      className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-none"
+                                    >
+                                      <Trash2 size={14} strokeWidth={2.5} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   )}
-                </div>
+                </>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {groupedTickets.map((group) => {
-                    const t = group.tickets[0]; // Representative event
-                    const count = group.tickets.length;
-                    return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                  {mockPastTickets.map((t) => (
                     <div
-                      key={group.event.eventId || group.event.title}
-                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden relative group hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
+                      key={t.ticketId}
+                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden flex flex-col justify-between opacity-80 hover:opacity-100 transition-opacity"
                     >
-                      <div className="p-5 flex gap-4">
-                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-visible relative">
-                          <img src={t.event.image} alt="" className="w-full h-full object-cover shadow-sm" />
-                          {count > 1 && (
-                            <span className="absolute -top-3 -right-3 bg-purple-600 text-white font-black text-[10px] w-6 h-6 flex items-center justify-center rounded-full shadow-md ring-2 ring-slate-50 dark:ring-slate-800 z-10 animate-bounce-in">
-                              {count}
-                            </span>
-                          )}
+                      <div className="p-5 flex gap-4 grayscale hover:grayscale-0 transition-all">
+                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+                          <img src={t.event.image} alt="" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <CheckCircle2 size={24} className="text-white/80" />
+                          </div>
                         </div>
                         <div className="min-w-0 flex-1">
+                          <span className="text-[9px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-900/50 px-2 py-0.5 border border-slate-300 dark:border-slate-700">
+                            {t.tier}
+                          </span>
                           <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
                             {t.event.title}
                           </h3>
                           <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                            <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date} @ {t.event.time}</p>
-                            <p
-                              className="flex items-center gap-1.5 truncate cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleLocationClick(t.event);
-                              }}
-                            >
-                              <MapPin size={12} /> {t.event.barangay || t.event.address}
-                            </p>
+                            <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date}</p>
+                            <p className="flex items-center gap-1.5"><MapPin size={12} /> {t.event.barangay}</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
-                        {group.tickets.map(ticket => (
-                          <div key={ticket.ticketId} className="px-5 py-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[9px] font-black tracking-widest text-purple-600 dark:text-purple-400 uppercase bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 border border-purple-100 dark:border-purple-800/50 self-start rounded-none">
-                                {ticket.tier}
-                              </span>
-                              <span className="font-mono text-xs font-black text-slate-700 dark:text-slate-300 tracking-wider">
-                                {ticket.ticketId}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <button
-                                title="View Full Digital Pass"
-                                onClick={() => setConfirmedTicket(ticket)}
-                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-none"
-                              >
-                                <Eye size={14} strokeWidth={2.5} />
-                              </button>
-                              <button
-                                title="Download Ticket Image (.png)"
-                                onClick={(e) => handleDownloadTicket(ticket, e)}
-                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors rounded-none"
-                              >
-                                <Download size={14} strokeWidth={2.5} />
-                              </button>
-                              <button
-                                title="Void / Delete Pass"
-                                onClick={(e) => handleDeleteTicket(ticket.ticketId, ticket.event.title, e)}
-                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-none"
-                              >
-                                <Trash2 size={14} strokeWidth={2.5} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="bg-slate-100 dark:bg-slate-900 px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <span className="font-mono text-xs font-black text-slate-500 dark:text-slate-400 tracking-wider">
+                          {t.ticketId}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setReviewingEvent(t.event);
+                          }}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest shadow-sm rounded-none flex items-center gap-2 transition-colors"
+                        >
+                          <Star size={14} fill="currentColor" /> Leave Review
+                        </button>
                       </div>
                     </div>
-                  )})}
+                  ))}
                 </div>
               )}
-              </>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                {mockPastTickets.map((t) => (
-                  <div
-                    key={t.ticketId}
-                    className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden flex flex-col justify-between opacity-80 hover:opacity-100 transition-opacity"
-                  >
-                    <div className="p-5 flex gap-4 grayscale hover:grayscale-0 transition-all">
-                      <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden relative">
-                        <img src={t.event.image} alt="" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <CheckCircle2 size={24} className="text-white/80" />
-                        </div>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[9px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-900/50 px-2 py-0.5 border border-slate-300 dark:border-slate-700">
-                          {t.tier}
-                        </span>
-                        <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
-                          {t.event.title}
-                        </h3>
-                        <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                          <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date}</p>
-                          <p className="flex items-center gap-1.5"><MapPin size={12} /> {t.event.barangay}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-100 dark:bg-slate-900 px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <span className="font-mono text-xs font-black text-slate-500 dark:text-slate-400 tracking-wider">
-                        {t.ticketId}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setReviewingEvent(t.event);
-                        }}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest shadow-sm rounded-none flex items-center gap-2 transition-colors"
-                      >
-                        <Star size={14} fill="currentColor" /> Leave Review
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
             </div>
           )}
 
           {activeTab === 'map' && (
             <div className="animate-fade-in flex flex-col md:flex-row h-[85vh] gap-6 max-w-full">
-              
+
               {/* Left Column: List & Search */}
               <div className="w-full md:w-[380px] flex flex-col bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden relative z-10 shrink-0">
                 <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700">
@@ -1489,18 +1490,18 @@ export default function AttendeeDashboard() {
                   {mapEvents
                     .filter(e => e.title.toLowerCase().includes(mapSearchQuery.toLowerCase()) || e.address.toLowerCase().includes(mapSearchQuery.toLowerCase()) || e.venueName.toLowerCase().includes(mapSearchQuery.toLowerCase()))
                     .map((event) => (
-                    <div 
-                      key={event.eventId} 
-                      onClick={() => setMapCenter([event.latitude, event.longitude])}
-                      className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-purple-500 hover:shadow-md transition-all group"
-                    >
-                      <h4 className="font-black text-slate-900 dark:text-white leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{event.title}</h4>
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2 flex items-start gap-1.5 leading-snug">
-                        <MapPin size={12} className="shrink-0 mt-0.5 text-purple-500" /> 
-                        <span className="line-clamp-2">{event.venueName} - {event.address}</span>
-                      </p>
-                    </div>
-                  ))}
+                      <div
+                        key={event.eventId}
+                        onClick={() => setMapCenter([event.latitude, event.longitude])}
+                        className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-purple-500 hover:shadow-md transition-all group"
+                      >
+                        <h4 className="font-black text-slate-900 dark:text-white leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{event.title}</h4>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2 flex items-start gap-1.5 leading-snug">
+                          <MapPin size={12} className="shrink-0 mt-0.5 text-purple-500" />
+                          <span className="line-clamp-2">{event.venueName} - {event.address}</span>
+                        </p>
+                      </div>
+                    ))}
                   {mapEvents.length === 0 && (
                     <div className="text-center py-10 opacity-60">
                       <MapPin size={32} className="mx-auto mb-2 text-slate-400" />
@@ -1512,7 +1513,7 @@ export default function AttendeeDashboard() {
 
               {/* Right Column: MapContainer */}
               <div className="flex-1 relative border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 min-h-[400px]">
-                <button 
+                <button
                   onClick={handleNearMe}
                   className="absolute bottom-6 right-6 z-[400] bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-400 p-3 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform"
                   title="Find My Location"
@@ -1576,7 +1577,7 @@ export default function AttendeeDashboard() {
                       </Marker>
                     ))}
                   </MapContainer>
-                  
+
                   {/* Floating "Near Me" Button - Exclusively for Global Radar Map */}
                   <button
                     onClick={() => {
@@ -1639,7 +1640,7 @@ export default function AttendeeDashboard() {
             <div className="p-6">
               <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">How was your experience at</p>
               <p className="text-base font-black text-slate-900 dark:text-white mb-6 leading-tight">{reviewingEvent.title}?</p>
-              
+
               <div className="flex justify-center gap-2 mb-6">
                 {[1, 2, 3, 4, 5].map(star => (
                   <button key={star} className="text-slate-300 hover:text-amber-400 transition-colors focus:outline-none focus:text-amber-400">
@@ -1650,13 +1651,13 @@ export default function AttendeeDashboard() {
 
               <div className="mb-6">
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Detailed Feedback</label>
-                <textarea 
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-none p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500 transition-colors min-h-[100px]" 
+                <textarea
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-none p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500 transition-colors min-h-[100px]"
                   placeholder="Tell us what you loved about the event..."
                 ></textarea>
               </div>
 
-              <button 
+              <button
                 onClick={() => {
                   setReviewingEvent(null);
                   addNotification("⭐ Review Submitted", `Thank you for reviewing ${reviewingEvent.title}!`);
@@ -1672,13 +1673,13 @@ export default function AttendeeDashboard() {
 
 
       {showQRScanner && (
-        <QRScannerModal 
-          onClose={() => setShowQRScanner(false)} 
+        <QRScannerModal
+          onClose={() => setShowQRScanner(false)}
           onScan={(data) => {
             setSearch(data);
             setShowQRScanner(false);
             addNotification("QR Scanned", `Search updated with code: ${data}`);
-          }} 
+          }}
         />
       )}
 
@@ -1687,8 +1688,8 @@ export default function AttendeeDashboard() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-slate-900 rounded-none border border-purple-500/30 shadow-2xl w-full max-w-sm p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
-            <button 
-              onClick={() => setAccessModalEvent(null)} 
+            <button
+              onClick={() => setAccessModalEvent(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
             >
               <X size={20} />
@@ -1702,11 +1703,11 @@ export default function AttendeeDashboard() {
                 Enter the access code for <span className="font-semibold">{accessModalEvent.title}</span>
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={accessCodeInput}
                   onChange={(e) => {
                     setAccessCodeInput(e.target.value);
@@ -1722,13 +1723,13 @@ export default function AttendeeDashboard() {
                       }
                     }
                   }}
-                  placeholder="Enter Code" 
+                  placeholder="Enter Code"
                   className={`w-full bg-slate-50 dark:bg-slate-800 border ${accessCodeError ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded p-3 text-center text-lg font-bold tracking-widest text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 focus:ring-1 focus:ring-purple-700`}
                 />
                 {accessCodeError && <p className="text-xs text-red-500 font-medium text-center mt-2">{accessCodeError}</p>}
               </div>
-              
-              <button 
+
+              <button
                 onClick={() => {
                   if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
                     setAccessModalEvent(null);

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 
 export default function AdminManagement() {
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false); // For Create button
+    const [actionLoading, setActionLoading] = useState({}); // For Table action buttons
     const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '' });
 
     useEffect(() => {
@@ -34,12 +36,17 @@ export default function AdminManagement() {
 
     const handleCreateAdmin = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true); // Disable button & show spinner
+
+        // UI/UX: Normalize email to prevent duplicate casing issues
+        const normalizedEmail = adminForm.email.trim().toLowerCase();
+
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/admins`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(adminForm)
+                body: JSON.stringify({ ...adminForm, email: normalizedEmail })
             });
 
             if (res.ok) {
@@ -54,10 +61,15 @@ export default function AdminManagement() {
         } catch (err) {
             console.error("Error creating admin:", err);
             alert(`Network Error: ${err.message}`);
+        } finally {
+            setIsSubmitting(false); // Re-enable button
         }
     };
 
     const handleDeleteAdmin = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this admin?")) return;
+
+        setActionLoading(prev => ({ ...prev, [id]: 'delete' }));
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/admins/${id}`, {
@@ -75,11 +87,15 @@ export default function AdminManagement() {
         } catch (err) {
             console.error("Error deleting admin:", err);
             alert(`Network Error: ${err.message}`);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [id]: false }));
         }
     };
 
     const handleToggleRole = async (admin, isSuperadmin) => {
         const newRole = isSuperadmin ? "Admin" : "Superadmin";
+
+        setActionLoading(prev => ({ ...prev, [admin.id]: 'role' }));
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/admins/${admin.id}/role`, {
@@ -98,8 +114,6 @@ export default function AdminManagement() {
                 const loggedInId = String(loggedInUser?.Id || loggedInUser?.id || '').toLowerCase();
                 const targetAdminId = String(admin.id || '').toLowerCase();
 
-                console.log("Checking IDs for logout:", loggedInId, "vs", targetAdminId); // For debugging
-
                 // If they were a Superadmin, are being demoted to Admin, and it's their own account
                 if (isSuperadmin && loggedInId === targetAdminId) {
                     alert("You have demoted your own account. You will now be logged out.");
@@ -116,8 +130,15 @@ export default function AdminManagement() {
             }
         } catch (err) {
             alert(`Network Error: ${err.message}`);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [admin.id]: false }));
         }
     };
+
+    // UI/UX: Form Validation - disable button until valid
+    const isFormValid = adminForm.name.trim() !== '' &&
+        adminForm.email.trim() !== '' &&
+        adminForm.password.trim().length >= 6;
 
     return (
         // Changed to flex layout to maximize table width
@@ -145,7 +166,7 @@ export default function AdminManagement() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Password</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Temp Password (Min 6 chars)</label>
                             <input
                                 type="text" required value={adminForm.password}
                                 onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
@@ -154,9 +175,18 @@ export default function AdminManagement() {
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest text-sm py-3 rounded-none flex items-center justify-center gap-2 mt-4"
+                            disabled={!isFormValid || isSubmitting}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest text-sm py-3 rounded-none flex items-center justify-center gap-2 mt-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Plus size={16} /> Create Admin
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" /> Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <Plus size={16} /> Create Admin
+                                </>
+                            )}
                         </button>
                     </form>
                 </div>
@@ -169,7 +199,9 @@ export default function AdminManagement() {
                         <h3 className="text-lg font-black text-slate-900 dark:text-white">Existing Administrators</h3>
                     </div>
                     {loading ? (
-                        <div className="p-10 text-center text-slate-400">Loading admins...</div>
+                        <div className="p-10 text-center text-slate-400 flex items-center justify-center gap-2">
+                            <Loader2 size={16} className="animate-spin" /> Loading admins...
+                        </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
@@ -190,6 +222,7 @@ export default function AdminManagement() {
                                         admins.map(admin => {
                                             const isSuperadmin = String(admin.role).toLowerCase() === 'superadmin';
                                             const displayName = admin.name || `${admin.firstName} ${admin.lastName}`;
+                                            const isLoading = actionLoading[admin.id];
 
                                             return (
                                                 <tr key={admin.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900/50">
@@ -204,23 +237,29 @@ export default function AdminManagement() {
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="flex justify-end items-center gap-2 whitespace-nowrap">
-                                                            <button
-                                                                onClick={() => handleToggleRole(admin, isSuperadmin)}
-                                                                className={`px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-widest border transition-colors ${isSuperadmin
-                                                                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600'
-                                                                    : 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
-                                                                    }`}
-                                                            >
-                                                                {isSuperadmin ? 'Demote' : 'Promote'}
-                                                            </button>
+                                                            {isLoading ? (
+                                                                <Loader2 size={16} className="animate-spin text-slate-400" />
+                                                            ) : (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleToggleRole(admin, isSuperadmin)}
+                                                                        className={`px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-widest border transition-colors ${isSuperadmin
+                                                                            ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                                                            : 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
+                                                                            }`}
+                                                                    >
+                                                                        {isSuperadmin ? 'Demote' : 'Promote'}
+                                                                    </button>
 
-                                                            <button
-                                                                onClick={() => handleDeleteAdmin(admin.id)}
-                                                                className="p-2 bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-none border border-red-200 dark:border-red-900/50"
-                                                                title="Delete Admin"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteAdmin(admin.id)}
+                                                                        className="p-2 bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-none border border-red-200 dark:border-red-900/50"
+                                                                        title="Delete Admin"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

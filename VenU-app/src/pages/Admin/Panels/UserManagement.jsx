@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, ChevronLeft, ChevronRight, Search, RotateCcw, Archive, Users, XCircle } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight, Search, RotateCcw, Archive, Users, XCircle, Loader2 } from 'lucide-react';
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState({}); // Track loading per user ID
 
     // State for View Mode (Normal vs Recycle Bin)
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'deleted'
@@ -54,6 +55,7 @@ export default function UserManagement() {
     }, [searchTerm, currentPage, viewMode]);
 
     const toggleUserStatus = async (id, currentStatus) => {
+        setActionLoading(prev => ({ ...prev, [id]: 'status' }));
         const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
         try {
             const token = localStorage.getItem('token');
@@ -68,11 +70,14 @@ export default function UserManagement() {
             }
         } catch (err) {
             console.error("Error updating user status:", err);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [id]: false }));
         }
     };
 
     const handleDeleteUser = async (id, name) => {
         if (!window.confirm(`Send ${name} to the Recycle Bin?`)) return;
+        setActionLoading(prev => ({ ...prev, [id]: 'delete' }));
 
         try {
             const token = localStorage.getItem('token');
@@ -89,10 +94,13 @@ export default function UserManagement() {
             }
         } catch (err) {
             alert(`Network Error: ${err.message}`);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [id]: false }));
         }
     };
 
     const handleRestoreUser = async (id, name) => {
+        setActionLoading(prev => ({ ...prev, [id]: 'restore' }));
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${id}/restore`, {
@@ -108,11 +116,14 @@ export default function UserManagement() {
             }
         } catch (err) {
             alert(`Network Error: ${err.message}`);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [id]: false }));
         }
     };
 
     const handlePermanentDeleteUser = async (id, name) => {
         if (!window.confirm(`PERMANENTLY DELETE ${name}?\n\nThis action cannot be undone. All their data will be erased from the database.`)) return;
+        setActionLoading(prev => ({ ...prev, [id]: 'permanent' }));
 
         try {
             const token = localStorage.getItem('token');
@@ -130,6 +141,8 @@ export default function UserManagement() {
             }
         } catch (err) {
             alert(`Network Error: ${err.message}`);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [id]: false }));
         }
     };
 
@@ -182,11 +195,13 @@ export default function UserManagement() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="4" className="p-10 text-center text-slate-400">Loading users...</td>
+                                <td colSpan="5" className="p-10 text-center text-slate-400 flex items-center justify-center gap-2">
+                                    <Loader2 size={16} className="animate-spin" /> Loading users...
+                                </td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan="4" className="p-10 text-center text-slate-400 font-medium">
+                                <td colSpan="5" className="p-10 text-center text-slate-400 font-medium">
                                     {viewMode === 'deleted' ? "The Recycle Bin is empty." : "No active users found."}
                                 </td>
                             </tr>
@@ -202,8 +217,8 @@ export default function UserManagement() {
                                     </td>
                                     <td className="p-5">
                                         <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${user.status === 'Active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                                                user.status === 'Deleted' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                            user.status === 'Deleted' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                             }`}>
                                             {user.status}
                                         </span>
@@ -211,52 +226,56 @@ export default function UserManagement() {
                                     <td className="p-5 text-right">
                                         <div className="flex justify-end items-center gap-2">
 
-                                            {/* RECYCLE BIN ACTIONS */}
-                                            {viewMode === 'deleted' ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleRestoreUser(user.id, `${user.firstName} ${user.lastName}`)}
-                                                        className="text-xs font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-800 border border-emerald-200 dark:border-emerald-900/50 px-3 py-1.5 rounded-none hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-1"
-                                                    >
-                                                        <RotateCcw size={14} /> Restore
-                                                    </button>
-
-                                                    {/* PERMANENT DELETE BUTTON */}
-                                                    <button
-                                                        onClick={() => handlePermanentDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
-                                                        className="text-xs font-bold uppercase tracking-widest text-white bg-red-600 hover:bg-red-700 border border-red-600 px-3 py-1.5 rounded-none flex items-center gap-1"
-                                                        title="Erase from database permanently"
-                                                    >
-                                                        <XCircle size={14} /> Delete Permanently
-                                                    </button>
-                                                </>
+                                            {actionLoading[user.id] ? (
+                                                <Loader2 size={16} className="animate-spin text-slate-400" />
                                             ) : (
-                                                /* ACTIVE USERS ACTIONS */
-                                                <>
-                                                    {user.status === 'Active' ? (
+                                                /* RECYCLE BIN ACTIONS */
+                                                viewMode === 'deleted' ? (
+                                                    <>
                                                         <button
-                                                            onClick={() => toggleUserStatus(user.id, user.status)}
-                                                            className="text-xs font-bold uppercase tracking-widest text-red-500 hover:text-red-700 border border-red-200 dark:border-red-900/50 px-3 py-1.5 rounded-none hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                            onClick={() => handleRestoreUser(user.id, `${user.firstName} ${user.lastName}`)}
+                                                            className="text-xs font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-800 border border-emerald-200 dark:border-emerald-900/50 px-3 py-1.5 rounded-none hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-1"
                                                         >
-                                                            Suspend
+                                                            <RotateCcw size={14} /> Restore
                                                         </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => toggleUserStatus(user.id, user.status)}
-                                                            className="text-xs font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-800 border border-emerald-200 dark:border-emerald-900/50 px-3 py-1.5 rounded-none hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                                                        >
-                                                            Activate
-                                                        </button>
-                                                    )}
 
-                                                    <button
-                                                        onClick={() => handleDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
-                                                        className="p-2 bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-none border border-red-200 dark:border-red-900/50"
-                                                        title="Move to Recycle Bin"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </>
+                                                        {/* PERMANENT DELETE BUTTON */}
+                                                        <button
+                                                            onClick={() => handlePermanentDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
+                                                            className="text-xs font-bold uppercase tracking-widest text-white bg-red-600 hover:bg-red-700 border border-red-600 px-3 py-1.5 rounded-none flex items-center gap-1"
+                                                            title="Erase from database permanently"
+                                                        >
+                                                            <XCircle size={14} /> Delete Permanently
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    /* ACTIVE USERS ACTIONS */
+                                                    <>
+                                                        {user.status === 'Active' ? (
+                                                            <button
+                                                                onClick={() => toggleUserStatus(user.id, user.status)}
+                                                                className="text-xs font-bold uppercase tracking-widest text-red-500 hover:text-red-700 border border-red-200 dark:border-red-900/50 px-3 py-1.5 rounded-none hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                            >
+                                                                Suspend
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => toggleUserStatus(user.id, user.status)}
+                                                                className="text-xs font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-800 border border-emerald-200 dark:border-emerald-900/50 px-3 py-1.5 rounded-none hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                                            >
+                                                                Activate
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => handleDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
+                                                            className="p-2 bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-none border border-red-200 dark:border-red-900/50"
+                                                            title="Move to Recycle Bin"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </>
+                                                )
                                             )}
 
                                         </div>
