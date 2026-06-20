@@ -1,9 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { Camera } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Camera, Loader2 } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../../utils/constants.js';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 export default function UserSettings({ currentUser }) {
   const [form, setForm] = useState({
@@ -32,6 +31,14 @@ export default function UserSettings({ currentUser }) {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
 
+  // Loading states for buttons
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isSavingVerification, setIsSavingVerification] = useState(false);
+  const [isSavingWallet, setIsSavingWallet] = useState(false);
+  const [isExportingTranscript, setIsExportingTranscript] = useState(false);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -41,7 +48,6 @@ export default function UserSettings({ currentUser }) {
         });
         setForm(prev => ({ ...prev, ...res.data }));
         if (res.data.dateOfBirth) {
-          // ensure it's mapped properly if the date format comes back as ISO
           setForm(prev => ({ ...prev, dateOfBirth: res.data.dateOfBirth.split('T')[0] }));
         }
         setIdType(res.data.idType || '');
@@ -52,7 +58,7 @@ export default function UserSettings({ currentUser }) {
       } catch (err) {
         if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
           console.warn('Backend unavailable, using local mock data.');
-          return; // just keep the current user state which we seeded from form state init
+          return;
         }
         console.error('Failed to fetch user data:', err);
       }
@@ -72,6 +78,7 @@ export default function UserSettings({ currentUser }) {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, form, {
@@ -88,6 +95,8 @@ export default function UserSettings({ currentUser }) {
         return;
       }
       alert('Failed to update profile: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
@@ -96,6 +105,7 @@ export default function UserSettings({ currentUser }) {
       alert('Passwords do not match');
       return;
     }
+    setIsUpdatingPassword(true);
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}/password`, { newPassword }, {
@@ -112,10 +122,13 @@ export default function UserSettings({ currentUser }) {
         return;
       }
       alert('Failed to update password: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
   const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${currentUser.id}`, {
@@ -133,6 +146,8 @@ export default function UserSettings({ currentUser }) {
         return;
       }
       alert('Failed to delete account: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -163,6 +178,7 @@ export default function UserSettings({ currentUser }) {
   };
 
   const handleSaveVerification = async () => {
+    setIsSavingVerification(true);
     try {
       const token = localStorage.getItem('token');
       const updatedForm = {
@@ -178,6 +194,8 @@ export default function UserSettings({ currentUser }) {
       setForm(updatedForm);
     } catch (err) {
       alert('Failed to save verification details: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsSavingVerification(false);
     }
   };
 
@@ -209,11 +227,15 @@ export default function UserSettings({ currentUser }) {
     setShowAddWalletModal(true);
   };
 
-  const submitNewWallet = () => {
+  const submitNewWallet = async () => {
     if (!walletForm.accountName || !walletForm.accountNumber) {
       alert("Please fill in the required fields (Account Name and Number).");
       return;
     }
+
+    setIsSavingWallet(true);
+    // Simulate API delay
+    await new Promise(r => setTimeout(r, 1000));
 
     let icon = walletForm.provider ? walletForm.provider[0].toUpperCase() : 'W';
     let bg = 'bg-slate-100';
@@ -246,10 +268,15 @@ export default function UserSettings({ currentUser }) {
     }]);
 
     setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' });
+    setIsSavingWallet(false);
     setShowAddWalletModal(false);
   };
 
-  const handlePrintTranscript = () => {
+  const handlePrintTranscript = async () => {
+    setIsExportingTranscript(true);
+    // Simulate processing delay
+    await new Promise(r => setTimeout(r, 1000));
+
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
@@ -291,6 +318,7 @@ export default function UserSettings({ currentUser }) {
       </html>
     `);
     printWindow.document.close();
+    setIsExportingTranscript(false);
   };
 
   const [idType, setIdType] = useState('');
@@ -333,10 +361,20 @@ export default function UserSettings({ currentUser }) {
     { id: 'security', label: 'Security' }
   ];
 
-  const SaveBtn = ({ label, onClick }) => (
+  const SaveBtn = ({ label, onClick, isLoading, loadingText }) => (
     <div className="flex justify-end mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
-      <button onClick={onClick || handleSaveProfile} className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all">
-        {label}
+      <button
+        onClick={onClick || handleSaveProfile}
+        disabled={isLoading}
+        className="px-8 py-2.5 rounded-none bg-purple-700 hover:bg-purple-800 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-bold text-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 size={16} className="animate-spin" /> {loadingText || 'Saving...'}
+          </>
+        ) : (
+          label
+        )}
       </button>
     </div>
   );
@@ -355,11 +393,10 @@ export default function UserSettings({ currentUser }) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-2.5 text-sm font-bold whitespace-nowrap flex-1 text-center ${
-              activeTab === tab.id
+            className={`px-6 py-2.5 text-sm font-bold whitespace-nowrap flex-1 text-center ${activeTab === tab.id
                 ? 'bg-purple-700 dark:bg-purple-500 text-white'
                 : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -372,8 +409,8 @@ export default function UserSettings({ currentUser }) {
         {activeTab === 'profile' && (
           <div className="animate-fade-in">
             {/* ── Basic Information (Profile Photo + Personal Info merged) ── */}
-            <Section 
-              title="Basic Information" 
+            <Section
+              title="Basic Information"
               action={
                 !isEditing ? (
                   <button onClick={() => setIsEditing(true)} className="text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-none hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
@@ -398,11 +435,11 @@ export default function UserSettings({ currentUser }) {
                     ref={photoInputRef}
                     onChange={(e) => { if (e.target.files[0]) setProfilePhoto(URL.createObjectURL(e.target.files[0])) }}
                   />
-                    <div
-                      className={`relative w-24 h-24 bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-3xl overflow-hidden group border-2 border-transparent hover:border-purple-400 dark:hover:border-purple-300 ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
-                      onClick={() => isEditing && photoInputRef.current?.click()}
-                      title={isEditing ? "Click to change photo" : ""}
-                    >
+                  <div
+                    className={`relative w-24 h-24 bg-purple-700 dark:bg-purple-500 flex items-center justify-center font-bold text-white text-3xl overflow-hidden group border-2 border-transparent hover:border-purple-400 dark:hover:border-purple-300 ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => isEditing && photoInputRef.current?.click()}
+                    title={isEditing ? "Click to change photo" : ""}
+                  >
                     {profilePhoto
                       ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                       : (form.firstName?.charAt(0) || 'U')}
@@ -448,7 +485,7 @@ export default function UserSettings({ currentUser }) {
                 </div>
 
               </div>
-              {isEditing && <SaveBtn label="Save Basic Information" />}
+              {isEditing && <SaveBtn label="Save Basic Information" isLoading={isSavingProfile} loadingText="Saving Info..." />}
             </Section>
 
             {/* Address Details */}
@@ -458,7 +495,7 @@ export default function UserSettings({ currentUser }) {
                   <label className={labelCls}>House / Unit / Block No.</label>
                   <input className={inputCls} value={form.houseNo} onChange={set('houseNo')} placeholder="House No." disabled={!isEditing} />
                 </div>
-                 <div className="md:col-span-2">
+                <div className="md:col-span-2">
                   <label className={labelCls}>Street Name</label>
                   <input className={inputCls} value={form.streetName} onChange={set('streetName')} placeholder="Street Name" disabled={!isEditing} />
                 </div>
@@ -487,7 +524,7 @@ export default function UserSettings({ currentUser }) {
                   <input className={inputCls} value={form.barangay} onChange={set('barangay')} placeholder="Barangay" disabled={!isEditing} />
                 </div>
               </div>
-              {isEditing && <SaveBtn label="Save Address Details" />}
+              {isEditing && <SaveBtn label="Save Address Details" isLoading={isSavingProfile} loadingText="Saving Address..." />}
             </Section>
 
             {/* Personalized Preferences */}
@@ -506,18 +543,17 @@ export default function UserSettings({ currentUser }) {
                           preferredCategories: isSelected ? current.filter(c => c !== cat) : [...current, cat]
                         });
                       }}
-                      className={`px-4 py-2 border rounded-none text-sm font-bold transition-all ${
-                        isSelected 
+                      className={`px-4 py-2 border rounded-none text-sm font-bold transition-all ${isSelected
                           ? 'bg-purple-700 dark:bg-purple-500 border-purple-700 dark:border-purple-500 text-white shadow-sm'
                           : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-purple-300 dark:hover:border-purple-400 hover:text-purple-700 dark:hover:text-purple-400'
-                      }`}
+                        }`}
                     >
                       {cat}
                     </button>
                   );
                 })}
               </div>
-              {isEditing && <SaveBtn label="Save Preferences" />}
+              {isEditing && <SaveBtn label="Save Preferences" isLoading={isSavingProfile} loadingText="Saving Prefs..." />}
             </Section>
           </div>
         )}
@@ -553,18 +589,18 @@ export default function UserSettings({ currentUser }) {
                   <input className={inputCls} value={idNumber} onChange={(e) => { setIdNumber(e.target.value); setForm(prev => ({ ...prev, idReferenceNumber: e.target.value })); }} placeholder="e.g. P1234567A" disabled={!isEditing} />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                  <div onClick={() => isEditing && frontInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
-                    {idFront ? <img src={idFront} alt="Front ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Front Side</p>}
-                    <input type="file" ref={frontInputRef} onChange={(e) => handleIdUpload(e, setIdFront, 'IdFrontPath')} className="hidden" accept="image/*" />
+                <div onClick={() => isEditing && frontInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
+                  {idFront ? <img src={idFront} alt="Front ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Front Side</p>}
+                  <input type="file" ref={frontInputRef} onChange={(e) => handleIdUpload(e, setIdFront, 'IdFrontPath')} className="hidden" accept="image/*" />
+                </div>
+
+                {idConfig?.hasBackSide && (
+                  <div onClick={() => isEditing && backInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
+                    {idBack ? <img src={idBack} alt="Back ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Back Side</p>}
+                    <input type="file" ref={backInputRef} onChange={(e) => handleIdUpload(e, setIdBack, 'IdBackPath')} className="hidden" accept="image/*" />
                   </div>
-                  
-                  {idConfig?.hasBackSide && (
-                    <div onClick={() => isEditing && backInputRef.current?.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
-                      {idBack ? <img src={idBack} alt="Back ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Back Side</p>}
-                      <input type="file" ref={backInputRef} onChange={(e) => handleIdUpload(e, setIdBack, 'IdBackPath')} className="hidden" accept="image/*" />
-                    </div>
                 )}
               </div>
 
@@ -574,7 +610,7 @@ export default function UserSettings({ currentUser }) {
                   <input type="file" ref={selfieInputRef} onChange={(e) => handleIdUpload(e, setIdSelfie, 'SelfiePath')} className="hidden" accept="image/*" />
                 </div>
               </div>
-              <SaveBtn label="Save Verification Details" onClick={handleSaveVerification} />
+              <SaveBtn label="Save Verification Details" onClick={handleSaveVerification} isLoading={isSavingVerification} loadingText="Saving Details..." />
             </Section>
 
             {/* Accessibility & Statutory Discounts */}
@@ -617,7 +653,7 @@ export default function UserSettings({ currentUser }) {
                   + Link New Payment Method
                 </button>
               </div>
-              <SaveBtn label="Save Payment Methods" onClick={() => alert('Linked Wallets Saved.')} />
+              <SaveBtn label="Save Payment Methods" onClick={() => alert('Linked Wallets Saved.')} isLoading={false} />
             </Section>
           </div>
         )}
@@ -665,7 +701,7 @@ export default function UserSettings({ currentUser }) {
                   <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={inputCls} placeholder="Confirm New Password" />
                 </div>
               </div>
-              <SaveBtn label="Update Credentials" onClick={handleUpdatePassword} />
+              <SaveBtn label="Update Credentials" onClick={handleUpdatePassword} isLoading={isUpdatingPassword} loadingText="Updating..." />
             </Section>
 
             {/* Security & Logins */}
@@ -703,8 +739,18 @@ export default function UserSettings({ currentUser }) {
                     onChange={setPurgeCache}
                   />
                 </div>
-                <button onClick={handlePrintTranscript} className="border border-purple-700 text-purple-700 dark:text-purple-400 font-bold text-xs px-6 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all active:scale-95 whitespace-nowrap">
-                  Export Profile Metadata Transcript
+                <button
+                  onClick={handlePrintTranscript}
+                  disabled={isExportingTranscript}
+                  className="border border-purple-700 text-purple-700 dark:text-purple-400 font-bold text-xs px-6 py-2.5 rounded-none hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExportingTranscript ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Exporting...
+                    </>
+                  ) : (
+                    "Export Profile Metadata Transcript"
+                  )}
                 </button>
               </div>
             </Section>
@@ -736,15 +782,23 @@ export default function UserSettings({ currentUser }) {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDangerModal(false)}
-                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+                disabled={isDeletingAccount}
+                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="flex-1 py-2.5 rounded-none bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all"
+                disabled={isDeletingAccount}
+                className="flex-1 py-2.5 rounded-none bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Yes, Delete
+                {isDeletingAccount ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  "Yes, Delete"
+                )}
               </button>
             </div>
           </div>
@@ -760,13 +814,13 @@ export default function UserSettings({ currentUser }) {
             <h2 className="text-xl font-bold text-slate-900 mb-2">Unlink Payment Method?</h2>
             <p className="text-sm text-slate-500 mb-6">Are you sure you want to remove your <strong>{walletToUnlink.name}</strong> ending in <strong>{walletToUnlink.value.slice(-4)}</strong>? You will need to re-verify it to use it again.</p>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setWalletToUnlink(null)}
                 className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setWallets(wallets.filter(w => w.id !== walletToUnlink.id));
                   setWalletToUnlink(null);
@@ -848,15 +902,23 @@ export default function UserSettings({ currentUser }) {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={() => { setShowAddWalletModal(false); setWalletForm({ type: 'ewallet', provider: 'GCash', accountName: '', accountNumber: '', expiry: '', cvv: '' }); }}
-                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+                disabled={isSavingWallet}
+                className="flex-1 py-2.5 rounded-none border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={submitNewWallet}
-                className="flex-1 py-2.5 rounded-none bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-semibold text-sm transition-all"
+                disabled={isSavingWallet}
+                className="flex-1 py-2.5 rounded-none bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Payment Method
+                {isSavingWallet ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save Payment Method"
+                )}
               </button>
             </div>
           </div>

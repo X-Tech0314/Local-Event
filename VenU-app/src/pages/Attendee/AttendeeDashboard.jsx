@@ -3,7 +3,7 @@ import {
   LayoutDashboard, MapPin, Ticket, Settings, Search, Lock,
   Tag, CheckCircle2, X, ChevronRight, Calendar, Clock,
   CreditCard, Smartphone, Star, User, Bell, LogOut, QrCode, Shield, ArrowRight, Music, Moon, Sun, Download, Trash2, Eye,
-  Trophy, Briefcase, Gift, Heart, MoreHorizontal
+  Trophy, Briefcase, Gift, Heart, MoreHorizontal, Loader2, RotateCcw, XCircle
 } from 'lucide-react';
 import logo from "../../assets/venu-logo3-transparent.png";
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,22 @@ import html2canvas from 'html2canvas';
 
 import UserSettings from './Panels/UserSettings';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+
+import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+import { useTheme } from '../../ThemeContext';
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 function QRScannerModal({ onScan, onClose }) {
   useEffect(() => {
@@ -42,20 +58,6 @@ function QRScannerModal({ onScan, onClose }) {
   );
 }
 
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
 function MapUpdater({ center }) {
   const map = useMap();
   React.useEffect(() => {
@@ -83,7 +85,6 @@ function getCoordinatesForEvent(event, index = 0) {
     return [event.latitude, event.longitude];
   }
   const baseCoords = cityCoordinates[event.city] || cityCoordinates['Default'];
-  // Add slight offset so markers don't overlap perfectly if they have the same city
   return [baseCoords[0] + (index * 0.002), baseCoords[1] - (index * 0.002)];
 }
 
@@ -140,7 +141,6 @@ const mockEvents = [
 ];
 
 function getRecommendedEvents(events, user) {
-  // Sort events so that those in the same barangay come first, then same city, then others
   const sortedEvents = [...events].sort((a, b) => {
     if (a.barangay === user.barangay && b.barangay !== user.barangay) return -1;
     if (a.barangay !== user.barangay && b.barangay === user.barangay) return 1;
@@ -260,6 +260,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
   const [paymentMethod, setPaymentMethod] = useState('gcash');
   const [accountNumber, setAccountNumber] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const tiers = event.ticketTiers && event.ticketTiers.length > 0 ? event.ticketTiers : ["General Admission"];
   const [selectedTier, setSelectedTier] = useState(tiers[0]);
   const codeMatches = accessCode === event.verificationCode;
@@ -274,7 +275,6 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
   };
 
   React.useEffect(() => {
-    // Small timeout to ensure map has initialized
     const timer = setTimeout(() => {
       if (markerRef.current) {
         markerRef.current.openPopup();
@@ -284,15 +284,20 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
   }, []);
 
   const handleCheckout = () => {
-    onSuccess({
-      event,
-      ticketId: generateTicketId(),
-      tier: selectedTier,
-      quantity,
-      paymentMethod: isPaid ? paymentMethod : null,
-      accountNumber: isPaid ? accountNumber : null,
-      claimedAt: new Date().toLocaleString()
-    });
+    setIsSubmitting(true);
+
+    setTimeout(() => {
+      onSuccess({
+        event,
+        ticketId: generateTicketId(),
+        tier: selectedTier,
+        quantity,
+        paymentMethod: isPaid ? paymentMethod : null,
+        accountNumber: isPaid ? accountNumber : null,
+        claimedAt: new Date().toLocaleString()
+      });
+      setIsSubmitting(false);
+    }, 1000);
   };
 
   return (
@@ -312,7 +317,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                 <div className="h-28 w-full bg-slate-200 relative">
                   <img src={event.image} className="w-full h-full object-cover" alt="Venue" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 bg-purple-700 dark:bg-purple-500/80 rounded-none backdrop-blur-sm">
+                  <span className="absolute bottom-2 left-2 text-[10px] font-black uppercase tracking-widest text-white px2 py-1 bg-purple-700 dark:bg-purple-500/80 rounded-none backdrop-blur-sm">
                     {event.category}
                   </span>
                 </div>
@@ -455,7 +460,6 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 
                 <div className="flex gap-4 items-center mb-5">
                   <div className="w-20 h-20 bg-white border-2 border-slate-200 p-1 shrink-0 shadow-sm relative group-hover:border-purple-300 transition-colors">
-                    {/* Mock QR Code using CSS grid patterns */}
                     <div className="w-full h-full bg-[linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a),linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a)]" style={{ backgroundSize: '10px 10px', backgroundPosition: '0 0, 5px 5px' }}></div>
                     <div className="absolute inset-2 border-[3px] border-white pointer-events-none"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent flex items-end justify-center pb-1 pointer-events-none">
@@ -525,29 +529,33 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
         <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md relative z-20">
           {event.accessType === 'Private' ? (
             <button
-              disabled={!codeMatches}
+              disabled={!codeMatches || isSubmitting}
               onClick={handleCheckout}
-              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide ${codeMatches
+              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${codeMatches && !isSubmitting
                 ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'
                 : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
                 }`}
             >
-              {codeMatches ? 'Confirm Registration' : 'Enter Access Code'}
+              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing...</> : 'Confirm Registration'}
             </button>
           ) : isPaid ? (
             <button
-              disabled={!isPaymentValid()}
+              disabled={!isPaymentValid() || isSubmitting}
               onClick={handleCheckout}
-              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${isPaymentValid()
+              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${isPaymentValid() && !isSubmitting
                 ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'
                 : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
                 }`}
             >
-              <Lock size={16} /> Authorize Payment
+              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing...</> : <><Lock size={16} /> Authorize Payment</>}
             </button>
           ) : (
-            <button onClick={handleCheckout} className="w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95 flex justify-center items-center gap-2">
-              <SparklesIcon /> Claim Free Pass
+            <button
+              disabled={isSubmitting}
+              onClick={handleCheckout}
+              className={`w-full py-4 rounded-none text-sm font-bold uppercase tracking-wide flex justify-center items-center gap-2 transition-colors ${isSubmitting ? 'bg-emerald-400 text-white cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95'}`}
+            >
+              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Claiming...</> : <><SparklesIcon /> Claim Free Pass</>}
             </button>
           )}
         </div>
@@ -557,7 +565,7 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
 }
 
 function SparklesIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1-1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>
 }
 
 function TicketModal({ ticket, onClose }) {
@@ -628,8 +636,6 @@ function TicketModal({ ticket, onClose }) {
   );
 }
 
-import { useTheme } from '../../ThemeContext';
-
 export default function AttendeeDashboard() {
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -664,6 +670,10 @@ export default function AttendeeDashboard() {
   const [liveEvents, setLiveEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mapCenter, setMapCenter] = useState(null);
+
+  const [actionLoading, setActionLoading] = useState({}); // For ticket spinners
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+  const [isAccessing, setIsAccessing] = useState(false);
 
   const [savedEvents, setSavedEvents] = useState(() => {
     const saved = localStorage.getItem(`vnu_user_saved_events_${currentUser.id}`);
@@ -724,7 +734,6 @@ export default function AttendeeDashboard() {
 
           const processedEvents = await Promise.all(data.map(async (event, index) => {
             if (!event.latitude || event.latitude === 0 || !event.longitude || event.longitude === 0) {
-              // Throttle requests slightly based on index to avoid 429 Too Many Requests
               await new Promise(r => setTimeout(r, index * 600));
 
               const coords = await dynamicGeocode(event.address);
@@ -793,7 +802,6 @@ export default function AttendeeDashboard() {
     return savedTickets ? JSON.parse(savedTickets) : [];
   });
 
-
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(() => {
     const saved = localStorage.getItem(`vnu_user_notifications_${currentUser.id}`);
@@ -811,6 +819,34 @@ export default function AttendeeDashboard() {
       ...prev
     ]);
   };
+
+  // --- DUPLICATE TICKET PREVENTION FUNCTIONS ---
+  const handleSelectEvent = (event) => {
+    const eventId = event.eventId || event.id;
+    const alreadyHasTicket = tickets.some(t => (t.event.eventId || t.event.id) === eventId);
+
+    if (alreadyHasTicket) {
+      alert(`You already have a ticket for ${event.title}. Please check your Ticket Wallet.`);
+      addNotification("Ticket Already Owned", `You already have a pass for ${event.title}. Check your Ticket Wallet.`);
+      return;
+    }
+    setSelectedEvent(event);
+  };
+
+  const handlePrivateEvent = (event) => {
+    const eventId = event.eventId || event.id;
+    const alreadyHasTicket = tickets.some(t => (t.event.eventId || t.event.id) === eventId);
+
+    if (alreadyHasTicket) {
+      alert(`You already have a ticket for ${event.title}. Please check your Ticket Wallet.`);
+      addNotification("Ticket Already Owned", `You already have a pass for ${event.title}. Check your Ticket Wallet.`);
+      return;
+    }
+    setAccessModalEvent(event);
+    setAccessCodeInput('');
+    setAccessCodeError('');
+  };
+  // --------------------------------------------
 
   const unreadCount = notifications.filter(n => !n.read).length;
   const markAllRead = () => setNotifications(notifications.map(n => ({ ...n, read: true })));
@@ -848,6 +884,11 @@ export default function AttendeeDashboard() {
   });
 
   const filteredTickets = tickets.filter((t) => {
+    // 1. Filter by Trash vs Upcoming
+    if (walletView === 'trash' && !t.isDeleted) return false;
+    if (walletView !== 'trash' && t.isDeleted) return false;
+
+    // 2. Filter by Category
     if (selectedWalletCategory === 'All') return true;
 
     const eventCat = (t.event.category || '').toLowerCase();
@@ -896,7 +937,6 @@ export default function AttendeeDashboard() {
   const groupedTickets = React.useMemo(() => {
     const map = new Map();
     filteredTickets.forEach(t => {
-      // Group strictly by title to prevent duplicates from mismatched local storage data structures
       const key = (t.event.title || 'Unknown Event').trim().toLowerCase();
       if (!map.has(key)) {
         map.set(key, { event: t.event, tickets: [] });
@@ -917,14 +957,42 @@ export default function AttendeeDashboard() {
     addNotification('🎫 Ticket Confirmed', `Successfully purchased ${qty} pass${qty > 1 ? 'es' : ''} for ${newTicket.event.title}.`);
   };
 
+  // --- TICKET ACTION FUNCTIONS (WITH SPINNERS) ---
   const handleDeleteTicket = (ticketId, eventTitle, e) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to void and remove your pass for "${eventTitle}"?`)) {
+    if (!window.confirm(`Send pass for "${eventTitle}" to the Recycle Bin?`)) return;
+    setActionLoading(prev => ({ ...prev, [ticketId]: 'delete' }));
+    setTimeout(() => {
+      const updatedTickets = tickets.map(t => t.ticketId === ticketId ? { ...t, isDeleted: true } : t);
+      setTickets(updatedTickets);
+      localStorage.setItem(`vnu_user_tickets_${currentUser.id}`, JSON.stringify(updatedTickets));
+      setActionLoading(prev => ({ ...prev, [ticketId]: false }));
+    }, 600);
+  };
+
+  const handleRestoreTicket = (ticketId, e) => {
+    e.stopPropagation();
+    setActionLoading(prev => ({ ...prev, [ticketId]: 'restore' }));
+    setTimeout(() => {
+      const updatedTickets = tickets.map(t => t.ticketId === ticketId ? { ...t, isDeleted: false } : t);
+      setTickets(updatedTickets);
+      localStorage.setItem(`vnu_user_tickets_${currentUser.id}`, JSON.stringify(updatedTickets));
+      setActionLoading(prev => ({ ...prev, [ticketId]: false }));
+    }, 600);
+  };
+
+  const handlePermanentDeleteTicket = (ticketId, eventTitle, e) => {
+    e.stopPropagation();
+    if (!window.confirm(`PERMANENTLY DELETE pass for "${eventTitle}"?\n\nThis action cannot be undone. All ticket data will be erased.`)) return;
+    setActionLoading(prev => ({ ...prev, [ticketId]: 'permanent' }));
+    setTimeout(() => {
       const updatedTickets = tickets.filter(t => t.ticketId !== ticketId);
       setTickets(updatedTickets);
       localStorage.setItem(`vnu_user_tickets_${currentUser.id}`, JSON.stringify(updatedTickets));
-    }
+      setActionLoading(prev => ({ ...prev, [ticketId]: false }));
+    }, 600);
   };
+  // ----------------------------------------------
 
   // ── High Quality Image Snapshot Download Engine ───────────────────────────
   const handleDownloadTicket = (ticket, e) => {
@@ -938,7 +1006,6 @@ export default function AttendeeDashboard() {
       cssGradient = 'linear-gradient(135deg, #f59e0b, #ea580c)';
     }
 
-    // Build the visual container to render off-screen
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.top = '-9999px';
@@ -948,7 +1015,6 @@ export default function AttendeeDashboard() {
     container.style.backgroundColor = '#0f172a';
     container.style.padding = '40px 20px';
 
-    // Randomize dynamic local fake pixels for snapshot
     const qrPixels = Array.from({ length: 64 }, () =>
       `<div style="background-color: ${Math.random() > 0.5 ? '#0f172a' : 'transparent'}; width:100%; height:100%;"></div>`
     ).join('');
@@ -959,7 +1025,7 @@ export default function AttendeeDashboard() {
           <div style="display: inline-flex; align-items: center; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 9999px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">✓ Confirmed</div>
           <h2 style="font-size: 24px; font-weight: 900; line-height: 1.2; margin: 0;">${ticket.event.title}</h2>
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: -16px; position: relative; z-index: 20;">
+        <div style="display: flex; justify-content: space-between; items-center; margin-top: -16px; position: relative; z-index: 20;">
           <div style="width: 32px; height: 32px; background: #0f172a; border-radius: 50%; margin-left: -16px;"></div>
           <div style="flex: 1; border-top: 2px dashed #cbd5e1; margin: 0 8px;"></div>
           <div style="width: 32px; height: 32px; background: #0f172a; border-radius: 50%; margin-right: -16px;"></div>
@@ -991,10 +1057,9 @@ export default function AttendeeDashboard() {
 
     document.body.appendChild(container);
 
-    // Render snapshot and prompt save
     html2canvas(container, {
       backgroundColor: '#0f172a',
-      scale: 2, // Double resolution scale for clear QR pixel snapshot
+      scale: 2,
       logging: false,
       useCORS: true
     }).then((canvas) => {
@@ -1066,8 +1131,8 @@ export default function AttendeeDashboard() {
                   <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
                   <span className="tracking-wide">{label}</span>
                   {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
-                  {id === 'mytickets' && tickets.length > 0 && (
-                    <span className="ml-auto bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-300 text-xs font-black px-2 py-0.5 rounded-full">{tickets.length}</span>
+                  {id === 'mytickets' && tickets.filter(t => !t.isDeleted).length > 0 && (
+                    <span className="ml-auto bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-300 text-xs font-black px-2 py-0.5 rounded-full">{tickets.filter(t => !t.isDeleted).length}</span>
                   )}
                 </button>
               );
@@ -1233,12 +1298,8 @@ export default function AttendeeDashboard() {
                     <EventCard
                       key={event.eventId || event.id}
                       event={event}
-                      onSelect={setSelectedEvent}
-                      onPrivateEvent={(evt) => {
-                        setAccessModalEvent(evt);
-                        setAccessCodeInput('');
-                        setAccessCodeError('');
-                      }}
+                      onSelect={handleSelectEvent}
+                      onPrivateEvent={handlePrivateEvent}
                       onLocationClick={() => handleLocationClick(event, index)}
                       isSaved={savedEvents.includes(event.eventId || event.id)}
                       onToggleSave={toggleSaveEvent}
@@ -1272,58 +1333,119 @@ export default function AttendeeDashboard() {
                     >
                       Past Event History
                     </button>
+                    <button
+                      onClick={() => setWalletView('trash')}
+                      className={`px-6 py-2 text-sm font-bold uppercase tracking-wide transition-colors ${walletView === 'trash' ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    >
+                      Recycle Bin
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {walletView === 'upcoming' ? (
-                <>
-                  <div className="mb-10 bg-slate-50 dark:bg-slate-800/40 p-4 border border-slate-200 dark:border-slate-800 rounded-none">
-                    <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Filter by Event Type</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {eventTypes.map((type) => {
-                        const TypeIcon = type.icon;
-                        const isSelected = selectedWalletCategory === type.name;
-                        return (
-                          <button
-                            key={type.name}
-                            onClick={() => setSelectedWalletCategory(type.name)}
-                            className={`flex items-center gap-3 p-3 text-sm font-bold border transition-all ${isSelected
-                              ? 'bg-purple-700 dark:bg-purple-600 border-purple-600 text-white shadow-md'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
-                              }`}
-                          >
-                            <TypeIcon size={16} className={isSelected ? 'text-white' : 'text-slate-400'} />
-                            {type.name === 'Others' && isSelected ? (
-                              <input
-                                autoFocus
-                                type="text"
-                                value={otherCategoryQuery}
-                                onChange={(e) => setOtherCategoryQuery(e.target.value)}
-                                placeholder="Type category..."
-                                className="bg-transparent text-white placeholder:text-purple-200 outline-none w-full min-w-[100px]"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            ) : (
-                              <span className="truncate">{type.name}</span>
-                            )}
-                          </button>
-                        );
-                      })}
+              {walletView === 'past' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                  {mockPastTickets.map((t) => (
+                    <div
+                      key={t.ticketId}
+                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden flex flex-col justify-between opacity-80 hover:opacity-100 transition-opacity"
+                    >
+                      <div className="p-5 flex gap-4 grayscale hover:grayscale-0 transition-all">
+                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+                          <img src={t.event.image} alt="" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <CheckCircle2 size={24} className="text-white/80" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[9px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-900/50 px-2 py-0.5 border border-slate-300 dark:border-slate-700">
+                            {t.tier}
+                          </span>
+                          <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
+                            {t.event.title}
+                          </h3>
+                          <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date}</p>
+                            <p className="flex items-center gap-1.5"><MapPin size={12} /> {t.event.barangay}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-100 dark:bg-slate-900 px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <span className="font-mono text-xs font-black text-slate-500 dark:text-slate-400 tracking-wider">
+                          {t.ticketId}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setReviewingEvent(t.event);
+                          }}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest shadow-sm rounded-none flex items-center gap-2 transition-colors"
+                        >
+                          <Star size={14} fill="currentColor" /> Leave Review
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {walletView === 'upcoming' && (
+                    <div className="mb-10 bg-slate-50 dark:bg-slate-800/40 p-4 border border-slate-200 dark:border-slate-800 rounded-none">
+                      <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Filter by Event Type</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {eventTypes.map((type) => {
+                          const TypeIcon = type.icon;
+                          const isSelected = selectedWalletCategory === type.name;
+                          return (
+                            <button
+                              key={type.name}
+                              onClick={() => setSelectedWalletCategory(type.name)}
+                              className={`flex items-center gap-3 p-3 text-sm font-bold border transition-all ${isSelected
+                                ? 'bg-purple-700 dark:bg-purple-600 border-purple-600 text-white shadow-md'
+                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                            >
+                              <TypeIcon size={16} className={isSelected ? 'text-white' : 'text-slate-400'} />
+                              {type.name === 'Others' && isSelected ? (
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={otherCategoryQuery}
+                                  onChange={(e) => setOtherCategoryQuery(e.target.value)}
+                                  placeholder="Type category..."
+                                  className="bg-transparent text-white placeholder:text-purple-200 outline-none w-full min-w-[100px]"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <span className="truncate">{type.name}</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {filteredTickets.length === 0 ? (
                     <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-none p-16 text-center relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent group-hover:via-purple-500"></div>
-                      <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800" size={64} strokeWidth={1} />
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Tickets Found</h3>
+                      {walletView === 'trash' ? (
+                        <Trash2 className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-amber-200 dark:group-hover:text-amber-800" size={64} strokeWidth={1} />
+                      ) : (
+                        <QrCode className="mx-auto text-slate-200 dark:text-slate-700 mb-6 group-hover:text-purple-200 dark:group-hover:text-purple-800" size={64} strokeWidth={1} />
+                      )}
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                        {walletView === 'trash' ? "Recycle Bin is Empty" : "No Tickets Found"}
+                      </h3>
                       <p className="text-sm font-medium text-slate-400 mt-2 mb-8 max-w-sm mx-auto">
-                        {tickets.length === 0
-                          ? "You haven't purchased any tickets yet. Browse events to find something you like."
-                          : "No passes match this specific event type filter."}
+                        {walletView === 'trash'
+                          ? "Tickets you delete will appear here. You can restore them or delete them permanently."
+                          : tickets.length === 0
+                            ? "You haven't purchased any tickets yet. Browse events to find something you like."
+                            : "No passes match this specific event type filter."
+                        }
                       </p>
-                      {tickets.length === 0 && (
+                      {walletView === 'upcoming' && tickets.length === 0 && (
                         <button onClick={() => setActiveTab('dashboard')} className="px-8 py-3.5 rounded-none bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
                           <Search size={16} /> Explore Events
                         </button>
@@ -1332,7 +1454,7 @@ export default function AttendeeDashboard() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {groupedTickets.map((group) => {
-                        const t = group.tickets[0]; // Representative event
+                        const t = group.tickets[0];
                         const count = group.tickets.length;
                         return (
                           <div
@@ -1380,27 +1502,50 @@ export default function AttendeeDashboard() {
                                   </div>
 
                                   <div className="flex items-center gap-1.5 shrink-0">
-                                    <button
-                                      title="View Full Digital Pass"
-                                      onClick={() => setConfirmedTicket(ticket)}
-                                      className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-none"
-                                    >
-                                      <Eye size={14} strokeWidth={2.5} />
-                                    </button>
-                                    <button
-                                      title="Download Ticket Image (.png)"
-                                      onClick={(e) => handleDownloadTicket(ticket, e)}
-                                      className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors rounded-none"
-                                    >
-                                      <Download size={14} strokeWidth={2.5} />
-                                    </button>
-                                    <button
-                                      title="Void / Delete Pass"
-                                      onClick={(e) => handleDeleteTicket(ticket.ticketId, ticket.event.title, e)}
-                                      className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-none"
-                                    >
-                                      <Trash2 size={14} strokeWidth={2.5} />
-                                    </button>
+                                    {actionLoading[ticket.ticketId] ? (
+                                      <Loader2 size={14} className="animate-spin text-slate-400" />
+                                    ) : walletView === 'trash' ? (
+                                      <>
+                                        <button
+                                          title="Restore Pass"
+                                          onClick={(e) => handleRestoreTicket(ticket.ticketId, e)}
+                                          className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors rounded-none"
+                                        >
+                                          <RotateCcw size={14} strokeWidth={2.5} />
+                                        </button>
+                                        <button
+                                          title="Delete Permanently"
+                                          onClick={(e) => handlePermanentDeleteTicket(ticket.ticketId, t.event.title, e)}
+                                          className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-none"
+                                        >
+                                          <XCircle size={14} strokeWidth={2.5} />
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          title="View Full Digital Pass"
+                                          onClick={() => setConfirmedTicket(ticket)}
+                                          className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-none"
+                                        >
+                                          <Eye size={14} strokeWidth={2.5} />
+                                        </button>
+                                        <button
+                                          title="Download Ticket Image (.png)"
+                                          onClick={(e) => handleDownloadTicket(ticket, e)}
+                                          className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors rounded-none"
+                                        >
+                                          <Download size={14} strokeWidth={2.5} />
+                                        </button>
+                                        <button
+                                          title="Move to Recycle Bin"
+                                          onClick={(e) => handleDeleteTicket(ticket.ticketId, t.event.title, e)}
+                                          className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-none"
+                                        >
+                                          <Trash2 size={14} strokeWidth={2.5} />
+                                        </button>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -1411,50 +1556,6 @@ export default function AttendeeDashboard() {
                     </div>
                   )}
                 </>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                  {mockPastTickets.map((t) => (
-                    <div
-                      key={t.ticketId}
-                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-none overflow-hidden flex flex-col justify-between opacity-80 hover:opacity-100 transition-opacity"
-                    >
-                      <div className="p-5 flex gap-4 grayscale hover:grayscale-0 transition-all">
-                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden relative">
-                          <img src={t.event.image} alt="" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <CheckCircle2 size={24} className="text-white/80" />
-                          </div>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="text-[9px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-900/50 px-2 py-0.5 border border-slate-300 dark:border-slate-700">
-                            {t.tier}
-                          </span>
-                          <h3 className="font-black text-slate-900 dark:text-white mt-1 truncate text-base leading-tight">
-                            {t.event.title}
-                          </h3>
-                          <div className="mt-2 space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                            <p className="flex items-center gap-1.5"><Calendar size={12} /> {t.event.date}</p>
-                            <p className="flex items-center gap-1.5"><MapPin size={12} /> {t.event.barangay}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-100 dark:bg-slate-900 px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                        <span className="font-mono text-xs font-black text-slate-500 dark:text-slate-400 tracking-wider">
-                          {t.ticketId}
-                        </span>
-                        <button
-                          onClick={() => {
-                            setReviewingEvent(t.event);
-                          }}
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest shadow-sm rounded-none flex items-center gap-2 transition-colors"
-                        >
-                          <Star size={14} fill="currentColor" /> Leave Review
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           )}
@@ -1568,7 +1669,7 @@ export default function AttendeeDashboard() {
                                 <p><span className="font-black text-slate-800">Best for:</span> <span className="capitalize">{event.recommendedFor || 'All events'}</span></p>
                               </div>
 
-                              <button onClick={() => setSelectedEvent(event)} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2 uppercase tracking-widest transition-colors shadow-sm">
+                              <button onClick={() => handleSelectEvent(event)} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2 uppercase tracking-widest transition-colors shadow-sm">
                                 Buy Tickets
                               </button>
                             </div>
@@ -1578,7 +1679,7 @@ export default function AttendeeDashboard() {
                     ))}
                   </MapContainer>
 
-                  {/* Floating "Near Me" Button - Exclusively for Global Radar Map */}
+                  {/* Floating "Near me" Button - Exclusively for Global Radar Map */}
                   <button
                     onClick={() => {
                       if (navigator.geolocation) {
@@ -1659,12 +1760,17 @@ export default function AttendeeDashboard() {
 
               <button
                 onClick={() => {
-                  setReviewingEvent(null);
-                  addNotification("⭐ Review Submitted", `Thank you for reviewing ${reviewingEvent.title}!`);
+                  setIsReviewSubmitting(true);
+                  setTimeout(() => {
+                    setReviewingEvent(null);
+                    setIsReviewSubmitting(false);
+                    addNotification("⭐ Review Submitted", `Thank you for reviewing ${reviewingEvent.title}!`);
+                  }, 1200);
                 }}
-                className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black uppercase tracking-widest text-sm py-3.5 rounded-none shadow-md transition-all active:scale-95"
+                disabled={isReviewSubmitting}
+                className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black uppercase tracking-widest text-sm py-3.5 rounded-none shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit Review
+                {isReviewSubmitting ? <><Loader2 size={16} className="animate-spin" /> Submitting...</> : "Submit Review"}
               </button>
             </div>
           </div>
@@ -1715,12 +1821,24 @@ export default function AttendeeDashboard() {
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
-                        setAccessModalEvent(null);
-                        setSelectedEvent(accessModalEvent);
-                      } else {
-                        setAccessCodeError('Incorrect access code. Please try again.');
-                      }
+                      setIsAccessing(true);
+                      setTimeout(() => {
+                        if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
+                          const eventId = accessModalEvent.eventId || accessModalEvent.id;
+                          const alreadyHasTicket = tickets.some(t => (t.event.eventId || t.event.id) === eventId);
+
+                          if (alreadyHasTicket) {
+                            setAccessCodeError('You already own a ticket for this event.');
+                            setIsAccessing(false);
+                            return;
+                          }
+                          setAccessModalEvent(null);
+                          setSelectedEvent(accessModalEvent);
+                        } else {
+                          setAccessCodeError('Incorrect access code. Please try again.');
+                        }
+                        setIsAccessing(false);
+                      }, 500);
                     }
                   }}
                   placeholder="Enter Code"
@@ -1731,16 +1849,29 @@ export default function AttendeeDashboard() {
 
               <button
                 onClick={() => {
-                  if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
-                    setAccessModalEvent(null);
-                    setSelectedEvent(accessModalEvent);
-                  } else {
-                    setAccessCodeError('Incorrect access code. Please try again.');
-                  }
+                  setIsAccessing(true);
+                  setTimeout(() => {
+                    if (accessCodeInput.toLowerCase() === accessModalEvent.verificationCode?.toLowerCase()) {
+                      const eventId = accessModalEvent.eventId || accessModalEvent.id;
+                      const alreadyHasTicket = tickets.some(t => (t.event.eventId || t.event.id) === eventId);
+
+                      if (alreadyHasTicket) {
+                        setAccessCodeError('You already own a ticket for this event.');
+                        setIsAccessing(false);
+                        return;
+                      }
+                      setAccessModalEvent(null);
+                      setSelectedEvent(accessModalEvent);
+                    } else {
+                      setAccessCodeError('Incorrect access code. Please try again.');
+                    }
+                    setIsAccessing(false);
+                  }, 500);
                 }}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded transition-colors shadow-lg"
+                disabled={isAccessing}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Access Event
+                {isAccessing ? <><Loader2 size={16} className="animate-spin" /> Verifying...</> : "Access Event"}
               </button>
             </div>
           </div>
