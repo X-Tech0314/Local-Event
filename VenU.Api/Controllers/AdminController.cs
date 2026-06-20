@@ -8,7 +8,7 @@ namespace VenU.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin,Superadmin")]
     public class AdminController : ControllerBase
     {
         private readonly VenUDbContext _context;
@@ -19,23 +19,7 @@ namespace VenU.Api.Controllers
         }
 
         // ==========================================
-        // 0. QUICK FIXES & UTILS
-        // ==========================================
-        [HttpGet("fix-identities")]
-        public async Task<IActionResult> FixIdentities()
-        {
-            var users = await _context.Users.Where(u => !u.IsVerified && u.Role == "Attendee" && u.Email != "").ToListAsync();
-            foreach (var user in users)
-            {
-                if (string.IsNullOrEmpty(user.IdFrontPath)) user.IdFrontPath = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=800&q=80";
-                if (string.IsNullOrEmpty(user.SelfiePath)) user.SelfiePath = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&q=80";
-            }
-            await _context.SaveChangesAsync();
-            return Ok(new { Message = $"Fixed {users.Count} users" });
-        }
-
-        // ==========================================
-        // DASHBOARD STATS
+        // 1. DASHBOARD STATS
         // ==========================================
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
@@ -53,30 +37,14 @@ namespace VenU.Api.Controllers
         }
 
         // ==========================================
-        // REAL-TIME EMAIL CHECKER
-        // ==========================================
-        [HttpGet("check-email")]
-        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-                return Ok(new { exists = false });
-
-            // Case-insensitive check
-            var exists = await _context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower().Trim());
-            return Ok(new { exists });
-        }
-
-        }   
-
-        // ==========================================
-        // EVENT APPROVALS
+        // 2. EVENT APPROVALS
         // ==========================================
         [HttpGet("events/pending")]
         public async Task<IActionResult> GetPendingEvents()
         {
             var pendingEvents = await _context.Events
                 .Include(e => e.Organizer)
-                .Where(e => e.Status == "Pending" || e.Status == "UnderReview")
+                .Where(e => e.Status == "Pending")
                 .Select(e => new {
                     id = e.Id,
                     name = e.Title,
@@ -85,7 +53,7 @@ namespace VenU.Api.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(new { events = pendingEvents }); // Wrapping in object for compatibility with frontend if expected
+            return Ok(pendingEvents);
         }
 
         [HttpPut("events/{id}/approved")]
@@ -120,14 +88,12 @@ namespace VenU.Api.Controllers
             var query = _context.Users
                 .Where(u => u.Role == "Attendee" || u.Role == "Organizer");
 
-            // Filter by Active or Deleted (Recycle Bin)
             if (deleted) {
                 query = query.Where(u => u.Status == "Deleted");
             } else {
-                query = query.Where(u => u.Status != "Deleted" || u.Status == null);
+                query = query.Where(u => u.Status != "Deleted");
             }
 
-            // Apply Search Filter
             if (!string.IsNullOrEmpty(search))
             {
                 var lowerSearch = search.ToLower();
@@ -138,11 +104,9 @@ namespace VenU.Api.Controllers
                 );
             }
 
-            // Get Total Count for Pagination logic
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            // Apply Pagination
             var users = await query
                 .OrderByDescending(u => u.CreatedAt)
                 .Skip((page - 1) * pageSize)
@@ -176,7 +140,6 @@ namespace VenU.Api.Controllers
             return Ok(new { message = "User status updated successfully." });
         }
 
-        // SOFT DELETE (Move to Recycle Bin)
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
@@ -194,7 +157,6 @@ namespace VenU.Api.Controllers
             return Ok(new { message = "User moved to Recycle Bin." });
         }
 
-        // RESTORE FROM RECYCLE BIN
         [HttpPut("users/{id}/restore")]
         public async Task<IActionResult> RestoreUser(Guid id)
         {
@@ -207,7 +169,6 @@ namespace VenU.Api.Controllers
             return Ok(new { message = "User restored successfully." });
         }
 
-        // PERMANENT DELETE (Remove from database entirely)
         [HttpDelete("users/{id}/permanent")]
         public async Task<IActionResult> PermanentDeleteUser(Guid id)
         {
@@ -229,7 +190,7 @@ namespace VenU.Api.Controllers
         // 4. ADMIN MANAGEMENT (Superadmin Only)
         // ==========================================
         [HttpGet("admins")]
-        [Authorize]
+        [Authorize(Roles = "Superadmin")]
         public async Task<IActionResult> GetAdmins()
         {
             var admins = await _context.Users
@@ -246,7 +207,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("admins")]
-        [Authorize]
+        [Authorize(Roles = "Superadmin")]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
@@ -295,7 +256,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPut("admins/{id}/role")]
-        [Authorize]
+        [Authorize(Roles = "Superadmin")]
         public async Task<IActionResult> UpdateAdminRole(Guid id, [FromBody] UpdateRoleDto dto)
         {
             var admin = await _context.Users.FindAsync(id);
@@ -303,7 +264,7 @@ namespace VenU.Api.Controllers
 
             if (dto.Role != "Admin" && dto.Role != "Superadmin")
             {
-                return BadRequest(new { message = "Invalid role specified." });
+                return BadRequest("Invalid role specified.");
             }
 
             admin.Role = dto.Role;
@@ -313,7 +274,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpDelete("admins/{id}")]
-        [Authorize]
+        [Authorize(Roles = "Superadmin")]
         public async Task<IActionResult> DeleteAdmin(Guid id)
         {
             var admin = await _context.Users.FindAsync(id);
@@ -321,7 +282,7 @@ namespace VenU.Api.Controllers
 
             if (admin.Role != "Admin" && admin.Role != "Superadmin")
             {
-                return BadRequest(new { message = "This user is not an admin." });
+                return BadRequest("This user is not an admin.");
             }
 
             _context.Users.Remove(admin);
@@ -331,64 +292,22 @@ namespace VenU.Api.Controllers
         }
 
         // ==========================================
-        // 5. IDENTITY APPROVALS
+        // 5. REAL-TIME EMAIL CHECKER
         // ==========================================
-        [HttpGet("identity-approvals")]
-        public async Task<IActionResult> GetIdentityApprovals()
+        [HttpGet("check-email")]
+        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
         {
-            // Fetch users who are NOT verified
-            var pendingUsers = await _context.Users
-                .Where(u => !u.IsVerified && (u.Role == "Attendee" || u.Role == "Organizer"))
-                .Select(u => new {
-                    id = u.Id,
-                    firstName = u.FirstName,
-                    lastName = u.LastName,
-                    email = u.Email,
-                    role = u.Role,
-                    idType = u.IdType,
-                    idFrontPath = u.IdFrontPath,
-                    idBackPath = u.IdBackPath,
-                    selfiePath = u.SelfiePath,
-                    orgDocumentPath = u.OrgDocumentPath,
-                    verificationMessage = u.VerificationMessage
-                })
-                .ToListAsync();
-            
-            return Ok(pendingUsers);
-        }
+            if (string.IsNullOrWhiteSpace(email))
+                return Ok(new { exists = false });
 
-        [HttpPut("identity-approvals/{id}/approve")]
-        public async Task<IActionResult> ApproveIdentity(Guid id)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound(new { message = "User not found." });
-
-            user.IsVerified = true;
-            user.VerificationMessage = null;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Identity approved." });
-        }
-
-        [HttpPut("identity-approvals/{id}/reject")]
-        public async Task<IActionResult> RejectIdentity(Guid id, [FromBody] RejectIdentityDto req)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound(new { message = "User not found." });
-
-            user.IsVerified = false;
-            // Optionally clear the paths so they must upload again
-            user.IdFrontPath = "";
-            user.IdBackPath = "";
-            user.SelfiePath = "";
-            user.VerificationMessage = req.Reason;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Identity rejected." });
+            var exists = await _context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower().Trim());
+            return Ok(new { exists });
         }
     }
 
-    // DTOs
+    // ==========================================
+    // DTOs (Data Transfer Objects)
+    // ==========================================
     public class UpdateStatusDto
     {
         public string Status { get; set; }
@@ -404,10 +323,5 @@ namespace VenU.Api.Controllers
     public class UpdateRoleDto
     {
         public string Role { get; set; }
-    }
-
-    public class RejectIdentityDto
-    {
-        public string Reason { get; set; }
     }
 }
