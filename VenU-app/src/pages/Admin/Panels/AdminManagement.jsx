@@ -7,6 +7,11 @@ export default function AdminManagement() {
     const [isSubmitting, setIsSubmitting] = useState(false); // For Create button
     const [actionLoading, setActionLoading] = useState({}); // For Table action buttons
     const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '' });
+    const [formErrors, setFormErrors] = useState({});
+
+    // Email checking states
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+    const [emailExists, setEmailExists] = useState(false);
 
     useEffect(() => {
         const fetchAdmins = async () => {
@@ -23,7 +28,6 @@ export default function AdminManagement() {
                 } else {
                     const errorText = await res.text();
                     console.error("Failed to fetch admins. Status:", res.status, "Response:", errorText);
-                    alert(`Failed to load admin list (Status ${res.status}): ${errorText}`);
                 }
             } catch (err) {
                 console.error("Network Error fetching admins:", err);
@@ -34,11 +38,112 @@ export default function AdminManagement() {
         fetchAdmins();
     }, []);
 
+    // Real-time Email Database Check (Debounced)
+    useEffect(() => {
+        // Only check if the email format is valid first
+        if (!adminForm.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminForm.email)) {
+            setEmailExists(false);
+            return;
+        }
+
+        setIsCheckingEmail(true);
+        setEmailExists(false);
+
+        const delayDebounceFn = setTimeout(async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/check-email?email=${adminForm.email.trim().toLowerCase()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) {
+                        setEmailExists(true);
+                        setFormErrors(prev => ({ ...prev, email: "Email is already registered." }));
+                    } else {
+                        setEmailExists(false);
+                        setFormErrors(prev => ({ ...prev, email: null }));
+                    }
+                }
+            } catch (err) {
+                console.error("Error checking email:", err);
+            } finally {
+                setIsCheckingEmail(false);
+            }
+        }, 600); // Wait 600ms after user stops typing
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [adminForm.email]);
+
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setAdminForm(prev => ({ ...prev, [name]: value }));
+
+        let error = null;
+
+        if (name === 'name') {
+            const nameRegex = /^[A-Za-z\s.\-]+$/;
+            if (!value.trim()) error = "Name is required.";
+            else if (value.trim().length > 50) error = "Name cannot exceed 50 characters.";
+            else if (!nameRegex.test(value)) error = "Name can only contain letters, spaces, and . -";
+        }
+
+        if (name === 'email') {
+            if (!value.trim()) error = "Email is required.";
+            else if (value.trim().length > 50) error = "Email cannot exceed 50 characters.";
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Invalid email format.";
+            else error = null; // If valid format, clear error so the DB check can run
+        }
+
+        if (name === 'password') {
+            if (!value) error = "Password is required.";
+            else if (value.length < 8) error = "Password must be at least 8 characters long.";
+            else {
+                const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+                if (!strongPasswordRegex.test(value)) {
+                    error = "Password does not meet the requirements.";
+                }
+            }
+        }
+
+        setFormErrors(prev => ({ ...prev, [name]: error }));
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!adminForm.name.trim() || adminForm.name.trim().length > 50 || !/^[A-Za-z\s.\-]+$/.test(adminForm.name)) {
+            errors.name = "Valid name is required (Max 50 chars, letters only).";
+            isValid = false;
+        }
+
+        if (!adminForm.email.trim() || adminForm.email.trim().length > 50 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminForm.email)) {
+            errors.email = "Valid email is required (Max 50 chars).";
+            isValid = false;
+        } else if (emailExists) {
+            errors.email = "Email is already registered.";
+            isValid = false;
+        }
+
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+        if (!strongPasswordRegex.test(adminForm.password)) {
+            errors.password = "Password does not meet the requirements.";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
     const handleCreateAdmin = async (e) => {
         e.preventDefault();
+
+        if (!validateForm()) return;
+
         setIsSubmitting(true); // Disable button & show spinner
 
-        // UI/UX: Normalize email to prevent duplicate casing issues
         const normalizedEmail = adminForm.email.trim().toLowerCase();
 
         try {
@@ -53,6 +158,8 @@ export default function AdminManagement() {
                 const newAdmin = await res.json();
                 setAdmins([...admins, newAdmin]);
                 setAdminForm({ name: '', email: '', password: '' });
+                setFormErrors({});
+                setEmailExists(false);
                 alert("Admin created successfully!");
             } else {
                 const errorData = await res.json().catch(() => ({ message: "Unknown server error" }));
@@ -107,14 +214,12 @@ export default function AdminManagement() {
             if (res.ok) {
                 setAdmins(admins.map(a => a.id === admin.id ? { ...a, role: newRole } : a));
 
-                // --- AUTO LOGOUT LOGIC (Bulletproof) ---
                 const loggedInUserStr = localStorage.getItem('user');
                 const loggedInUser = loggedInUserStr ? JSON.parse(loggedInUserStr) : null;
 
                 const loggedInId = String(loggedInUser?.Id || loggedInUser?.id || '').toLowerCase();
                 const targetAdminId = String(admin.id || '').toLowerCase();
 
-                // If they were a Superadmin, are being demoted to Admin, and it's their own account
                 if (isSuperadmin && loggedInId === targetAdminId) {
                     alert("You have demoted your own account. You will now be logged out.");
                     localStorage.removeItem('token');
@@ -136,15 +241,19 @@ export default function AdminManagement() {
     };
 
     // UI/UX: Form Validation - disable button until valid
-    const isFormValid = adminForm.name.trim() !== '' &&
+    const isFormValid = Object.keys(formErrors).length === 0 &&
+        adminForm.name.trim() !== '' &&
         adminForm.email.trim() !== '' &&
-        adminForm.password.trim().length >= 6;
+        adminForm.password.trim() !== '' &&
+        !isCheckingEmail && !emailExists;
+
+    const baseInputCls = "w-full bg-white dark:bg-slate-900 border rounded-none p-3 text-sm font-medium outline-none transition-colors";
+    const inputCls = (fieldName) => `${baseInputCls} ${formErrors[fieldName] ? 'border-red-400 focus:border-red-500' : 'border-slate-400 dark:border-slate-700 focus:border-purple-500'}`;
 
     return (
-        // Changed to flex layout to maximize table width
         <div className="animate-fade-in flex flex-col lg:flex-row gap-8">
 
-            {/* Admin Creation Form - Fixed width on large screens */}
+            {/* Admin Creation Form */}
             <div className="lg:w-80 lg:shrink-0">
                 <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-none border border-slate-200 dark:border-slate-700 shadow-sm lg:sticky lg:top-24">
                     <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6">Create New Admin</h3>
@@ -152,26 +261,54 @@ export default function AdminManagement() {
                         <div>
                             <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Name</label>
                             <input
-                                type="text" required value={adminForm.name}
-                                onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 rounded-none p-3 text-sm font-medium outline-none focus:border-purple-500"
+                                type="text"
+                                name="name"
+                                required
+                                maxLength={50}
+                                value={adminForm.name}
+                                onChange={handleFormChange}
+                                className={inputCls('name')}
+                                placeholder="Max 50 characters"
                             />
+                            {formErrors.name && <p className="text-[10px] text-red-500 mt-1 font-medium">{formErrors.name}</p>}
                         </div>
                         <div>
                             <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Email</label>
-                            <input
-                                type="email" required value={adminForm.email}
-                                onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 rounded-none p-3 text-sm font-medium outline-none focus:border-purple-500"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    required
+                                    maxLength={50}
+                                    value={adminForm.email}
+                                    onChange={handleFormChange}
+                                    className={inputCls('email') + ' pr-10'}
+                                    placeholder="admin@gmail.com"
+                                />
+                                {/* Spinner while checking DB */}
+                                {isCheckingEmail && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Loader2 size={16} className="animate-spin text-purple-500" />
+                                    </div>
+                                )}
+                            </div>
+                            {formErrors.email && <p className="text-[10px] text-red-500 mt-1 font-medium">{formErrors.email}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Temp Password (Min 6 chars)</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Temp Password</label>
                             <input
-                                type="text" required value={adminForm.password}
-                                onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 rounded-none p-3 text-sm font-medium outline-none focus:border-purple-500"
+                                type="text"
+                                name="password"
+                                required
+                                value={adminForm.password}
+                                onChange={handleFormChange}
+                                className={inputCls('password')}
+                                placeholder="Enter secure password"
                             />
+                            <p className="text-[10px] text-slate-400 mt-1.5 font-medium leading-tight">
+                                Rules: 8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char (!@#$%^&*).
+                            </p>
+                            {formErrors.password && <p className="text-[10px] text-red-500 mt-1 font-medium">{formErrors.password}</p>}
                         </div>
                         <button
                             type="submit"
@@ -192,7 +329,7 @@ export default function AdminManagement() {
                 </div>
             </div>
 
-            {/* Existing Admins Table - Takes up all remaining space */}
+            {/* Existing Admins Table */}
             <div className="flex-1 min-w-0">
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <div className="p-5 border-b border-slate-200 dark:border-slate-700">

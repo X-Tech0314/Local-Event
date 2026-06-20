@@ -35,7 +35,7 @@ namespace VenU.Api.Controllers
         }
 
         // ==========================================
-        // 1. DASHBOARD STATS
+        // DASHBOARD STATS
         // ==========================================
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
@@ -53,7 +53,23 @@ namespace VenU.Api.Controllers
         }
 
         // ==========================================
-        // 2. EVENT APPROVALS
+        // REAL-TIME EMAIL CHECKER
+        // ==========================================
+        [HttpGet("check-email")]
+        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return Ok(new { exists = false });
+
+            // Case-insensitive check
+            var exists = await _context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower().Trim());
+            return Ok(new { exists });
+        }
+
+        }   
+
+        // ==========================================
+        // EVENT APPROVALS
         // ==========================================
         [HttpGet("events/pending")]
         public async Task<IActionResult> GetPendingEvents()
