@@ -117,7 +117,8 @@ namespace VenU.Api.Models
         public bool HasFireExit { get; set; } = false; // Legacy
 
         // 6. Media & Files (Stored as JSON array or URLs)
-        public string? VenueImages { get; set; } // JSON array of Cloudinary URLs
+        public string? VenueImages { get; set; } // Legacy JSON array of Cloudinary URLs
+        public ICollection<VenueImage> Images { get; set; } = new List<VenueImage>(); // New related images
         public string? FloorPlanUrl { get; set; }
         public string? LegalPermitsUrl { get; set; }
 

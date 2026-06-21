@@ -48,6 +48,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
+// Register Http Client and Image Moderation Service
+builder.Services.AddHttpClient<VenU.Api.Services.IImageModerationService, VenU.Api.Services.ImageModerationService>();
+builder.Services.AddScoped<VenU.Api.Services.IImageModerationService, VenU.Api.Services.ImageModerationService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

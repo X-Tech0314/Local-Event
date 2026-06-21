@@ -14,6 +14,7 @@ namespace VenU.Api.Data
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<EventTicketTier> EventTicketTiers { get; set; }
         public DbSet<Venue> Venues { get; set; }
+        public DbSet<VenueImage> VenueImages { get; set; }
         public DbSet<EventAttendee> EventAttendees { get; set; }
         public DbSet<EventReview> EventReviews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -34,6 +35,13 @@ namespace VenU.Api.Data
                 .HasOne(t => t.Event)
                 .WithMany(e => e.TicketTiers)
                 .HasForeignKey(t => t.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Cascade delete for Venue -> VenueImages
+            modelBuilder.Entity<VenueImage>()
+                .HasOne(vi => vi.Venue)
+                .WithMany(v => v.Images)
+                .HasForeignKey(vi => vi.VenueId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

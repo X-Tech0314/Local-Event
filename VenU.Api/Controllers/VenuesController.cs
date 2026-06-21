@@ -7,6 +7,7 @@ using VenU.Api.Data;
 using System.Security.Claims;
 using VenU.Api.DTOs;
 using VenU.Api.Models;
+using VenU.Api.Services;
 
 namespace VenU.Api.Controllers
 {
@@ -15,10 +16,12 @@ namespace VenU.Api.Controllers
     public class VenuesController : ControllerBase
     {
         private readonly VenUDbContext _context;
+        private readonly IImageModerationService _imageModerationService;
 
-        public VenuesController(VenUDbContext context)
+        public VenuesController(VenUDbContext context, IImageModerationService imageModerationService)
         {
             _context = context;
+            _imageModerationService = imageModerationService;
         }
 
         [HttpGet("debug-bldg")]
@@ -72,13 +75,41 @@ namespace VenU.Api.Controllers
                 return Unauthorized(new { message = "Invalid user token." });
             }
 
-            // 1. Handle file uploads to Cloudinary/S3 (Mocked paths here for demonstration)
-            List<string> imageUrls = new List<string>();
+            // 1. Handle file uploads to Cloudinary + Moderation
+            List<string> legacyImageUrls = new List<string>();
+            List<VenueImage> processedImages = new List<VenueImage>();
+
             if (dto.GalleryImages != null && dto.GalleryImages.Count >= 3)
             {
                 foreach (var img in dto.GalleryImages)
                 {
-                    imageUrls.Add($"https://cloudinary.com/venues/{Guid.NewGuid()}_{img.FileName}");
+                    var (url, publicId) = await _imageModerationService.UploadImageAsync(img);
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        decimal aiScore = await _imageModerationService.ModerateImageAsync(url);
+                        
+                        string status = "PENDING_REVIEW";
+                        if (aiScore < 35.0m)
+                        {
+                            status = "APPROVED";
+                            legacyImageUrls.Add(url); // Only public images go to legacy list
+                        }
+                        else if (aiScore >= 80.0m)
+                        {
+                            // Taboo Zone - Reject immediately
+                            await _imageModerationService.DeleteImageAsync(publicId);
+                            return BadRequest(new { message = "One or more images violated our safety policy and were rejected." });
+                        }
+
+                        processedImages.Add(new VenueImage
+                        {
+                            CloudinaryUrl = url,
+                            CloudinaryPublicId = publicId,
+                            AiScore = aiScore,
+                            Status = status,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
                 }
             }
             else if (dto.GalleryImages != null && dto.GalleryImages.Count > 0)
@@ -128,7 +159,8 @@ namespace VenU.Api.Controllers
                 HasBirForm2303 = dto.HasBirForm2303,
                 HasSmokeDetectors = dto.HasSmokeDetectors,
                 HasFireExits = dto.HasFireExits,
-                VenueImages = System.Text.Json.JsonSerializer.Serialize(imageUrls),
+                VenueImages = System.Text.Json.JsonSerializer.Serialize(legacyImageUrls),
+                Images = processedImages,
                 FloorPlanUrl = floorPlanUrl,
                 LegalPermitsUrl = legalPermitsUrl,
                 CreatedAt = DateTime.UtcNow,
