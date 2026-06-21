@@ -17,7 +17,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpGet("pending")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Superadmin,admin,superadmin")]
         public async Task<IActionResult> GetPendingVenues()
         {
             var pendingVenues = await _context.Venues
@@ -44,7 +44,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPut("{id}/verify")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Superadmin,admin,superadmin")]
         public async Task<IActionResult> VerifyVenue(Guid id)
         {
             var venue = await _context.Venues.FindAsync(id);
@@ -57,7 +57,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpDelete("{id}/reject")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Superadmin,admin,superadmin")]
         public async Task<IActionResult> RejectVenue(Guid id)
         {
             var venue = await _context.Venues.FindAsync(id);

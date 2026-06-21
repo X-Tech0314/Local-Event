@@ -8,7 +8,7 @@ namespace VenU.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Superadmin")]
+    [Authorize(Roles = "Admin,Superadmin,admin,superadmin")]
     public class AdminController : ControllerBase
     {
         private readonly VenUDbContext _context;
@@ -190,7 +190,7 @@ namespace VenU.Api.Controllers
         // 4. ADMIN MANAGEMENT (Superadmin Only)
         // ==========================================
         [HttpGet("admins")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize(Roles = "Superadmin,superadmin")]
         public async Task<IActionResult> GetAdmins()
         {
             var admins = await _context.Users
@@ -207,7 +207,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("admins")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize(Roles = "Superadmin,superadmin")]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
@@ -256,7 +256,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPut("admins/{id}/role")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize(Roles = "Superadmin,superadmin")]
         public async Task<IActionResult> UpdateAdminRole(Guid id, [FromBody] UpdateRoleDto dto)
         {
             var admin = await _context.Users.FindAsync(id);
@@ -274,7 +274,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpDelete("admins/{id}")]
-        [Authorize(Roles = "Superadmin")]
+        [Authorize(Roles = "Superadmin,superadmin")]
         public async Task<IActionResult> DeleteAdmin(Guid id)
         {
             var admin = await _context.Users.FindAsync(id);
