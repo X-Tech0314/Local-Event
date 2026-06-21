@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import OrganizerRegister from './OrganizerRegister.jsx';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../utils/constants.js';
 import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
@@ -22,6 +22,12 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Real-time uniqueness checking states
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+  const [isCheckingContact, setIsCheckingContact] = useState(false);
+  const [contactExists, setContactExists] = useState(false);
 
   // Address Fields
   const [houseNo, setHouseNo] = useState('');
@@ -75,14 +81,82 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   const validation = validatePassword(createPassword);
 
+  // Password Strength Meter Logic
+  const passwordStrength = useMemo(() => {
+    let score = 0;
+    if (createPassword.length >= 8) score++;
+    if (/[A-Z]/.test(createPassword)) score++;
+    if (/[a-z]/.test(createPassword)) score++;
+    if (/[0-9]/.test(createPassword)) score++;
+    if (/[^A-Za-z0-9]/.test(createPassword)) score++;
+
+    if (score <= 2) return { label: 'Weak', color: 'bg-red-500', width: 'w-1/3', text: 'text-red-400' };
+    if (score <= 4) return { label: 'Moderate', color: 'bg-yellow-500', width: 'w-2/3', text: 'text-yellow-400' };
+    return { label: 'Strong', color: 'bg-green-500', width: 'w-full', text: 'text-green-400' };
+  }, [createPassword]);
+
+  // Real-time Email Database Check
+  useEffect(() => {
+    if (!createEmail || !isEmailValid(createEmail)) {
+      setEmailExists(false);
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    setEmailExists(false);
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/check-email?email=${createEmail.trim().toLowerCase()}&role=${createRole}`);
+        if (res.ok) {
+          const data = await res.json();
+          setEmailExists(data.exists);
+        }
+      } catch (err) {
+        console.error("Error checking email:", err);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [createEmail, createRole]);
+
+  // Real-time Contact Number Database Check
+  useEffect(() => {
+    if (!contactNumber || !isContactValid(contactNumber)) {
+      setContactExists(false);
+      return;
+    }
+
+    setIsCheckingContact(true);
+    setContactExists(false);
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/check-contact?contact=${contactNumber.trim()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setContactExists(data.exists);
+        }
+      } catch (err) {
+        console.error("Error checking contact:", err);
+      } finally {
+        setIsCheckingContact(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [contactNumber]);
+
   // ─── Wizard Step Guards ───────────────────────────────────────────────────
   const isStep1Valid =
     firstName.trim() && isNameValid(firstName) && !isFirstNameTooLong &&
     lastName.trim() && isNameValid(lastName) && !isLastNameTooLong &&
     !isMiddleNameTooLong &&
     isAgeValid &&
-    contactNumber.trim() && isContactValid(contactNumber) &&
-    createEmail.trim() && isEmailValid(createEmail) && !isEmailTooLong &&
+    contactNumber.trim() && isContactValid(contactNumber) && !contactExists && !isCheckingContact &&
+    createEmail.trim() && isEmailValid(createEmail) && !isEmailTooLong && !emailExists && !isCheckingEmail &&
     createPassword && Object.values(validation).every(Boolean) &&
     confirmPassword && createPassword === confirmPassword;
 
@@ -107,12 +181,12 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
       onSubmit({
         role: 'Attendee',
         personal: { firstName, middleName, lastName, suffix, dateOfBirth, contactNumber, email: createEmail, password: createPassword },
-        address: { 
-          houseNo, streetName, subdivision, zipCode, 
-          region: getRegionName(psgcSel.regionCode), 
-          province: getProvinceName(psgcSel.provinceCode), 
-          city: getCityName(psgcSel.cityMunCode), 
-          barangay: getBarangayName(psgcSel.barangayCode) 
+        address: {
+          houseNo, streetName, subdivision, zipCode,
+          region: getRegionName(psgcSel.regionCode),
+          province: getProvinceName(psgcSel.provinceCode),
+          city: getCityName(psgcSel.cityMunCode),
+          barangay: getBarangayName(psgcSel.barangayCode)
         },
         idVerification: { type: idType, front: idFrontFile, back: idBackFile, referenceNumber: idReferenceNumber },
       });
@@ -174,8 +248,8 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                 }
               }}
               className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${createRole === r
-                  ? 'bg-[#A855F7] text-white shadow-sm'
-                  : 'text-white/50 hover:text-white/80'
+                ? 'bg-[#A855F7] text-white shadow-sm'
+                : 'text-white/50 hover:text-white/80'
                 }`}
             >
               {r}
@@ -190,10 +264,10 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
               <div
                 key={stepNum}
                 className={`h-1.5 rounded-full transition-all duration-300 ${stepNum === currentStep
-                    ? 'w-6 bg-[#A855F7]'
-                    : stepNum < currentStep
-                      ? 'w-2 bg-[#A855F7]/50'
-                      : 'w-2 bg-white/10'
+                  ? 'w-6 bg-[#A855F7]'
+                  : stepNum < currentStep
+                    ? 'w-2 bg-[#A855F7]/50'
+                    : 'w-2 bg-white/10'
                   }`}
               />
             ))}
@@ -229,18 +303,22 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                 isLastNameTooLong,
                 isMiddleNameTooLong,
                 isEmailTooLong,
+                // New Real-time check props
+                isCheckingEmail, emailExists,
+                isCheckingContact, contactExists,
+                passwordStrength
               }}
             />
           )}
 
           {currentStep === 2 && (
             <AddressDetails
-              {...{ 
-                houseNo, setHouseNo, streetName, setStreetName, subdivision, setSubdivision, zipCode, setZipCode, 
+              {...{
+                houseNo, setHouseNo, streetName, setStreetName, subdivision, setSubdivision, zipCode, setZipCode,
                 regions, provinces, cities, barangays,
                 psgcLoading, noProvinceRegion, psgcSel,
                 selectRegion, selectProvince, selectCity, selectBarangay,
-                touched, touch 
+                touched, touch
               }}
             />
           )}
@@ -321,10 +399,10 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
                 (currentStep === 3 && !isStep3Valid)
               }
               className={`flex-1 rounded-xl py-3 text-white text-sm font-semibold transition-all duration-300 cursor-pointer ${((currentStep === 1 && isStep1Valid) ||
-                  (currentStep === 2 && isStep2Valid) ||
-                  (currentStep === 3 && isStep3Valid))
-                  ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
-                  : 'bg-purple-500/30 cursor-not-allowed opacity-50 text-white/50'
+                (currentStep === 2 && isStep2Valid) ||
+                (currentStep === 3 && isStep3Valid))
+                ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
+                : 'bg-purple-500/30 cursor-not-allowed opacity-50 text-white/50'
                 }`}
             >
               Next
@@ -334,8 +412,8 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
               type="submit"
               disabled={!canCreate}
               className={`flex-1 rounded-xl py-3 text-white text-sm font-semibold transition-all duration-300 cursor-pointer ${canCreate
-                  ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
-                  : 'bg-purple-500/30 cursor-not-allowed text-white/50'
+                ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
+                : 'bg-purple-500/30 cursor-not-allowed text-white/50'
                 }`}
             >
               Create Account
@@ -354,7 +432,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
           </button>
         </div>
       </form>
-      
+
       <TermsAndPrivacyModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </div>
   );

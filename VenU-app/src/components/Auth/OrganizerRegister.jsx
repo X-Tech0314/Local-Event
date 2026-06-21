@@ -112,12 +112,12 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
       onSubmit({
         role: 'Organizer',
         personal: { firstName, lastName, position, dateOfBirth, contactNumber, email: corporateEmail, password },
-        address: { 
-          houseNo, streetName, subdivision, zipCode, 
-          region: getRegionName(psgcSel.regionCode), 
-          province: getProvinceName(psgcSel.provinceCode), 
-          city: getCityName(psgcSel.cityMunCode), 
-          barangay: getBarangayName(psgcSel.barangayCode) 
+        address: {
+          houseNo, streetName, subdivision, zipCode,
+          region: getRegionName(psgcSel.regionCode),
+          province: getProvinceName(psgcSel.provinceCode),
+          city: getCityName(psgcSel.cityMunCode),
+          barangay: getBarangayName(psgcSel.barangayCode)
         },
         orgProfile: { orgType, companyName, tinNumber, councilName, universityName, document: orgDocFile },
         idVerification: { type: idType, front: idFrontFile, back: idBackFile, selfie: selfieFile, referenceNumber: idReferenceNumber },
@@ -167,8 +167,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
               type="button"
               onClick={() => setCreateRole(r)}
               className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${createRole === r
-                  ? 'bg-[#A855F7] text-white shadow-sm'
-                  : 'text-white/50 hover:text-white/80'
+                ? 'bg-[#A855F7] text-white shadow-sm'
+                : 'text-white/50 hover:text-white/80'
                 }`}
             >
               {r}
@@ -183,10 +183,10 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
               <div
                 key={stepNum}
                 className={`h-1.5 rounded-full transition-all duration-300 ${stepNum === currentStep
-                    ? 'w-6 bg-[#A855F7]'
-                    : stepNum < currentStep
-                      ? 'w-2 bg-[#A855F7]/50'
-                      : 'w-2 bg-white/10'
+                  ? 'w-6 bg-[#A855F7]'
+                  : stepNum < currentStep
+                    ? 'w-2 bg-[#A855F7]/50'
+                    : 'w-2 bg-white/10'
                   }`}
               />
             ))}
@@ -215,8 +215,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       onChange={(e) => setFirstName(e.target.value)}
                       onBlur={() => touch('firstName')}
                       className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.firstName && !firstName.trim()) || isFirstNameTooLong
-                          ? 'border-red-500/60'
-                          : 'border-white/10 focus:border-[#A855F7]/50'
+                        ? 'border-red-500/60'
+                        : 'border-white/10 focus:border-[#A855F7]/50'
                         }`}
                       placeholder="Juan"
                     />
@@ -234,8 +234,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       onChange={(e) => setLastName(e.target.value)}
                       onBlur={() => touch('lastName')}
                       className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.lastName && !lastName.trim()) || isLastNameTooLong
-                          ? 'border-red-500/60'
-                          : 'border-white/10 focus:border-[#A855F7]/50'
+                        ? 'border-red-500/60'
+                        : 'border-white/10 focus:border-[#A855F7]/50'
                         }`}
                       placeholder="dela Cruz"
                     />
@@ -256,8 +256,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                       onChange={(e) => setPosition(e.target.value)}
                       onBlur={() => touch('position')}
                       className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.position && !position.trim()) || isPositionTooLong
-                          ? 'border-red-500/60'
-                          : 'border-white/10 focus:border-[#A855F7]/50'
+                        ? 'border-red-500/60'
+                        : 'border-white/10 focus:border-[#A855F7]/50'
                         }`}
                       placeholder="Event Director"
                     />
@@ -276,8 +276,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         onChange={(e) => setDateOfBirth(e.target.value)}
                         onBlur={() => touch('dateOfBirth')}
                         className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
-                            ? 'border-red-500/60 focus:border-red-400'
-                            : 'border-white/10 focus:border-[#A855F7]/50'
+                          ? 'border-red-500/60 focus:border-red-400'
+                          : 'border-white/10 focus:border-[#A855F7]/50'
                           }`}
                       />
                       {touched.dateOfBirth && !dateOfBirth && (
@@ -302,8 +302,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         onChange={(e) => setContactNumber(e.target.value)}
                         onBlur={() => touch('contactNumber')}
                         className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
-                            ? 'border-red-500/60'
-                            : 'border-white/10 focus:border-[#A855F7]/50'
+                          ? 'border-red-500/60'
+                          : 'border-white/10 focus:border-[#A855F7]/50'
                           }`}
                         placeholder="+639XXXXXXXXX"
                       />
@@ -319,8 +319,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     onChange={(e) => setCorporateEmail(e.target.value)}
                     onBlur={() => touch('corporateEmail')}
                     className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.corporateEmail && (!corporateEmail.trim() || !isEmailValid(corporateEmail))) || isEmailTooLong
-                        ? 'border-red-500/60'
-                        : 'border-white/10 focus:border-[#A855F7]/50'
+                      ? 'border-red-500/60'
+                      : 'border-white/10 focus:border-[#A855F7]/50'
                       }`}
                     placeholder="director@company.ph"
                   />
@@ -447,8 +447,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                           onChange={(e) => setCompanyName(e.target.value)}
                           onBlur={() => touch('companyName')}
                           className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${(touched.companyName && !companyName.trim()) || isCompanyNameTooLong
-                              ? 'border-red-500/60'
-                              : 'border-white/10 focus:border-[#A855F7]/50'
+                            ? 'border-red-500/60'
+                            : 'border-white/10 focus:border-[#A855F7]/50'
                             }`}
                           placeholder="Enter registered business name"
                         />
@@ -466,8 +466,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                           onChange={(e) => setTinNumber(e.target.value)}
                           onBlur={() => touch('tinNumber')}
                           className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors bg-slate-950/80 ${touched.tinNumber && (!tinNumber.trim() || !isTinValid(tinNumber))
-                              ? 'border-red-500/60'
-                              : 'border-white/10 focus:border-[#A855F7]/50'
+                            ? 'border-red-500/60'
+                            : 'border-white/10 focus:border-[#A855F7]/50'
                             }`}
                           placeholder="000-000-000-000"
                         />
@@ -767,8 +767,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         onChange={(e) => setIdReferenceNumber(e.target.value.toUpperCase())}
                         onBlur={() => touch('idReferenceNumber')}
                         className={`w-full mt-1 px-3 py-2 border rounded-md text-sm outline-none font-mono bg-white ${touched.idReferenceNumber && !isIdNumberValid(idType, idReferenceNumber)
-                            ? 'border-red-400 focus:border-red-500'
-                            : 'border-slate-300 focus:border-[#A855F7]'
+                          ? 'border-red-400 focus:border-red-500'
+                          : 'border-slate-300 focus:border-[#A855F7]'
                           }`}
                         placeholder={PHILIPPINE_GOVERNMENT_IDS.find(id => id.id === idType).placeholder}
                       />
@@ -864,8 +864,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     type="submit"
                     disabled={!canSubmit}
                     className={`flex-1 rounded-xl py-3 text-white text-xs font-semibold transition-all duration-300 cursor-pointer ${canSubmit
-                        ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
-                        : 'bg-purple-500/30 cursor-not-allowed opacity-50 text-white/50'
+                      ? 'bg-[#A855F7] hover:bg-[#9333EA] shadow-md shadow-purple-500/20 active:scale-[0.99]'
+                      : 'bg-purple-500/30 cursor-not-allowed opacity-50 text-white/50'
                       }`}
                   >
                     Create Account
@@ -887,7 +887,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
           </button>
         </div>
       </form>
-      
+
       <TermsAndPrivacyModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </div>
   );

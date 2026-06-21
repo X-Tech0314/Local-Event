@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization; // <--- THIS WAS MISSING
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -63,13 +64,41 @@ namespace VenU.Api.Controllers
                 OrgName = request.OrgName ?? "",
                 TinNumber = request.TinNumber ?? "",
                 OrgDocumentPath = request.OrgDocumentPath ?? "",
-                IsVerified = false // Back to false for real identity verification workflow
+                IsVerified = false 
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "User registered successfully." });
+        }
+
+        [HttpGet("check-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return Ok(new { exists = false });
+
+            var exists = await _context.Users
+                .Where(u => u.Role == "Attendee" || u.Role == "Organizer")
+                .AnyAsync(u => u.Email.ToLower() == email.ToLower().Trim());
+                
+            return Ok(new { exists });
+        }
+
+        [HttpGet("check-contact")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CheckContactExists([FromQuery] string contact)
+        {
+            if (string.IsNullOrWhiteSpace(contact))
+                return Ok(new { exists = false });
+
+            var exists = await _context.Users
+                .Where(u => u.Role == "Attendee" || u.Role == "Organizer")
+                .AnyAsync(u => u.ContactNumber == contact.Trim());
+                
+            return Ok(new { exists });
         }
 
         [HttpPost("login")]

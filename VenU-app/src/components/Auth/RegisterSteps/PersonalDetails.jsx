@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { suffixes, passwordRules } from '../../../utils/constants.js';
 import { isNameValid, isContactValid, isEmailValid } from '../../../utils/validation.js';
 
@@ -28,6 +28,12 @@ export default function PersonalDetails({
   isLastNameTooLong,
   isMiddleNameTooLong,
   isEmailTooLong,
+  // Real-time check props
+  isCheckingEmail,
+  emailExists,
+  isCheckingContact,
+  contactExists,
+  passwordStrength
 }) {
   // Derive which age error (if any) should be shown
   const isAgeNaN = isNaN(calculatedAge);
@@ -48,8 +54,8 @@ export default function PersonalDetails({
               onChange={(e) => setFirstName(e.target.value)}
               onBlur={() => touch('firstName')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.firstName && (!firstName.trim() || !isNameValid(firstName))) || isFirstNameTooLong
-                  ? 'border-red-500/60 focus:border-red-400'
-                  : 'border-white/10 focus:border-[#A855F7]/50'
+                ? 'border-red-500/60 focus:border-red-400'
+                : 'border-white/10 focus:border-[#A855F7]/50'
                 }`}
               placeholder="Juan"
             />
@@ -73,8 +79,8 @@ export default function PersonalDetails({
               onChange={(e) => setMiddleName(e.target.value)}
               onBlur={() => touch('middleName')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.middleName && middleName.trim() && !isNameValid(middleName)) || isMiddleNameTooLong
-                  ? 'border-red-500/60 focus:border-red-400'
-                  : 'border-white/10 focus:border-[#A855F7]/50'
+                ? 'border-red-500/60 focus:border-red-400'
+                : 'border-white/10 focus:border-[#A855F7]/50'
                 }`}
               placeholder="Santos"
             />
@@ -98,8 +104,8 @@ export default function PersonalDetails({
               onChange={(e) => setLastName(e.target.value)}
               onBlur={() => touch('lastName')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.lastName && (!lastName.trim() || !isNameValid(lastName))) || isLastNameTooLong
-                  ? 'border-red-500/60 focus:border-red-400'
-                  : 'border-white/10 focus:border-[#A855F7]/50'
+                ? 'border-red-500/60 focus:border-red-400'
+                : 'border-white/10 focus:border-[#A855F7]/50'
                 }`}
               placeholder="dela Cruz"
             />
@@ -138,8 +144,8 @@ export default function PersonalDetails({
               onChange={(e) => setDateOfBirth(e.target.value)}
               onBlur={() => touch('dateOfBirth')}
               className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
-                  ? 'border-red-500/60 focus:border-red-400'
-                  : 'border-white/10 focus:border-[#A855F7]/50'
+                ? 'border-red-500/60 focus:border-red-400'
+                : 'border-white/10 focus:border-[#A855F7]/50'
                 }`}
             />
             {touched.dateOfBirth && !dateOfBirth && (
@@ -170,39 +176,56 @@ export default function PersonalDetails({
           </div>
           <div>
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Contact Number</label>
-            <input
-              type="text"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              onBlur={() => touch('contactNumber')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
+            <div className="relative">
+              <input
+                type="text"
+                value={contactNumber}
+                onChange={(e) => setContactNumber(e.target.value)}
+                onBlur={() => touch('contactNumber')}
+                className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 pr-10 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber)) || contactExists
                   ? 'border-red-500/60 focus:border-red-400'
                   : 'border-white/10 focus:border-[#A855F7]/50'
-                }`}
-              placeholder="+639XXXXXXXXX"
-            />
+                  }`}
+                placeholder="+639XXXXXXXXX"
+              />
+              {isCheckingContact && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 size={16} className="animate-spin text-[#A855F7]" />
+                </div>
+              )}
+            </div>
             {touched.contactNumber && !contactNumber.trim() && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Contact number is required.</p>
             )}
             {touched.contactNumber && contactNumber.trim() && !isContactValid(contactNumber) && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Must be +639XXXXXXXXX or 09XXXXXXXXX (11 digits).</p>
             )}
+            {contactExists && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">This contact number is already registered.</p>
+            )}
           </div>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-white/70 mb-1.5">Email Address</label>
-          <input
-            type="email"
-            value={createEmail}
-            onChange={(e) => setCreateEmail(e.target.value)}
-            onBlur={() => touch('createEmail')}
-            className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.createEmail && (!createEmail.trim() || !isEmailValid(createEmail))) || isEmailTooLong
+          <div className="relative">
+            <input
+              type="email"
+              value={createEmail}
+              onChange={(e) => setCreateEmail(e.target.value)}
+              onBlur={() => touch('createEmail')}
+              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 pr-10 ${(touched.createEmail && (!createEmail.trim() || !isEmailValid(createEmail))) || isEmailTooLong || emailExists
                 ? 'border-red-500/60 focus:border-red-400'
                 : 'border-white/10 focus:border-[#A855F7]/50'
-              }`}
-            placeholder="juan.delacruz@example.ph"
-          />
+                }`}
+              placeholder="juan.delacruz@example.ph"
+            />
+            {isCheckingEmail && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 size={16} className="animate-spin text-[#A855F7]" />
+              </div>
+            )}
+          </div>
           {touched.createEmail && !createEmail.trim() && (
             <p className="text-[10px] text-red-400 mt-1 font-medium">Email address is required.</p>
           )}
@@ -214,14 +237,17 @@ export default function PersonalDetails({
               Email must be at most {MAX_NAME_LENGTH} characters (currently {createEmail.length}).
             </p>
           )}
+          {emailExists && (
+            <p className="text-[10px] text-red-400 mt-1 font-medium">This email is already registered.</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Password</label>
             <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${touched.createPassword && (!createPassword || !Object.values(validation).every(Boolean))
-                ? 'border-red-500/60'
-                : 'border-white/10 focus-within:border-[#A855F7]/50'
+              ? 'border-red-500/60'
+              : 'border-white/10 focus-within:border-[#A855F7]/50'
               }`}>
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -242,12 +268,24 @@ export default function PersonalDetails({
             {touched.createPassword && !createPassword && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Password is required.</p>
             )}
+
+            {/* Password Strength Meter */}
+            {createPassword.length > 0 && (
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`text-[10px] font-bold ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full ${passwordStrength.color} ${passwordStrength.width} transition-all duration-300`}></div>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Confirm Password</label>
             <div className={`flex items-center rounded-lg border px-3 py-2 bg-slate-950/80 ${touched.confirmPassword && (!confirmPassword || createPassword !== confirmPassword)
-                ? 'border-red-500/60'
-                : 'border-white/10 focus-within:border-[#A855F7]/50'
+              ? 'border-red-500/60'
+              : 'border-white/10 focus-within:border-[#A855F7]/50'
               }`}>
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
