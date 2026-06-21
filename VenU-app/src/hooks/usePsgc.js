@@ -52,15 +52,15 @@ const DIRECT_REGION = '__direct__';
  */
 export default function usePsgc(initial = {}) {
   const [psgcSel, setPsgcSel] = useState({
-    regionCode:   initial.regionCode   || '',
+    regionCode: initial.regionCode || '',
     provinceCode: initial.provinceCode || '',
-    cityMunCode:  initial.cityMunCode  || '',
+    cityMunCode: initial.cityMunCode || '',
     barangayCode: initial.barangayCode || '',
   });
 
-  const [regions,   setRegions]   = useState([]);
+  const [regions, setRegions] = useState([]);
   const [provinces, setProvinces] = useState([]);
-  const [cities,    setCities]    = useState([]);
+  const [cities, setCities] = useState([]);
   const [barangays, setBarangays] = useState([]);
   const [noProvinceRegion, setNoProvinceRegion] = useState(false);
   const [loading, setLoading] = useState({
@@ -149,12 +149,12 @@ export default function usePsgc(initial = {}) {
   }, []);
 
   // ── Name helpers ──────────────────────────────────────────────────
-  const getRegionName   = (code) => regions.find(r => r.code === code)?.name || '';
+  const getRegionName = (code) => regions.find(r => r.code === code)?.name || '';
   const getProvinceName = (code) => {
     if (code === DIRECT_REGION) return '';
     return provinces.find(p => p.code === code)?.name || '';
   };
-  const getCityName     = (code) => cities.find(c => c.code === code)?.name || '';
+  const getCityName = (code) => cities.find(c => c.code === code)?.name || '';
   const getBarangayName = (code) => barangays.find(b => b.code === code)?.name || '';
 
   return {

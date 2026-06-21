@@ -154,7 +154,7 @@ export default function VenuesPanel({ currentUser }) {
       )}
       {/* Split View Container */}
       <div className="flex flex-col lg:flex-row gap-6 mt-6">
-        
+
         {/* Left Column: Venues Grid (60%) */}
         <div className="w-full lg:w-[60%] order-2 lg:order-1">
           <div className="flex items-center gap-2 mb-6">
@@ -238,9 +238,9 @@ export default function VenuesPanel({ currentUser }) {
                       <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                         {venue.latitude && venue.longitude ? (
                           <button
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              setSelectedVenue(venue); 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVenue(venue);
                             }}
                             className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors"
                           >
@@ -284,7 +284,7 @@ export default function VenuesPanel({ currentUser }) {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                     url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                   />
-                  
+
                   {/* The RecenterMap helper component handles centering map to selected venue */}
                   {selectedVenue && selectedVenue.latitude && selectedVenue.longitude && (
                     <RecenterMap coords={[Number(selectedVenue.latitude), Number(selectedVenue.longitude)]} />
@@ -317,7 +317,7 @@ export default function VenuesPanel({ currentUser }) {
                                 <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1">
                                   <MapPin size={10} /> {venue.barangay}, {venue.city}
                                 </p>
-                                
+
                                 {venue.activeEventsCount > 0 && (
                                   <div className="mb-2 border-l-2 border-purple-500 pl-2">
                                     <span className="text-[10px] font-bold text-purple-600 flex items-center gap-1">

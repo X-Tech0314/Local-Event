@@ -304,7 +304,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       for (const evt of events) {
         const addressQuery = [evt.streetAddress, evt.barangay, evt.city].filter(v => v && v !== 'N/A').join(', ');
         if (!addressQuery) continue;
-        
+
         const cacheKey = `geo_${addressQuery}`;
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
@@ -496,13 +496,13 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((evt) => (
-            <EventCard 
-              key={evt.id} 
-              evt={evt} 
-              setEditEvent={setEditEvent} 
-              setActivePanel={setActivePanel} 
-              onDeleteClick={setEventToDelete} 
-              onViewAnalytics={setAnalyticsEventId} 
+            <EventCard
+              key={evt.id}
+              evt={evt}
+              setEditEvent={setEditEvent}
+              setActivePanel={setActivePanel}
+              onDeleteClick={setEventToDelete}
+              onViewAnalytics={setAnalyticsEventId}
               onManage={(e) => setManagementEventId(e.id)}
               onSelect={(evt) => {
                 setSelectedEvent(evt);
@@ -523,9 +523,9 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
 
       {/* Event Management & Feedback Modal */}
       {managementEventId && (
-        <EventManagementModal 
-          eventId={managementEventId} 
-          onClose={() => setManagementEventId(null)} 
+        <EventManagementModal
+          eventId={managementEventId}
+          onClose={() => setManagementEventId(null)}
           onEdit={() => {
             const ev = events.find(e => e.id === managementEventId);
             if (ev) {
@@ -589,7 +589,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedEvent.title}</h2>
                 <p className="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
-                  <MapPin size={14} className="text-purple-500" /> 
+                  <MapPin size={14} className="text-purple-500" />
                   {[selectedEvent.streetAddress, selectedEvent.barangay, selectedEvent.city].filter(Boolean).join(', ')}
                 </p>
               </div>
