@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Moon, Sun, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarCheck, Crown, LogOut, Moon, Sun, ShieldCheck, ShieldAlert, Building } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../ThemeContext';
 import logo from "../../assets/venu-logo3-transparent.png";
@@ -11,6 +11,7 @@ import EventApprovals from './Panels/EventApprovals';
 import AdminManagement from './Panels/AdminManagement';
 import IdentityApprovals from './Panels/IdentityApprovals';
 import VenueImageApprovals from './Panels/VenueImageApprovals';
+import VenueApprovals from './Panels/VenueApprovals';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function AdminDashboard() {
         { id: 'users', label: 'User Management', icon: Users, roles: ['admin', 'superadmin'] },
         { id: 'identity', label: 'Identity Approvals', icon: ShieldCheck, roles: ['admin', 'superadmin'] },
         { id: 'events', label: 'Event Approvals', icon: CalendarCheck, roles: ['admin', 'superadmin'] },
+        { id: 'venues', label: 'Venue Approvals', icon: Building, roles: ['admin', 'superadmin'] },
         { id: 'images', label: 'Image Moderation', icon: ShieldAlert, roles: ['admin', 'superadmin'] },
         { id: 'admins', label: 'Admin Management', icon: Crown, roles: ['superadmin'] },
     ];
@@ -152,8 +154,9 @@ export default function AdminDashboard() {
                     {activeTab === 'dashboard' && <AdminDashboardHome pendingEvents={pendingEvents} loadingEvents={loadingEvents} setActiveTab={setActiveTab} />}
                     {activeTab === 'users' && <UserManagement />}
                     {activeTab === 'identity' && <IdentityApprovals />}
-                    {activeTab === 'events' && <EventApprovals pendingEvents={pendingEvents} loadingEvents={loadingEvents} handleEventAction={handleEventAction} />}
-                    {activeTab === 'images' && <VenueImageApprovals />}
+                    { activeTab === 'events' && <EventApprovals pendingEvents={pendingEvents} loadingEvents={loadingEvents} handleEventAction={handleEventAction} /> }
+                    { activeTab === 'venues' && <VenueApprovals /> }
+                    { activeTab === 'images' && <VenueImageApprovals /> }
                     {activeTab === 'admins' && role === 'superadmin' && <AdminManagement />}
                 </div>
             </main>
