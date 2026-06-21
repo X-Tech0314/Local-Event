@@ -573,8 +573,8 @@ export default function AddVenueForm({ setViewMode }) {
                     const filesArray = Array.from(e.target.files);
                     const oversized = filesArray.some(f => f.size > 5 * 1024 * 1024);
                     if (oversized) {
-                       setErrors(prev => ({ ...prev, galleryImages: "Each image must be under 5MB." }));
-                       return;
+                      setErrors(prev => ({ ...prev, galleryImages: "Each image must be under 5MB." }));
+                      return;
                     }
                     setFiles(f => ({ ...f, galleryImages: filesArray }));
                     // Real-time validation for files

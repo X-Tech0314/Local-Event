@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { UploadCloud, User, Eye, EyeOff, Building, MapPin, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { UploadCloud, User, Eye, EyeOff, Building, MapPin, ShieldAlert, Loader2 } from 'lucide-react';
 import { PHILIPPINE_GOVERNMENT_IDS, passwordRules } from '../../utils/constants.js';
 import usePsgc from '../../hooks/usePsgc.js';
-import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
+import { isNameValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 import FileDropzone from '../common/FileDropzone.jsx';
 import TermsAndPrivacyModal from './TermsAndPrivacyModal.jsx';
 
@@ -13,12 +13,18 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [position, setPosition] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
+  const [contactNumber, setContactNumber] = useState(''); // Only stores the 10 digit number (e.g. 9171234567)
   const [corporateEmail, setCorporateEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Real-time uniqueness checking states
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+  const [isCheckingContact, setIsCheckingContact] = useState(false);
+  const [contactExists, setContactExists] = useState(false);
 
   // Step 2: Org Info
   const [orgType, setOrgType] = useState('Commercial/Private Business');
@@ -61,6 +67,79 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
 
   const validation = validatePassword(password);
 
+  // Password Strength Meter Logic
+  const passwordStrength = useMemo(() => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 2) return { label: 'Weak', color: 'bg-red-500', width: 'w-1/3', text: 'text-red-400' };
+    if (score <= 4) return { label: 'Moderate', color: 'bg-yellow-500', width: 'w-2/3', text: 'text-yellow-400' };
+    return { label: 'Strong', color: 'bg-green-500', width: 'w-full', text: 'text-green-400' };
+  }, [password]);
+
+  // Custom Contact Validation: Must be 10 digits starting with 9
+  const isContactValidFormat = (num) => /^9\d{9}$/.test(num);
+
+  // Real-time Email Database Check
+  useEffect(() => {
+    if (!corporateEmail || !isEmailValid(corporateEmail)) {
+      setEmailExists(false);
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    setEmailExists(false);
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/check-email?email=${corporateEmail.trim().toLowerCase()}&role=Organizer`);
+        if (res.ok) {
+          const data = await res.json();
+          setEmailExists(data.exists);
+        }
+      } catch (err) {
+        console.error("Error checking email:", err);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [corporateEmail]);
+
+  // Real-time Contact Number Database Check
+  useEffect(() => {
+    if (!contactNumber || !isContactValidFormat(contactNumber)) {
+      setContactExists(false);
+      return;
+    }
+
+    setIsCheckingContact(true);
+    setContactExists(false);
+
+    // Pass the full +63 format to the backend checker
+    const fullNumber = `+63${contactNumber}`;
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/check-contact?contact=${fullNumber}`);
+        if (res.ok) {
+          const data = await res.json();
+          setContactExists(data.exists);
+        }
+      } catch (err) {
+        console.error("Error checking contact:", err);
+      } finally {
+        setIsCheckingContact(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [contactNumber]);
+
   const isTinValid = (v) => /^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/.test(v.replace(/\s/g, ''));
 
   // Max length validation for names, position, email, and company name
@@ -83,8 +162,8 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
     lastName.trim() && isNameValid(lastName) && !isLastNameTooLong &&
     position.trim() && !isPositionTooLong &&
     dateOfBirth && isAgeValid &&
-    contactNumber.trim() && isContactValid(contactNumber) &&
-    corporateEmail.trim() && isEmailValid(corporateEmail) && !isEmailTooLong &&
+    contactNumber.trim() && isContactValidFormat(contactNumber) && !contactExists && !isCheckingContact &&
+    corporateEmail.trim() && isEmailValid(corporateEmail) && !isEmailTooLong && !emailExists && !isCheckingEmail &&
     password && Object.values(validation).every(Boolean) &&
     confirmPassword === password;
 
@@ -109,9 +188,12 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (onSubmit && canSubmit) {
+      // Append +63 to the contact number before sending to backend
+      const fullContactNumber = `+63${contactNumber}`;
+
       onSubmit({
         role: 'Organizer',
-        personal: { firstName, lastName, position, dateOfBirth, contactNumber, email: corporateEmail, password },
+        personal: { firstName, lastName, position, dateOfBirth, contactNumber: fullContactNumber, email: corporateEmail, password },
         address: {
           houseNo, streetName, subdivision, zipCode,
           region: getRegionName(psgcSel.regionCode),
@@ -124,8 +206,6 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
       });
     }
   };
-
-
 
   const roles = ['Organizer', 'Attendee'];
 
@@ -206,6 +286,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                 <User className="h-4 w-4 text-[#A855F7]" /> 1. Personal & Position Details
               </h4>
               <div className="space-y-4">
+                {/* Row 1: First Name & Last Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">First Name</label>
@@ -222,7 +303,7 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     />
                     {isFirstNameTooLong && (
                       <p className="text-[10px] text-red-400 mt-1 font-medium">
-                        First Name must be at most {MAX_NAME_LENGTH} characters (currently {firstName.length}).
+                        First Name must be at most {MAX_NAME_LENGTH} characters.
                       </p>
                     )}
                   </div>
@@ -241,12 +322,13 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     />
                     {isLastNameTooLong && (
                       <p className="text-[10px] text-red-400 mt-1 font-medium">
-                        Last Name must be at most {MAX_NAME_LENGTH} characters (currently {lastName.length}).
+                        Last Name must be at most {MAX_NAME_LENGTH} characters.
                       </p>
                     )}
                   </div>
                 </div>
 
+                {/* Row 2: Position & Date of Birth */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">Official Position / Designation</label>
@@ -263,74 +345,104 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                     />
                     {isPositionTooLong && (
                       <p className="text-[10px] text-red-400 mt-1 font-medium">
-                        Official Position / Designation must be at most {MAX_NAME_LENGTH} characters (currently {position.length}).
+                        Official Position must be at most {MAX_NAME_LENGTH} characters.
                       </p>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-white/70 mb-1.5">Date of Birth</label>
-                      <input
-                        type="date"
-                        value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
-                        onBlur={() => touch('dateOfBirth')}
-                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
-                          ? 'border-red-500/60 focus:border-red-400'
-                          : 'border-white/10 focus:border-[#A855F7]/50'
-                          }`}
-                      />
-                      {touched.dateOfBirth && !dateOfBirth && (
-                        <p className="text-[10px] text-red-400 mt-1 font-medium">Date of Birth is required.</p>
-                      )}
-                      {touched.dateOfBirth && dateOfBirth && calculatedAge < MIN_AGE && (
-                        <p className="text-[10px] text-red-400 mt-1 font-medium">
-                          Organizers must be at least {MIN_AGE} years old. (Current age: {calculatedAge})
-                        </p>
-                      )}
-                      {touched.dateOfBirth && dateOfBirth && calculatedAge > MAX_AGE && (
-                        <p className="text-[10px] text-red-400 mt-1 font-medium">
-                          Age must not exceed {MAX_AGE} years old. (Current age: {calculatedAge})
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-white/70 mb-1.5">Contact Number</label>
-                      <input
-                        type="text"
-                        value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value)}
-                        onBlur={() => touch('contactNumber')}
-                        className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber))
-                          ? 'border-red-500/60'
-                          : 'border-white/10 focus:border-[#A855F7]/50'
-                          }`}
-                        placeholder="+639XXXXXXXXX"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      onBlur={() => touch('dateOfBirth')}
+                      className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.dateOfBirth && (!dateOfBirth || !isAgeValid)
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-white/10 focus:border-[#A855F7]/50'
+                        }`}
+                    />
+                    {touched.dateOfBirth && !dateOfBirth && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">Date of Birth is required.</p>
+                    )}
+                    {touched.dateOfBirth && dateOfBirth && calculatedAge < MIN_AGE && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">
+                        Organizers must be at least {MIN_AGE} years old.
+                      </p>
+                    )}
+                    {touched.dateOfBirth && dateOfBirth && calculatedAge > MAX_AGE && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">
+                        Age must not exceed {MAX_AGE} years old.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-white/70 mb-1.5">Corporate Email Address</label>
-                  <input
-                    type="email"
-                    value={corporateEmail}
-                    onChange={(e) => setCorporateEmail(e.target.value)}
-                    onBlur={() => touch('corporateEmail')}
-                    className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.corporateEmail && (!corporateEmail.trim() || !isEmailValid(corporateEmail))) || isEmailTooLong
-                      ? 'border-red-500/60'
-                      : 'border-white/10 focus:border-[#A855F7]/50'
-                      }`}
-                    placeholder="director@company.ph"
-                  />
-                  {isEmailTooLong && (
-                    <p className="text-[10px] text-red-400 mt-1 font-medium">
-                      Email must be at most {MAX_NAME_LENGTH} characters (currently {corporateEmail.length}).
-                    </p>
-                  )}
+                {/* Row 3: Contact Number & Email Address */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="min-w-0">
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Contact Number</label>
+                    <div className="flex items-center space-x-2">
+                      <span className="inline-flex items-center px-3 py-2 rounded-lg border border-white/10 bg-slate-800/80 text-white/70 text-sm font-medium shrink-0">
+                        +63
+                      </span>
+                      <div className="relative flex-1 min-w-0">
+                        <input
+                          type="text"
+                          value={contactNumber}
+                          onChange={(e) => setContactNumber(e.target.value.replace(/\D/g, ''))}
+                          onBlur={() => touch('contactNumber')}
+                          maxLength={10}
+                          className={`w-full rounded-lg border px-3 py-2 pr-10 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValidFormat(contactNumber)) || contactExists
+                            ? 'border-red-500/60'
+                            : 'border-white/10 focus:border-[#A855F7]/50'
+                            }`}
+                          placeholder="9171234567"
+                        />
+                        {isCheckingContact && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2 size={16} className="animate-spin text-[#A855F7]" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {touched.contactNumber && contactNumber && !isContactValidFormat(contactNumber) && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">Must be 10 digits starting with 9.</p>
+                    )}
+                    {contactExists && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">Already registered.</p>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <label className="block text-xs font-semibold text-white/70 mb-1.5">Corporate Email Address</label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={corporateEmail}
+                        onChange={(e) => setCorporateEmail(e.target.value)}
+                        onBlur={() => touch('corporateEmail')}
+                        className={`w-full rounded-lg border px-3 py-2 pr-10 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.corporateEmail && (!corporateEmail.trim() || !isEmailValid(corporateEmail))) || isEmailTooLong || emailExists
+                          ? 'border-red-500/60'
+                          : 'border-white/10 focus:border-[#A855F7]/50'
+                          }`}
+                        placeholder="director@company.ph"
+                      />
+                      {isCheckingEmail && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 size={16} className="animate-spin text-[#A855F7]" />
+                        </div>
+                      )}
+                    </div>
+                    {isEmailTooLong && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">Max {MAX_NAME_LENGTH} chars.</p>
+                    )}
+                    {emailExists && (
+                      <p className="text-[10px] text-red-400 mt-1 font-medium">Already registered.</p>
+                    )}
+                  </div>
                 </div>
 
+                {/* Row 4: Password & Confirm Password */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">Password (Min 8 chars)</label>
@@ -352,6 +464,16 @@ export default function OrganizerRegister({ onSubmit, onClose, onToggleMode, cre
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
+                    {password.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className={`text-[10px] font-bold ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                          <div className={`h-full ${passwordStrength.color} ${passwordStrength.width} transition-all duration-300`}></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">Confirm Password</label>

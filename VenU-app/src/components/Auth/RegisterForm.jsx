@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import OrganizerRegister from './OrganizerRegister.jsx';
 import { PHILIPPINE_GOVERNMENT_IDS } from '../../utils/constants.js';
-import { isNameValid, isContactValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
+import { isNameValid, isEmailValid, calculateAge, validatePassword, isIdNumberValid } from '../../utils/validation.js';
 import TermsAndPrivacyModal from './TermsAndPrivacyModal.jsx';
 
 import PersonalDetails from './RegisterSteps/PersonalDetails.jsx';
@@ -16,7 +16,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const [lastName, setLastName] = useState('');
   const [suffix, setSuffix] = useState('None');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
+  const [contactNumber, setContactNumber] = useState(''); // Only stores the 10 digit number (e.g. 9171234567)
   const [createEmail, setCreateEmail] = useState('');
   const [createPassword, setCreatePassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -75,6 +75,9 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   // Age bounds: lower bound depends on role, upper bound is 100 for both
   const isAgeValid = dateOfBirth && calculatedAge >= MIN_AGE && calculatedAge <= MAX_AGE;
 
+  // Custom Contact Validation: Must be 10 digits starting with 9
+  const isContactValidFormat = (num) => /^9\d{9}$/.test(num);
+
   // ─── Touched / Dirty State ────────────────────────────────────────────────
   const [touched, setTouched] = useState({});
   const touch = (field) => setTouched((prev) => ({ ...prev, [field]: true }));
@@ -124,7 +127,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
 
   // Real-time Contact Number Database Check
   useEffect(() => {
-    if (!contactNumber || !isContactValid(contactNumber)) {
+    if (!contactNumber || !isContactValidFormat(contactNumber)) {
       setContactExists(false);
       return;
     }
@@ -132,9 +135,11 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
     setIsCheckingContact(true);
     setContactExists(false);
 
+    // Pass the full +63 format to the backend checker
+    const fullNumber = `+63${contactNumber}`;
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/check-contact?contact=${contactNumber.trim()}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/check-contact?contact=${fullNumber}`);
         if (res.ok) {
           const data = await res.json();
           setContactExists(data.exists);
@@ -155,7 +160,7 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
     lastName.trim() && isNameValid(lastName) && !isLastNameTooLong &&
     !isMiddleNameTooLong &&
     isAgeValid &&
-    contactNumber.trim() && isContactValid(contactNumber) && !contactExists && !isCheckingContact &&
+    contactNumber.trim() && isContactValidFormat(contactNumber) && !contactExists && !isCheckingContact &&
     createEmail.trim() && isEmailValid(createEmail) && !isEmailTooLong && !emailExists && !isCheckingEmail &&
     createPassword && Object.values(validation).every(Boolean) &&
     confirmPassword && createPassword === confirmPassword;
@@ -178,9 +183,12 @@ export default function RegisterForm({ onSubmit, onClose, onToggleMode, createRo
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (onSubmit && canCreate) {
+      // Append +63 to the contact number before sending to backend
+      const fullContactNumber = `+63${contactNumber}`;
+
       onSubmit({
         role: 'Attendee',
-        personal: { firstName, middleName, lastName, suffix, dateOfBirth, contactNumber, email: createEmail, password: createPassword },
+        personal: { firstName, middleName, lastName, suffix, dateOfBirth, contactNumber: fullContactNumber, email: createEmail, password: createPassword },
         address: {
           houseNo, streetName, subdivision, zipCode,
           region: getRegionName(psgcSel.regionCode),
