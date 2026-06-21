@@ -26,7 +26,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpGet("pending")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Superadmin,admin,superadmin")]
         public async Task<IActionResult> GetPendingImages()
         {
             var pendingImages = await _context.VenueImages
@@ -48,7 +48,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize] // Ideally we should add [Authorize(Roles = "Admin")] here
+        [Authorize(Roles = "Admin,Superadmin,admin,superadmin")]
         public async Task<IActionResult> ModerateImage([FromBody] ModerateImageRequest request)
         {
             var image = await _context.VenueImages.FindAsync(request.ImageId);
