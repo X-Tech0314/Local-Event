@@ -41,6 +41,9 @@ export default function PersonalDetails({
   const isAgeTooYoung = !isAgeNaN && calculatedAge >= 0 && calculatedAge < MIN_AGE;
   const isAgeTooOld = !isAgeNaN && calculatedAge > MAX_AGE;
 
+  // Custom Contact Validation: Must be 10 digits starting with 9
+  const isContactValidFormat = (num) => /^9\d{9}$/.test(num);
+
   return (
     <div>
       <h4 className="text-sm font-bold text-white/90 border-b border-white/5 pb-2 mb-4">1. Personal Details</h4>
@@ -174,31 +177,39 @@ export default function PersonalDetails({
               </p>
             )}
           </div>
-          <div>
+
+          {/* NEW CONTACT NUMBER INPUT WITH +63 PREFIX */}
+          <div className="min-w-0">
             <label className="block text-xs font-semibold text-white/70 mb-1.5">Contact Number</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
-                onBlur={() => touch('contactNumber')}
-                className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 pr-10 ${touched.contactNumber && (!contactNumber.trim() || !isContactValid(contactNumber)) || contactExists
-                  ? 'border-red-500/60 focus:border-red-400'
-                  : 'border-white/10 focus:border-[#A855F7]/50'
-                  }`}
-                placeholder="+639XXXXXXXXX"
-              />
-              {isCheckingContact && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 size={16} className="animate-spin text-[#A855F7]" />
-                </div>
-              )}
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center px-3 py-2 rounded-lg border border-white/10 bg-slate-800/80 text-white/70 text-sm font-medium shrink-0">
+                +63
+              </span>
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value.replace(/\D/g, ''))} // Strip non-digits
+                  onBlur={() => touch('contactNumber')}
+                  maxLength={10}
+                  className={`w-full rounded-lg border px-3 py-2 pr-10 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${touched.contactNumber && (!contactNumber.trim() || !isContactValidFormat(contactNumber)) || contactExists
+                    ? 'border-red-500/60 focus:border-red-400'
+                    : 'border-white/10 focus:border-[#A855F7]/50'
+                    }`}
+                  placeholder="9171234567"
+                />
+                {isCheckingContact && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 size={16} className="animate-spin text-[#A855F7]" />
+                  </div>
+                )}
+              </div>
             </div>
             {touched.contactNumber && !contactNumber.trim() && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">Contact number is required.</p>
             )}
-            {touched.contactNumber && contactNumber.trim() && !isContactValid(contactNumber) && (
-              <p className="text-[10px] text-red-400 mt-1 font-medium">Must be +639XXXXXXXXX or 09XXXXXXXXX (11 digits).</p>
+            {touched.contactNumber && contactNumber.trim() && !isContactValidFormat(contactNumber) && (
+              <p className="text-[10px] text-red-400 mt-1 font-medium">Must be exactly 10 digits starting with 9.</p>
             )}
             {contactExists && (
               <p className="text-[10px] text-red-400 mt-1 font-medium">This contact number is already registered.</p>
@@ -214,7 +225,7 @@ export default function PersonalDetails({
               value={createEmail}
               onChange={(e) => setCreateEmail(e.target.value)}
               onBlur={() => touch('createEmail')}
-              className={`w-full rounded-lg border px-3 py-2 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 pr-10 ${(touched.createEmail && (!createEmail.trim() || !isEmailValid(createEmail))) || isEmailTooLong || emailExists
+              className={`w-full rounded-lg border px-3 py-2 pr-10 text-white text-sm outline-none transition-colors placeholder:text-white/25 bg-slate-950/80 ${(touched.createEmail && (!createEmail.trim() || !isEmailValid(createEmail))) || isEmailTooLong || emailExists
                 ? 'border-red-500/60 focus:border-red-400'
                 : 'border-white/10 focus:border-[#A855F7]/50'
                 }`}
