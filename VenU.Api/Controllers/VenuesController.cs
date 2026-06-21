@@ -62,6 +62,38 @@ namespace VenU.Api.Controllers
             return Ok(venues);
         }
 
+        [HttpGet("with-events-count")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetVenuesWithEventsCount()
+        {
+            var venuesWithCount = await _context.Venues
+                .Where(v => v.IsVerified) // Usually map should only show verified
+                .Select(v => new
+                {
+                    v.Id,
+                    v.Name,
+                    v.StreetAddress,
+                    v.Barangay,
+                    v.City,
+                    v.Province,
+                    v.Latitude,
+                    v.Longitude,
+                    v.VenueImages,
+                    v.Type,
+                    v.MaxCapacity,
+                    v.MapUrl,
+                    v.Rating,
+                    v.OrganizersUsedCount,
+                    v.SquareFootage,
+                    v.HasFireExit,
+                    v.HasFireExtinguishers,
+                    ActiveEventsCount = _context.Events.Count(e => e.VenueId == v.Id && e.Status == "Published")
+                })
+                .ToListAsync();
+
+            return Ok(venuesWithCount);
+        }
+
         [HttpPost("add-venue")]
         [Authorize]
         public async Task<IActionResult> AddVenue([FromForm] CreateVenueDto dto)
@@ -131,6 +163,7 @@ namespace VenU.Api.Controllers
                 Barangay = dto.Barangay,
                 City = dto.City,
                 Province = dto.Province,
+                ZipCode = dto.ZipCode,
                 Landmarks = dto.Landmarks,
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,

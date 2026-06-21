@@ -17,6 +17,7 @@ namespace VenU.Api.DTOs
         public string? City { get; set; }
         public string? Province { get; set; }
         public string? Region { get; set; }
+        public string? ZipCode { get; set; }
         public string? Landmarks { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }

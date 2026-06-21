@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const BASE = 'https://psgc.gitlab.io/api';
+const BASE = 'https://psgc.cloud/api';
 const cache = {};
 
 /**

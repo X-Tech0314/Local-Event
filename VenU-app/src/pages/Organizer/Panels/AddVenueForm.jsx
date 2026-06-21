@@ -73,7 +73,7 @@ export default function AddVenueForm({ setViewMode }) {
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '', type: '', floorArea: '', ceilingHeight: '',
-    streetAddress: '', landmarks: '', latitude: '', longitude: '',
+    streetAddress: '', zipCode: '', landmarks: '', latitude: '', longitude: '',
     representativeName: '', mobileNumber: '', landline: '', email: '', websiteUrl: '',
     capacityTheater: '', capacityBanquet: '', capacityStanding: '', parkingSlots: '', operatingHours: '',
     hasAircon: false, hasSoundSystem: false, hasBackupGenerator: false, hasHoldingRooms: false,
@@ -126,6 +126,24 @@ export default function AddVenueForm({ setViewMode }) {
       const h = parseFloat(val);
       if (isNaN(h) || h < 2 || h > 100) error = "Enter a realistic height between 2 and 100 meters.";
     }
+
+    if (key === 'capacityTheater' || key === 'capacityBanquet' || key === 'capacityStanding') {
+      const cap = parseInt(val, 10);
+      const area = parseFloat(formData.floorArea);
+      if (val && (isNaN(cap) || cap < 0)) {
+        error = "Capacity cannot be negative.";
+      } else if (val && !isNaN(area) && area > 0) {
+        let maxAllowed = area * 4; // Standing max
+        if (key === 'capacityBanquet') maxAllowed = area * 1.5;
+        if (key === 'capacityTheater') maxAllowed = area * 2;
+        if (cap > maxAllowed) {
+          error = `Capacity exceeds realistic limit for ${area} sqm. (Max: ~${Math.floor(maxAllowed)})`;
+        }
+      }
+    }
+
+    if (key === 'fsicNumber' && val && val.length < 5) error = "FSIC Number is too short to be valid.";
+    if (key === 'businessPermitNumber' && val && val.length < 5) error = "Permit Number is too short.";
 
     if (key === 'mobileNumber' && val) {
       const phPhone = /^(09\d{9}|\+639\d{9})$/;
@@ -191,8 +209,17 @@ export default function AddVenueForm({ setViewMode }) {
       if (!formData.streetAddress.trim()) tempErrors.streetAddress = "Street address is required.";
     }
 
+    if (currentStep === 3) {
+      const area = parseFloat(formData.floorArea);
+      if (formData.capacityTheater && parseInt(formData.capacityTheater, 10) > area * 2) tempErrors.capacityTheater = `Max capacity is ~${Math.floor(area * 2)}`;
+      if (formData.capacityBanquet && parseInt(formData.capacityBanquet, 10) > area * 1.5) tempErrors.capacityBanquet = `Max capacity is ~${Math.floor(area * 1.5)}`;
+      if (formData.capacityStanding && parseInt(formData.capacityStanding, 10) > area * 4) tempErrors.capacityStanding = `Max capacity is ~${Math.floor(area * 4)}`;
+    }
+
     if (currentStep === 4) {
       if (files.galleryImages.length < 3) tempErrors.galleryImages = "Please upload at least 3 gallery images.";
+      if (formData.fsicNumber && formData.fsicNumber.length < 5) tempErrors.fsicNumber = "FSIC Number is too short to be valid.";
+      if (formData.businessPermitNumber && formData.businessPermitNumber.length < 5) tempErrors.businessPermitNumber = "Permit Number is too short.";
     }
 
     setErrors(tempErrors);
@@ -217,7 +244,11 @@ export default function AddVenueForm({ setViewMode }) {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const payload = new FormData();
-    Object.keys(formData).forEach(key => payload.append(key, formData[key]));
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== '') {
+        payload.append(key, formData[key]);
+      }
+    });
 
     // PSGC names + codes
     payload.append('region', getRegionName(psgcSel.regionCode));
@@ -336,7 +367,7 @@ export default function AddVenueForm({ setViewMode }) {
                 {errors.email && <p className="text-[10px] text-red-400 mt-1">{errors.email}</p>}
               </div>
               <div>
-                <label className={labelCls}>Website URL</label>
+                <label className={labelCls}>Website URL <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
                 <input type="url" maxLength={50} className={inputCls('websiteUrl')} value={formData.websiteUrl} onChange={e => set('websiteUrl', e.target.value)} placeholder="https://..." />
               </div>
             </div>
@@ -415,9 +446,15 @@ export default function AddVenueForm({ setViewMode }) {
               loading={psgcLoading.barangays}
             />
 
-            <div>
-              <label className={labelCls}>Landmarks / Nearby Places</label>
-              <input maxLength={50} className={inputCls('landmarks')} value={formData.landmarks} onChange={e => set('landmarks', e.target.value)} placeholder="e.g. Near Mall of Asia, beside SM" />
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <label className={labelCls}>Zip Code</label>
+                <input maxLength={10} className={inputCls('zipCode')} value={formData.zipCode} onChange={e => set('zipCode', e.target.value)} placeholder="e.g. 1109" />
+              </div>
+              <div>
+                <label className={labelCls}>Landmarks / Nearby Places</label>
+                <input maxLength={50} className={inputCls('landmarks')} value={formData.landmarks} onChange={e => set('landmarks', e.target.value)} placeholder="e.g. Near Mall of Asia, beside SM" />
+              </div>
             </div>
 
             {/* Location preview */}
@@ -450,14 +487,20 @@ export default function AddVenueForm({ setViewMode }) {
               <div>
                 <label className={labelCls}>Theater Capacity</label>
                 <input type="number" min="0" className={inputCls('capacityTheater')} value={formData.capacityTheater} onChange={e => set('capacityTheater', e.target.value)} placeholder="0" />
+                <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">Max seating in rows (e.g. seminars)</p>
+                {errors.capacityTheater && <p className="text-[10px] text-red-400 mt-1">{errors.capacityTheater}</p>}
               </div>
               <div>
                 <label className={labelCls}>Banquet Capacity</label>
                 <input type="number" min="0" className={inputCls('capacityBanquet')} value={formData.capacityBanquet} onChange={e => set('capacityBanquet', e.target.value)} placeholder="0" />
+                <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">Max seating with round tables (e.g. weddings)</p>
+                {errors.capacityBanquet && <p className="text-[10px] text-red-400 mt-1">{errors.capacityBanquet}</p>}
               </div>
               <div>
                 <label className={labelCls}>Standing / Cocktail</label>
                 <input type="number" min="0" className={inputCls('capacityStanding')} value={formData.capacityStanding} onChange={e => set('capacityStanding', e.target.value)} placeholder="0" />
+                <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">Max capacity with no chairs/tables</p>
+                {errors.capacityStanding && <p className="text-[10px] text-red-400 mt-1">{errors.capacityStanding}</p>}
               </div>
               <div>
                 <label className={labelCls}>Parking Slots</label>
@@ -494,11 +537,13 @@ export default function AddVenueForm({ setViewMode }) {
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className={labelCls}>FSIC Number (Fire Safety)</label>
-                <input maxLength={50} className={inputCls('fsicNumber')} value={formData.fsicNumber} onChange={e => set('fsicNumber', e.target.value)} />
+                <input maxLength={50} className={inputCls('fsicNumber')} value={formData.fsicNumber} onChange={e => set('fsicNumber', e.target.value)} placeholder="e.g. FSIC-2023-01234" />
+                {errors.fsicNumber && <p className="text-[10px] text-red-400 mt-1">{errors.fsicNumber}</p>}
               </div>
               <div>
                 <label className={labelCls}>Mayor's Permit / Business Permit No.</label>
-                <input maxLength={50} className={inputCls('businessPermitNumber')} value={formData.businessPermitNumber} onChange={e => set('businessPermitNumber', e.target.value)} />
+                <input maxLength={50} className={inputCls('businessPermitNumber')} value={formData.businessPermitNumber} onChange={e => set('businessPermitNumber', e.target.value)} placeholder="e.g. BP-2023-012345" />
+                {errors.businessPermitNumber && <p className="text-[10px] text-red-400 mt-1">{errors.businessPermitNumber}</p>}
               </div>
             </div>
 
@@ -526,6 +571,11 @@ export default function AddVenueForm({ setViewMode }) {
                   accept="image/*"
                   onChange={e => {
                     const filesArray = Array.from(e.target.files);
+                    const oversized = filesArray.some(f => f.size > 5 * 1024 * 1024);
+                    if (oversized) {
+                       setErrors(prev => ({ ...prev, galleryImages: "Each image must be under 5MB." }));
+                       return;
+                    }
                     setFiles(f => ({ ...f, galleryImages: filesArray }));
                     // Real-time validation for files
                     setErrors(prev => ({ ...prev, galleryImages: filesArray.length < 3 ? "Please upload at least 3 gallery images." : null }));
@@ -539,12 +589,26 @@ export default function AddVenueForm({ setViewMode }) {
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Floor Plan / Blueprint (PDF/IMG)</label>
-                <input type="file" onChange={e => setFiles(f => ({ ...f, floorPlanFile: e.target.files[0] }))}
+                <input type="file" onChange={e => {
+                  if (e.target.files[0] && e.target.files[0].size > 5 * 1024 * 1024) {
+                    alert("File must be under 5MB.");
+                    e.target.value = '';
+                    return;
+                  }
+                  setFiles(f => ({ ...f, floorPlanFile: e.target.files[0] }));
+                }}
                   className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" />
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Legal Permits Package (Zip/PDF)</label>
-                <input type="file" onChange={e => setFiles(f => ({ ...f, legalPermitsFile: e.target.files[0] }))}
+                <input type="file" onChange={e => {
+                  if (e.target.files[0] && e.target.files[0].size > 10 * 1024 * 1024) {
+                    alert("Permit package must be under 10MB.");
+                    e.target.value = '';
+                    return;
+                  }
+                  setFiles(f => ({ ...f, legalPermitsFile: e.target.files[0] }));
+                }}
                   className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" />
               </div>
             </div>

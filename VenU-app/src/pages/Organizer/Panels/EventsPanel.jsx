@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, Edit, Copy, ChevronDown, CheckCircle, Clock, Ban, Lock, MapPin, Calendar, Ticket, Tag, ArrowRight, Star, Settings, Plus, Search, Filter, BarChart3, AlertCircle, Navigation, Building, ExternalLink } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -415,41 +416,43 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
                   url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                 />
                 <MapUpdater center={mapCenter} />
-                {geocodedEvents.map((evt) => (
-                  <Marker key={evt.id} position={[evt.lat, evt.lon]}>
-                    <Popup className="rounded overflow-hidden border-0 p-0 m-0 w-[240px]">
-                      <div className="font-sans">
-                        <div className="h-24 w-full bg-slate-200 relative">
-                          {evt.bannerUrl ? (
-                            <img src={evt.bannerUrl} className="w-full h-full object-cover" alt={evt.title} />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                              <Calendar size={24} className="text-slate-400" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                          <span className="absolute bottom-2 left-2 text-[10px] font-semibold text-white px-2 py-1 bg-purple-600/80 rounded backdrop-blur-sm">
-                            {evt.category}
-                          </span>
-                        </div>
-                        <div className="p-3">
-                          <h4 className="font-semibold text-slate-900 leading-tight mb-1 text-sm">{evt.title}</h4>
-                          <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1">
-                            <MapPin size={10} /> {[evt.barangay, evt.city].filter(Boolean).join(', ')}
-                          </p>
-                          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                            <span className="text-[10px] font-semibold text-slate-500">
-                              Cap: <span className="text-slate-800">{evt.maxCapacity || 'N/A'}</span>
+                <MarkerClusterGroup chunkedLoading>
+                  {geocodedEvents.map((evt) => (
+                    <Marker key={evt.id} position={[evt.lat, evt.lon]}>
+                      <Popup className="rounded overflow-hidden border-0 p-0 m-0 w-[240px]">
+                        <div className="font-sans">
+                          <div className="h-24 w-full bg-slate-200 relative">
+                            {evt.bannerUrl ? (
+                              <img src={evt.bannerUrl} className="w-full h-full object-cover" alt={evt.title} />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                                <Calendar size={24} className="text-slate-400" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                            <span className="absolute bottom-2 left-2 text-[10px] font-semibold text-white px-2 py-1 bg-purple-600/80 rounded backdrop-blur-sm">
+                              {evt.category}
                             </span>
-                            <button onClick={() => setSelectedEvent(evt)} className="text-[10px] text-purple-600 font-bold flex items-center gap-0.5 hover:underline">
-                              Details <ExternalLink size={9} />
-                            </button>
+                          </div>
+                          <div className="p-3">
+                            <h4 className="font-semibold text-slate-900 leading-tight mb-1 text-sm">{evt.title}</h4>
+                            <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1">
+                              <MapPin size={10} /> {[evt.barangay, evt.city].filter(Boolean).join(', ')}
+                            </p>
+                            <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                              <span className="text-[10px] font-semibold text-slate-500">
+                                Cap: <span className="text-slate-800">{evt.maxCapacity || 'N/A'}</span>
+                              </span>
+                              <button onClick={() => setSelectedEvent(evt)} className="text-[10px] text-purple-600 font-bold flex items-center gap-0.5 hover:underline">
+                                Details <ExternalLink size={9} />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MarkerClusterGroup>
               </MapContainer>
             </div>
           </div>
