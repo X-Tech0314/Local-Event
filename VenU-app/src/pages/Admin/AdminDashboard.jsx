@@ -24,7 +24,11 @@ export default function AdminDashboard() {
     // Bulletproof role extraction
     const rawRole = loggedInUser?.Role || loggedInUser?.role || '';
     const cleanRole = String(rawRole).trim().toLowerCase();
-    const [role, setRole] = useState(cleanRole === 'superadmin' ? 'superadmin' : 'admin');
+    
+    // Only allow actual admins
+    const [role, setRole] = useState(
+        (cleanRole === 'superadmin' || cleanRole === 'admin') ? cleanRole : 'unauthorized'
+    );
 
     const [activeTab, setActiveTab] = useState('dashboard');
     const [pendingEvents, setPendingEvents] = useState([]);
@@ -81,6 +85,19 @@ export default function AdminDashboard() {
             console.error(`Failed to ${action} event:`, err);
         }
     };
+
+    if (role === 'unauthorized') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white flex-col gap-4">
+                <ShieldAlert size={64} className="text-red-500" />
+                <h1 className="text-3xl font-bold">403 Forbidden</h1>
+                <p className="text-slate-400">Your account ({rawRole || 'No Role'}) does not have Admin privileges.</p>
+                <button onClick={() => navigate('/login')} className="mt-4 px-6 py-2 bg-purple-600 rounded font-bold hover:bg-purple-700">
+                    Return to Login
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-200 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
