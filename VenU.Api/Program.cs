@@ -6,6 +6,7 @@ using VenU.Api.Data;
 using VenU.Api.Middlewares;
 using VenU.Api.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 // Load environment variables from .env if present
 var currentDir = Directory.GetCurrentDirectory();
