@@ -92,6 +92,9 @@ namespace VenU.Api.Models
 
         public string? OrgDocumentPath { get; set; }
 
+        public int FailedLoginAttempts { get; set; } = 0;
+        public DateTime? LockoutEnd { get; set; }
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Add this inside the User class

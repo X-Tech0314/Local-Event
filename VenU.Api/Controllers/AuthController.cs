@@ -104,19 +104,59 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("login")]
-        [EnableRateLimiting("AuthStrict")]
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
+            // 1. Check if account is currently locked out
+            if (user != null && user.LockoutEnd != null && user.LockoutEnd > DateTime.UtcNow)
+            {
+                var timeRemaining = (user.LockoutEnd.Value - DateTime.UtcNow);
+                var minutesRemaining = Math.Ceiling(timeRemaining.TotalMinutes);
+                return Unauthorized(new { Message = $"Account is temporarily locked due to multiple failed attempts. Please try again in {minutesRemaining} minute(s)." });
+            }
+
+            // 2. Check if user exists or password is correct
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
+                // If the user exists, increment their failed attempts
+                if (user != null)
+                {
+                    user.FailedLoginAttempts++;
+
+                    // If they hit 5 attempts, lock the account for 5 minutes
+                    if (user.FailedLoginAttempts >= 5)
+                    {
+                        user.LockoutEnd = DateTime.UtcNow.AddMinutes(5);
+                        user.FailedLoginAttempts = 0; // Reset counter so it starts at 0 after the lockout expires
+                        await _context.SaveChangesAsync();
+                        return Unauthorized(new { Message = "Account locked due to 5 failed attempts. Please try again in 5 minutes." });
+                    }
+                    else
+                    {
+                        await _context.SaveChangesAsync();
+                        // ON FIRST ERROR: Show exactly how many attempts are left
+                        int attemptsLeft = 5 - user.FailedLoginAttempts;
+                        return Unauthorized(new { Message = $"Invalid email or password. You have {attemptsLeft} attempt(s) left before your account is locked." });
+                    }
+                }
+
+                // Generic error if email doesn't exist (don't reveal that the email doesn't exist for security)
                 return Unauthorized(new { Message = "Invalid email or password." });
             }
 
+            // 3. Check if account is suspended or deleted by an admin
             if (user.Status == "Suspended" || user.Status == "Deleted")
             {
                 return Unauthorized(new { Message = "Your account has been suspended or deleted. Please contact an administrator." });
+            }
+
+            // 4. SUCCESS: Reset failed attempts and lockout time
+            if (user.FailedLoginAttempts > 0 || user.LockoutEnd != null)
+            {
+                user.FailedLoginAttempts = 0;
+                user.LockoutEnd = null;
+                await _context.SaveChangesAsync();
             }
 
             var token = GenerateJwtToken(user);

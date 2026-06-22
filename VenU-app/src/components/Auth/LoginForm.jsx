@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
-export default function LoginForm({ onSubmit, onClose, onToggleMode }) {
+export default function LoginForm({ onSubmit, onClose, onToggleMode, loginError }) {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -73,6 +73,14 @@ export default function LoginForm({ onSubmit, onClose, onToggleMode }) {
             </button>
           </div>
         </div>
+
+        {/* ERROR MESSAGE DISPLAY (Attempts Left / Lockout Warning) */}
+        {loginError && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium rounded-lg p-3 flex items-start gap-2 animate-fadeIn">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <span>{loginError}</span>
+          </div>
+        )}
 
         <div className="flex justify-end">
           <button
