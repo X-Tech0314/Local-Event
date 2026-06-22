@@ -173,6 +173,21 @@ namespace VenU.Api.Controllers
                 return BadRequest("No file uploaded.");
             }
 
+            // Strict MIME type validation
+            var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            if (!allowedMimeTypes.Contains(file.ContentType.ToLower()))
+            {
+                return BadRequest("Invalid file type. Only JPEG, PNG, GIF, and WEBP images are allowed.");
+            }
+
+            // Strict File Extension validation
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var fileExtension = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest("Invalid file extension. Only .jpg, .jpeg, .png, .gif, and .webp are allowed.");
+            }
+
             var cloudName = _configuration["Cloudinary:CloudName"];
             var apiKey = _configuration["Cloudinary:ApiKey"];
             var apiSecret = _configuration["Cloudinary:ApiSecret"];
@@ -226,7 +241,6 @@ namespace VenU.Api.Controllers
                 System.IO.Directory.CreateDirectory(uploadsPath);
             }
 
-            var fileExtension = System.IO.Path.GetExtension(file.FileName);
             var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
             var filePath = System.IO.Path.Combine(uploadsPath, uniqueFileName);
 
