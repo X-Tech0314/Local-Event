@@ -197,7 +197,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
       // Over-allocated: manually entered values already exceed total capacity
       if (remainingCapacity < 0) {
-        alert(`⚠️ Over-allocated! Your tiers already sum to ${sumAssigned} which exceeds the total capacity of ${totalCapacity}. Please reduce some tier values first.`);
+        alert(`Over-allocated! Your tiers already sum to ${sumAssigned} which exceeds the total capacity of ${totalCapacity}. Please reduce some tier values first.`);
         setIsAllocating(false);
         return;
       }
@@ -349,7 +349,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       }, 3000);
     } catch (err) {
       if (err.name === 'AbortError') {
-        alert("⏱️ The server took too long to respond. The Render backend may be waking up from sleep — please wait 30 seconds and try again.");
+        alert("The server took too long to respond. The Render backend may be waking up from sleep — please wait 30 seconds and try again.");
       } else {
         alert("Error submitting event: " + err.message);
       }
@@ -588,21 +588,22 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     if (!files.length) return;
 
     setIsUploadingVenue(true);
-    const cloudName = "ditxaqwu6";
-    const uploadPreset = "img-c-event";
-
+    const token = localStorage.getItem('token');
     const uploadedUrls = [];
+
     try {
       for (const file of files) {
-        const uploadData = new FormData();
-        uploadData.append("file", file);
-        uploadData.append("upload_preset", uploadPreset);
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-          method: "POST",
-          body: uploadData,
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/events/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
         });
+
         const data = await res.json();
-        if (data.secure_url) uploadedUrls.push(data.secure_url);
+        if (data.url) uploadedUrls.push(data.url);
       }
 
       setFormData(prev => ({
@@ -611,7 +612,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       }));
       if (errors.VenueImages) setErrors(prev => ({ ...prev, VenueImages: null }));
     } catch (err) {
-      console.error("Cloudinary upload failed", err);
+      console.error("Venue image upload failed", err);
+      alert("Failed to upload venue images. Please try again.");
     } finally {
       setIsUploadingVenue(false);
     }
@@ -671,7 +673,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                   ref={fileInputRef}
                   type="file"
                   className="hidden"
-                  accept=".jpg,.jpeg,.png"
+                  accept="image/*"
                   onChange={handleFileChange}
                   disabled={isUploadingBanner}
                 />
@@ -697,7 +699,6 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     </div>
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Upload promotional media asset</p>
                     <p className="text-xs text-slate-400 mt-1">Drag and drop or click to browse (16:9 ratio recommended)</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1">Accepted formats: .jpg, .png</p>
                   </>
                 )}
               </div>
@@ -1195,7 +1196,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Contact Number <span className="text-red-500">*</span></label>
                           <div className="relative">
-                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono select-none">🇵🇭</span>
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono select-none">+63</span>
                             <input
                               type="tel"
                               name="ContactNumber"
@@ -1212,7 +1213,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                               }}
                               placeholder="09171234567"
                               maxLength={13}
-                              className={`w-full pl-7 pr-2 p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${errors.ContactNumber
+                              className={`w-full pl-8 pr-2 p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${errors.ContactNumber
                                 ? 'border-red-400 dark:border-red-500 focus:ring-red-400'
                                 : 'border-slate-200 dark:border-slate-800'
                                 }`}
@@ -1251,43 +1252,14 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
                       <div className="grid grid-cols-2 gap-3 mt-2">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Square Footage (sqm)</label>
-                          <input type="number" name="FloorArea" value={formData.FloorArea} onChange={handleInputChange} placeholder="e.g., 5000" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Square Footage</label>
+                          <input type="number" name="SquareFootage" value={formData.SquareFootage} onChange={handleInputChange} placeholder="e.g., 5000" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.SquareFootage && <span className="text-[10px] text-red-500">{errors.SquareFootage}</span>}
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Parking Slots</label>
-                          <input type="number" name="ParkingSlots" value={formData.ParkingSlots} onChange={handleInputChange} placeholder="e.g., 50" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Number of Floors</label>
+                          <input type="number" name="NumberOfFloors" value={formData.NumberOfFloors} onChange={handleInputChange} placeholder="1" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-3 mt-2">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Theater Cap</label>
-                          <input type="number" name="CapacityTheater" value={formData.CapacityTheater} onChange={handleInputChange} placeholder="0" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Banquet Cap</label>
-                          <input type="number" name="CapacityBanquet" value={formData.CapacityBanquet} onChange={handleInputChange} placeholder="0" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Standing Cap</label>
-                          <input type="number" name="CapacityStanding" value={formData.CapacityStanding} onChange={handleInputChange} placeholder="0" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
-                        </div>
-                      </div>
-
-                      <div className="flex gap-4 mt-2 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex-wrap">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.HasAircon} onChange={(e) => setFormData(prev => ({ ...prev, HasAircon: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
-                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Air Conditioned</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.HasSoundSystem} onChange={(e) => setFormData(prev => ({ ...prev, HasSoundSystem: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
-                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Sound System</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.HasHoldingRooms} onChange={(e) => setFormData(prev => ({ ...prev, HasHoldingRooms: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
-                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Holding Rooms</span>
-                        </label>
                       </div>
 
                       <div className="flex gap-4 mt-2 mb-2 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1340,12 +1312,12 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
               <div className="p-4 bg-purple-50/40 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/40 rounded-xl space-y-3">
                 {venueSource === 'registered' ? (
                   <p className="text-xs font-medium text-purple-900 dark:text-purple-400">
-                    ✅ <strong>Venue Occupancy Synchronized:</strong> Capacity limits and logistics are automatically inherited from the registered venue profile in the database.
+                    <strong>Venue Occupancy Synchronized:</strong> Capacity limits and logistics are automatically inherited from the registered venue profile in the database.
                   </p>
                 ) : (
                   <>
                     <p className="text-xs font-medium text-purple-900 dark:text-purple-400">
-                      ⚠️ <strong>Organizer Verification Statement:</strong> Are you certain that the parameters selected above correctly map to your physical layout setup and logistics deployment capacity limits?
+                      <strong>Organizer Verification Statement:</strong> Are you certain that the parameters selected above correctly map to your physical layout setup and logistics deployment capacity limits?
                     </p>
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Structural Occupancy Capacity Limit</label>
@@ -1361,7 +1333,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
                       {formData.Capacity && getCapacitySuggestion(formData.Capacity) && (
                         <div className="mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 rounded-lg flex items-center space-x-2 animate-fade-in">
-                          <span className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">💡 Suggestion:</span>
+                          <span className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">Suggestion:</span>
                           <span className="text-indigo-700 dark:text-indigo-300 text-[10px]">{getCapacitySuggestion(formData.Capacity)}</span>
                         </div>
                       )}
@@ -1386,13 +1358,13 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     disabled={isAllocating}
                     className="text-xs px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors flex items-center gap-1 disabled:opacity-50"
                   >
-                    {isAllocating ? <Loader2 size={12} className="animate-spin" /> : '✨ Smart Auto-Allocate'}
+                    {isAllocating ? <Loader2 size={12} className="animate-spin" /> : 'Smart Auto-Allocate'}
                   </button>
                 )}
               </div>
               {errors.TicketCapacitySum && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg text-xs text-red-600 dark:text-red-400 animate-fade-in">
-                  ⚠️ {errors.TicketCapacitySum}
+                  {errors.TicketCapacitySum}
                 </div>
               )}
 
