@@ -208,16 +208,7 @@ using (var scope = app.Services.CreateScope())
             context.SaveChanges();
         }
 
-        // Also ensure all existing venues are verified
-        var unverifiedVenues = context.Venues.Where(v => !v.IsVerified).ToList();
-        if (unverifiedVenues.Any())
-        {
-            foreach (var v in unverifiedVenues)
-            {
-                v.IsVerified = true;
-            }
-            context.SaveChanges();
-        }
+        // Removed auto-verification block to respect manual admin approval for custom venues
     }
     catch (Exception ex)
     {
