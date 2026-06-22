@@ -303,6 +303,60 @@ namespace VenU.Api.Controllers
             var exists = await _context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower().Trim());
             return Ok(new { exists });
         }
+
+        // ==========================================
+        // 6. IDENTITY APPROVALS
+        // ==========================================
+        [HttpGet("identity-approvals")]
+        public async Task<IActionResult> GetPendingIdentityApprovals()
+        {
+            var pendingUsers = await _context.Users
+                .Where(u => (u.Role == "Attendee" || u.Role == "Organizer") 
+                         && !u.IsVerified 
+                         && u.Status == "Active"
+                         && string.IsNullOrEmpty(u.VerificationMessage))
+                .Select(u => new {
+                    id = u.Id,
+                    firstName = u.FirstName,
+                    lastName = u.LastName,
+                    email = u.Email,
+                    role = u.Role,
+                    idType = u.IdType,
+                    idFrontPath = u.IdFrontPath,
+                    idBackPath = u.IdBackPath,
+                    selfiePath = u.SelfiePath,
+                    orgDocumentPath = u.OrgDocumentPath
+                })
+                .ToListAsync();
+
+            return Ok(pendingUsers);
+        }
+
+        [HttpPut("identity-approvals/{id}/approve")]
+        public async Task<IActionResult> ApproveIdentity(Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.IsVerified = true;
+            user.VerificationMessage = null;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Identity approved successfully." });
+        }
+
+        [HttpPut("identity-approvals/{id}/reject")]
+        public async Task<IActionResult> RejectIdentity(Guid id, [FromBody] RejectIdentityDto dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.IsVerified = false;
+            user.VerificationMessage = dto.Reason;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Identity rejected successfully." });
+        }
     }
 
     // ==========================================
@@ -323,5 +377,10 @@ namespace VenU.Api.Controllers
     public class UpdateRoleDto
     {
         public string Role { get; set; }
+    }
+
+    public class RejectIdentityDto
+    {
+        public string Reason { get; set; }
     }
 }
