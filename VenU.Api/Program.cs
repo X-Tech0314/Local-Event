@@ -7,6 +7,8 @@ using VenU.Api.Middlewares;
 using VenU.Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 // Load environment variables from .env if present
 var currentDir = Directory.GetCurrentDirectory();
@@ -104,6 +106,34 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
         RoleClaimType = ClaimTypes.Role
+    };
+});
+
+// Configure Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Global Limit: 100 requests per 10 seconds per IP
+    options.AddFixedWindowLimiter("Global", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromSeconds(10);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 2;
+    });
+
+    // Stricter Limit for Auth: 5 requests per minute per IP
+    options.AddFixedWindowLimiter("AuthStrict", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0; // Reject immediately if over limit
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsync("Too many requests. Please try again later.", token);
     };
 });
 
@@ -229,7 +259,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
 app.UseCors("AllowReactFrontend");
+
+app.UseRateLimiter();
 
 app.UseStaticFiles(); // Serve static uploaded assets from wwwroot
 

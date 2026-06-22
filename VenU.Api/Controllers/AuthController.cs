@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization; // <--- THIS WAS MISSING
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -28,6 +29,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("AuthStrict")]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
@@ -102,6 +104,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("AuthStrict")]
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
