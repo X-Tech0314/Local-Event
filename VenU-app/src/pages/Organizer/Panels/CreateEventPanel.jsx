@@ -510,8 +510,11 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   };
 
   const processFile = async (file) => {
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (file && validTypes.includes(file.type)) {
+    if (!file) return;
+
+    // Accept any image type
+    if (file.type.startsWith('image/')) {
+      // Show local preview immediately
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);
@@ -519,25 +522,40 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       reader.readAsDataURL(file);
 
       setIsUploadingBanner(true);
-      const cloudName = "ditxaqwu6";
-      const uploadPreset = "img-c-event";
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("upload_preset", uploadPreset);
+
       try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-          method: "POST",
-          body: uploadData,
+        // Route through your backend API instead of Cloudinary directly
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/events/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+            // Note: Do NOT set 'Content-Type' here, the browser sets it automatically for FormData
+          },
+          body: formData
         });
+
         const data = await res.json();
-        if (data.secure_url) {
-          setFormData(prev => ({ ...prev, EventBannerUrl: data.secure_url }));
+
+        if (res.ok && data.url) {
+          setFormData(prev => ({ ...prev, EventBannerUrl: data.url }));
+          // Clear any previous "required" errors
+          if (errors.EventBannerUrl) setErrors(prev => ({ ...prev, EventBannerUrl: null }));
+        } else {
+          console.error("Backend upload failed:", data);
+          alert(`Image upload failed: ${data.message || 'Unknown server error'}`);
         }
       } catch (err) {
-        console.error("Cloudinary banner upload failed", err);
+        console.error("Network error during upload:", err);
+        alert("Failed to connect to the server. Please check your internet connection.");
       } finally {
         setIsUploadingBanner(false);
       }
+    } else {
+      alert("Please upload a valid image file (JPG, PNG, WEBP, etc).");
     }
   };
 
