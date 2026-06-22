@@ -100,13 +100,21 @@ export default function SettingsPanel({ currentUser }) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formData, {
+    // FIX: Use fetch and DO NOT set 'Content-Type' header manually.
+    // The browser sets it automatically for FormData, including the necessary boundary.
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/events/upload`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
     });
-    return res.data.url;
+
+    const data = await res.json();
+    if (!res.ok || !data.url) {
+      throw new Error(data.message || "Upload failed");
+    }
+    return data.url;
   };
 
   const handleImageChange = async (e) => {
@@ -349,8 +357,8 @@ export default function SettingsPanel({ currentUser }) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-6 py-2.5 text-sm font-bold whitespace-nowrap flex-1 text-center ${activeTab === tab.id
-                ? 'bg-purple-700 dark:bg-purple-500 text-white'
-                : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+              ? 'bg-purple-700 dark:bg-purple-500 text-white'
+              : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-slate-700'
               }`}
           >
             {tab.label}
@@ -457,7 +465,7 @@ export default function SettingsPanel({ currentUser }) {
                       <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Accepted: .jpg, .png, .pdf (Under 5MB)</p>
                     </>
                   )}
-                  <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc, 'orgDocumentPath')} className="hidden" accept=".jpg,.jpeg,.png,.pdf" />
+                  <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc, 'orgDocumentPath')} className="hidden" accept="image/*,.pdf" />
                 </div>
               </div>
               {isEditing && <SaveBtn label="Update Organization" onClick={() => handleSave('profile')} isLoading={isSavingProfile} loadingText="Updating..." />}
@@ -486,18 +494,18 @@ export default function SettingsPanel({ currentUser }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                 <div onClick={() => isEditing && frontRef.current.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
                   {idFront ? <img src={idFront} alt="Front ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <div><p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Front Side</p><p className="text-[10px] font-bold text-slate-400 mt-1">.jpg, .png</p></div>}
-                  <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront, 'idFrontPath')} className="hidden" accept=".jpg,.jpeg,.png" />
+                  <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront, 'idFrontPath')} className="hidden" accept="image/*" />
                 </div>
                 <div onClick={() => isEditing && backRef.current.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
                   {idBack ? <img src={idBack} alt="Back ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <div><p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Back Side</p><p className="text-[10px] font-bold text-slate-400 mt-1">.jpg, .png</p></div>}
-                  <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack, 'idBackPath')} className="hidden" accept=".jpg,.jpeg,.png" />
+                  <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack, 'idBackPath')} className="hidden" accept="image/*" />
                 </div>
               </div>
 
               <div className="mb-6">
                 <div onClick={() => isEditing && selfieRef.current.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
                   {idSelfie ? <img src={idSelfie} alt="Selfie" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <div><p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Selfie with ID</p><p className="text-[10px] font-bold text-slate-400 mt-1">.jpg, .png</p></div>}
-                  <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie, 'selfiePath')} className="hidden" accept=".jpg,.jpeg,.png" />
+                  <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie, 'selfiePath')} className="hidden" accept="image/*" />
                 </div>
               </div>
               <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
