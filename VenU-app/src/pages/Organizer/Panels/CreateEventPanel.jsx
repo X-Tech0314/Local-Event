@@ -551,9 +551,18 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
   };
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
+    e.preventDefault();
+    console.log("File input change detected");
+
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      console.log("File selected:", file.name, file.type);
+      processFile(file);
+    } else {
+      console.log("No file found in input");
     }
+
+    e.target.value = '';
   };
 
   const handleVenueImageUpload = async (e) => {
