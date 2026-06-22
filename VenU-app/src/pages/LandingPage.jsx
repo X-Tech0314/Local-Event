@@ -79,6 +79,9 @@ export default function LandingPage() {
   const [createRole, setCreateRole] = useState('Attendee');
   const [showSuccessAnim, setShowSuccessAnim] = useState(false);
 
+  // NEW: State to hold login errors (like attempt limits)
+  const [loginError, setLoginError] = useState('');
+
   const mainContainerRef = useRef(null);
   const navigate = useNavigate();
 
@@ -96,6 +99,7 @@ export default function LandingPage() {
 
   function handleCloseAuth() {
     setShowAuth(false);
+    setLoginError(''); // Clear errors when closing the modal
   }
 
   function getSubtitle() {
@@ -139,6 +143,7 @@ export default function LandingPage() {
             <a href="#about" className="text-white/80 hover:text-purple-300 hover:bg-purple-500/10 px-3 py-1.5 rounded-lg transition-all duration-300 text-sm font-medium">About Us</a>
             <button
               onClick={() => {
+                setLoginError(''); // Clear error when opening
                 setShowAuth(true);
                 scrollToTop();
               }}
@@ -252,7 +257,9 @@ export default function LandingPage() {
             setAuthView={setAuthView}
             createRole={createRole}
             setCreateRole={setCreateRole}
+            loginError={loginError} // <--- PASSING THE ERROR STATE HERE
             onLoginSubmit={async (data) => {
+              setLoginError(''); // Clear previous errors before attempting
               try {
                 const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
                   email: data.email,
@@ -274,6 +281,10 @@ export default function LandingPage() {
                   navigate('/attendee');
                 }
               } catch (err) {
+                // Capture the exact message from the backend (e.g., "You have 4 attempts left...")
+                const errorMsg = err.response?.data?.message || err.message;
+                setLoginError(errorMsg);
+
                 if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
                   const mockStoredUser = localStorage.getItem('mockUser_' + data.email);
                   const storedRole = mockStoredUser ? JSON.parse(mockStoredUser).role : null;
@@ -292,7 +303,6 @@ export default function LandingPage() {
                   if (roleLower === 'organizer') return navigate('/dashboard');
                   return navigate('/attendee');
                 }
-                alert('Login failed: ' + (err.response?.data?.message || err.message));
               }
             }}
             onRegisterSubmit={async (data) => {
@@ -500,6 +510,7 @@ export default function LandingPage() {
                 <li className="pt-1">
                   <button
                     onClick={() => {
+                      setLoginError('');
                       setShowAuth(true);
                       scrollToTop();
                     }}

@@ -11,13 +11,13 @@ export default function AuthModal({
   setCreateRole,
   onLoginSubmit,
   onRegisterSubmit,
+  loginError, // <--- ADDED THIS PROP
 }) {
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className={`transition-all duration-700 ease-in-out overflow-hidden flex items-start justify-center shrink-0 ${
-        showAuth ? 'auth-panel-auth-open' : ''
-      }`}
+      className={`transition-all duration-700 ease-in-out overflow-hidden flex items-start justify-center shrink-0 ${showAuth ? 'auth-panel-auth-open' : ''
+        }`}
       style={{
         width: showAuth ? (authView === 'login' ? '45%' : '65%') : '0%',
         opacity: showAuth ? 1 : 0,
@@ -29,6 +29,7 @@ export default function AuthModal({
           onClose={onClose}
           onToggleMode={() => setAuthView('register')}
           onSubmit={onLoginSubmit}
+          loginError={loginError} // <--- PASSING IT TO LOGIN FORM
         />
       ) : (
         <RegisterForm
