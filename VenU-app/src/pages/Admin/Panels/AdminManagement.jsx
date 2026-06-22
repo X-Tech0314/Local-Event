@@ -241,7 +241,8 @@ export default function AdminManagement() {
     };
 
     // UI/UX: Form Validation - disable button until valid
-    const isFormValid = Object.keys(formErrors).length === 0 &&
+    // FIX: Check if all error values are null/empty, instead of checking the object keys length
+    const isFormValid = Object.values(formErrors).every(err => !err) &&
         adminForm.name.trim() !== '' &&
         adminForm.email.trim() !== '' &&
         adminForm.password.trim() !== '' &&
