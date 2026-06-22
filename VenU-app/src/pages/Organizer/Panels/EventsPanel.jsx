@@ -8,6 +8,7 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import EventAnalyticsHub from './EventAnalyticsHub';
 import EventManagementModal from './EventManagementModal';
+import LocationEventFilter from '../../../components/LocationEventFilter';
 
 // ── Status config ────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -150,7 +151,12 @@ export function EventCard({ evt, setEditEvent, setActivePanel, onDeleteClick, on
             <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">Code: {evt.verificationCode}</span>
           )}
         </div>
-        <h3 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight mb-4 group-hover:text-slate-800 dark:text-slate-200 dark:group-hover:text-slate-500 transition-colors">{evt.title}</h3>
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight mb-2 group-hover:text-slate-800 dark:text-slate-200 dark:group-hover:text-slate-500 transition-colors">{evt.title}</h3>
+        {evt.description && (
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+            {evt.description}
+          </p>
+        )}
 
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -292,16 +298,54 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
   const [geocodedEvents, setGeocodedEvents] = useState([]);
   const [mapCenter, setMapCenter] = useState([14.34, 120.94]);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({ region: '', province: '', city: '', category: '', status: '' });
+
+  // ── Derived: count active filters ──
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  // ── Derived: filtered event list ──
+  const filteredEvents = events.filter((evt) => {
+    const q = searchQuery.toLowerCase();
+    if (q && !evt.title?.toLowerCase().includes(q) && !evt.venueName?.toLowerCase().includes(q) && !evt.city?.toLowerCase().includes(q)) return false;
+    if (filters.category && evt.category !== filters.category) return false;
+    if (filters.status && (evt.status || '').toLowerCase() !== filters.status.toLowerCase()) return false;
+    if (filters.cityName) {
+      // Use the name for matching
+      const evtCity = (evt.city || '').toLowerCase();
+      const filterCity = filters.cityName.toLowerCase();
+      if (!evtCity.includes(filterCity) && evtCity !== filterCity) return false;
+    } else if (filters.provinceName) {
+      const evtProv = (evt.province || '').toLowerCase();
+      const filterProv = filters.provinceName.toLowerCase();
+      if (!evtProv.includes(filterProv) && evtProv !== filterProv) return false;
+    } else if (filters.regionName) {
+      const evtReg = (evt.region || '').toLowerCase();
+      const filterReg = filters.regionName.toLowerCase();
+      if (!evtReg.includes(filterReg) && evtReg !== filterReg) return false;
+    }
+    return true;
+  });
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
   useEffect(() => {
-    if (events.length === 0) return;
+    if (filteredEvents.length === 0) {
+      setGeocodedEvents([]);
+      return;
+    }
     const geocode = async () => {
       const coded = [];
-      for (const evt of events) {
+      for (const evt of filteredEvents) {
+        // 1. Use exact coordinates from the database if provided
+        if (evt.latitude && evt.longitude && evt.latitude !== 0 && evt.longitude !== 0) {
+          coded.push({ ...evt, lat: evt.latitude, lon: evt.longitude });
+          continue;
+        }
+
+        // 2. Fallback to OpenStreetMap text search if no coords exist
         const addressQuery = [evt.streetAddress, evt.barangay, evt.city].filter(v => v && v !== 'N/A').join(', ');
         if (!addressQuery) continue;
 
@@ -331,7 +375,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       }
     };
     geocode();
-  }, [events]);
+  }, [filteredEvents]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -395,7 +439,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       </div>
 
       {/* Map Section */}
-      {!loading && events.length > 0 && (
+      {!loading && filteredEvents.length > 0 && (
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded overflow-hidden p-2">
           <div className="relative">
             <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-lg">
@@ -408,7 +452,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
               <MapContainer
                 center={mapCenter}
                 zoom={14}
-                scrollWheelZoom={false}
+                scrollWheelZoom={true}
                 style={{ height: '100%', width: '100%' }}
               >
                 <TileLayer
@@ -434,16 +478,23 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
                               {evt.category}
                             </span>
                           </div>
-                          <div className="p-3">
-                            <h4 className="font-semibold text-slate-900 leading-tight mb-1 text-sm">{evt.title}</h4>
-                            <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1">
-                              <MapPin size={10} /> {[evt.barangay, evt.city].filter(Boolean).join(', ')}
+                          <div className="p-3 bg-white dark:bg-slate-900">
+                            <h4 className="font-semibold text-slate-900 dark:text-white leading-tight mb-1 text-sm">{evt.title}</h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1">
+                              <MapPin size={10} className="text-purple-500" /> {[evt.barangay, evt.city].filter(Boolean).join(', ')}
                             </p>
-                            <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                              <span className="text-[10px] font-semibold text-slate-500">
-                                Cap: <span className="text-slate-800">{evt.maxCapacity || 'N/A'}</span>
+                            
+                            <div className="mb-2 border-l-2 border-purple-500 pl-2">
+                              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                📅 {new Date(evt.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </span>
-                              <button onClick={() => setSelectedEvent(evt)} className="text-[10px] text-purple-600 font-bold flex items-center gap-0.5 hover:underline">
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center mt-auto">
+                              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                Cap: <span className="text-slate-800 dark:text-white">{evt.maxCapacity || 'N/A'}</span>
+                              </span>
+                              <button onClick={() => setSelectedEvent(evt)} className="text-[10px] text-purple-600 dark:text-purple-400 font-bold flex items-center gap-0.5 hover:underline bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded">
                                 Details <ExternalLink size={9} />
                               </button>
                             </div>
@@ -463,12 +514,22 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
       <div className="bg-white dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors" size={18} />
-          <input type="text" placeholder="Search event titles or venues..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded pl-12 pr-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search event titles or venues..."
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded pl-12 pr-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-purple-700 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+          />
         </div>
         <div className="flex gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-all active:scale-95">
-            <Filter size={16} /> Filters
-          </button>
+          <LocationEventFilter
+            mode="events"
+            filters={filters}
+            onChange={setFilters}
+            onClear={() => setFilters({ region: '', province: '', city: '', category: '', status: '' })}
+            activeCount={activeFilterCount}
+          />
         </div>
       </div>
 
@@ -482,7 +543,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
           <AlertCircle className="mx-auto text-red-500 mb-2" size={32} />
           <p className="text-red-600 dark:text-red-400 font-bold">{error}</p>
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 && events.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center min-h-[400px] bg-slate-50/50 dark:bg-slate-800/50 rounded-[32px] border-2 border-dashed border-slate-200 dark:border-slate-800 p-8">
           <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-700 transform rotate-3 hover:rotate-6 transition-transform">
             <Calendar className="text-slate-600 dark:text-slate-400" size={32} />
@@ -493,9 +554,21 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
             <Plus size={18} strokeWidth={3} /> Create Event
           </button>
         </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center min-h-[300px] bg-slate-50/50 dark:bg-slate-800/50 rounded-[32px] border-2 border-dashed border-slate-200 dark:border-slate-800 p-8">
+          <Filter className="text-slate-400 mb-3" size={32} />
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No events match your filters</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Try adjusting or clearing your filters.</p>
+          <button
+            onClick={() => { setFilters({ region: '', province: '', city: '', category: '', status: '' }); setSearchQuery(''); }}
+            className="text-sm font-bold text-purple-600 hover:text-purple-800 underline"
+          >
+            Clear all filters
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((evt) => (
+          {filteredEvents.map((evt) => (
             <EventCard
               key={evt.id}
               evt={evt}

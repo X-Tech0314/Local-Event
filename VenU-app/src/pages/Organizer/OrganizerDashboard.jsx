@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, MapPin, Users, BarChart3, Settings, Plus, LogOut, Bell, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Calendar, MapPin, Users, BarChart3, Settings, Plus, LogOut, Bell, Moon, Sun, QrCode } from 'lucide-react';
 import { useTheme } from '../../ThemeContext.jsx';
 
 // Panel File Imports
@@ -11,16 +11,18 @@ import AttendeesPanel from "./Panels/AttendeesPanel";
 import AnalyticsPanel from "./Panels/AnalyticsPanel";
 import SettingsPanel from "./Panels/SettingsPanel";
 import CreateEventPanel from "./Panels/CreateEventPanel";
+import QRScannerPanel from "./Panels/QRScannerPanel";
 import logo from '../../assets/venu-logo3-transparent.png';
 
 const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'events',    label: 'Events',    icon: Calendar },
-    { id: 'venues',    label: 'Venues',    icon: MapPin },
+    { id: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
+    { id: 'events',      label: 'Events',      icon: Calendar },
+    { id: 'venues',      label: 'Venues',      icon: MapPin },
     { id: 'create-event', label: 'Create Event', icon: Plus },
-    { id: 'attendees', label: 'Attendees', icon: Users },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings',  label: 'Settings',  icon: Settings },
+    { id: 'attendees',   label: 'Attendees',   icon: Users },
+    { id: 'analytics',   label: 'Analytics',   icon: BarChart3 },
+    { id: 'qr-scanner',  label: 'QR Scanner',  icon: QrCode },
+    { id: 'settings',    label: 'Settings',    icon: Settings },
 ];
 
 export default function OrganizerDashboard() {
@@ -85,7 +87,8 @@ export default function OrganizerDashboard() {
             case 'analytics':  return <AnalyticsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'settings':   return <SettingsPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
             case 'create-event': return <CreateEventPanel currentUser={currentUser} setActivePanel={setActivePanel} editEvent={editEvent} setEditEvent={setEditEvent} addNotification={addNotification} />;
-            default:           return <MainDashboard currentUser={currentUser} setActivePanel={setActivePanel} />;
+            case 'qr-scanner':   return <QRScannerPanel currentUser={currentUser} setActivePanel={setActivePanel} />;
+            default:             return <MainDashboard currentUser={currentUser} setActivePanel={setActivePanel} />;
         }
     };
 

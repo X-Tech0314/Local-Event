@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, ExternalLink, Navigation, Building, AlertCircle, Phone, Mail, User, ChevronLeft, ChevronRight, Shield, Layers, CheckCircle } from 'lucide-react';
+import { MapPin, Plus, ExternalLink, Navigation, Building, AlertCircle, Phone, Mail, User, ChevronLeft, ChevronRight, Shield, Layers, CheckCircle, Search, Filter } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -7,6 +7,7 @@ import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import AddVenueForm from './AddVenueForm';
+import LocationEventFilter from '../../../components/LocationEventFilter';
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -93,8 +94,32 @@ export default function VenuesPanel({ currentUser }) {
   const [error, setError] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({ region: '', province: '', city: '', category: '', status: '' });
 
-  useEffect(() => { fetchVenues(); }, []);
+  // ── Derived: count active filters ──
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  // ── Derived: filtered venue list ──
+  const filteredVenues = venues.filter((v) => {
+    const q = searchQuery.toLowerCase();
+    if (q && !v.name?.toLowerCase().includes(q) && !v.city?.toLowerCase().includes(q) && !v.barangay?.toLowerCase().includes(q)) return false;
+    if (filters.category && v.type !== filters.category) return false;
+    if (filters.cityName) {
+      const vc = (v.city || '').toLowerCase();
+      const fc = filters.cityName.toLowerCase();
+      if (!vc.includes(fc) && vc !== fc) return false;
+    } else if (filters.provinceName) {
+      const vp = (v.province || '').toLowerCase();
+      const fp = filters.provinceName.toLowerCase();
+      if (!vp.includes(fp) && vp !== fp) return false;
+    } else if (filters.regionName) {
+      const vr = (v.region || '').toLowerCase();
+      const fr = filters.regionName.toLowerCase();
+      if (!vr.includes(fr) && vr !== fr) return false;
+    }
+    return true;
+  });
 
   const fetchVenues = async () => {
     setLoading(true);
@@ -116,8 +141,10 @@ export default function VenuesPanel({ currentUser }) {
     }
   };
 
+  useEffect(() => { fetchVenues(); }, []);
+
   // Venues with valid lat/lng for map pins
-  const mappableVenues = venues.filter(v => v.latitude && v.longitude);
+  const mappableVenues = filteredVenues.filter(v => v.latitude && v.longitude);
 
   if (viewMode === 'add') {
     return (
@@ -157,25 +184,60 @@ export default function VenuesPanel({ currentUser }) {
 
         {/* Left Column: Venues Grid (60%) */}
         <div className="w-full lg:w-[60%] order-2 lg:order-1">
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-4">
             <Building size={20} className="text-slate-800 dark:text-slate-200" />
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Saved Venues</h2>
-            <span className="ml-2 text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">{venues.length}</span>
+            <span className="ml-2 text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+              {filteredVenues.length}{filteredVenues.length !== venues.length ? ` of ${venues.length}` : ''}
+            </span>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="bg-white dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 items-center mb-4">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search venues, cities..."
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+              />
+            </div>
+            <LocationEventFilter
+              mode="venues"
+              filters={filters}
+              onChange={setFilters}
+              onClear={() => setFilters({ region: '', province: '', city: '', category: '', status: '' })}
+              activeCount={activeFilterCount}
+            />
           </div>
 
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : venues.length === 0 ? (
+          ) : filteredVenues.length === 0 && venues.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center min-h-[300px] bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-8">
               <Building size={40} className="text-slate-300 dark:text-slate-600 mb-4" />
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No venues yet</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm">Venues you register during event creation will appear here.</p>
             </div>
+          ) : filteredVenues.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center min-h-[200px] bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-8">
+              <Filter size={32} className="text-slate-400 mb-3" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No venues match your filters</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Try adjusting your filters or search.</p>
+              <button
+                onClick={() => { setFilters({ region: '', province: '', city: '', category: '', status: '' }); setSearchQuery(''); }}
+                className="text-sm font-bold text-purple-600 hover:text-purple-800 underline"
+              >
+                Clear all filters
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {venues.map((venue) => {
+              {filteredVenues.map((venue) => {
                 const images = parseImages(venue.venueImages);
                 const address = [venue.streetAddress, venue.barangay, venue.city, venue.province].filter(Boolean).join(', ');
                 return (
@@ -308,9 +370,16 @@ export default function VenuesPanel({ currentUser }) {
                                   </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                                <span className="absolute bottom-2 left-2 text-[10px] font-semibold text-white px-2 py-1 bg-purple-600/80 rounded backdrop-blur-sm">
-                                  {venue.type}
-                                </span>
+                                <div className="absolute bottom-2 left-2 flex gap-1">
+                                    <span className="text-[10px] font-semibold text-white px-2 py-1 bg-purple-600/80 rounded backdrop-blur-sm">
+                                      {venue.type}
+                                    </span>
+                                    {!venue.isVerified && (
+                                        <span className="text-[10px] font-bold text-white px-2 py-1 rounded bg-amber-500/90 backdrop-blur-md shadow-sm">
+                                            Pending
+                                        </span>
+                                    )}
+                                </div>
                               </div>
                               <div className="p-3">
                                 <h4 className="font-semibold text-slate-900 leading-tight mb-1 text-sm">{venue.name}</h4>
@@ -368,9 +437,13 @@ export default function VenuesPanel({ currentUser }) {
                 ✕
               </button>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-              <div className="absolute bottom-4 left-4 z-20">
+              <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
                 <span className="text-[10px] font-bold text-white bg-purple-600 px-2.5 py-1 rounded-full">{selectedVenue.type}</span>
-                {selectedVenue.isVerified && <span className="ml-2 text-[10px] font-bold text-white bg-emerald-500 px-2.5 py-1 rounded-full">✓ Verified</span>}
+                {selectedVenue.isVerified ? (
+                  <span className="text-[10px] font-bold text-white bg-emerald-500 px-2.5 py-1 rounded-full flex items-center gap-1">✓ Verified</span>
+                ) : (
+                  <span className="text-[10px] font-bold text-white bg-amber-500 px-2.5 py-1 rounded-full flex items-center gap-1"><AlertCircle size={10} /> Pending Admin Approval</span>
+                )}
               </div>
             </div>
 

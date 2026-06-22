@@ -58,6 +58,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     ProximityAnchor: '',
     RegisteredVenueId: '',
     RegisteredVenueName: '',
+    CustomVenueName: '',
+    CustomVenueType: 'Indoor Hall',
     Capacity: '',
     ContactPerson: '',
     ContactNumber: '',
@@ -284,8 +286,8 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         VenueSourcingMode: venueSource,
         RegisterVenueToDB: venueSource === 'custom',
         VenueId: venueSource === 'registered' ? formData.RegisteredVenueId || null : null,
-        VenueName: venueSource === 'registered' ? formData.RegisteredVenueName : (formData.StreetAddress || "Custom Venue"),
-        VenueType: formData.VenueType,
+        VenueName: venueSource === 'registered' ? formData.RegisteredVenueName : (formData.CustomVenueName || formData.StreetAddress),
+        VenueType: venueSource === 'registered' ? formData.VenueType : formData.CustomVenueType,
         FloorLevel: formData.FloorLevel,
         WingSection: formData.WingSection,
         ProximityAnchor: formData.ProximityAnchor,
@@ -433,6 +435,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           newErrors.RegisteredVenueId = "Please search and select a registered venue.";
         }
         if (venueSource === 'custom') {
+          if (!formData.CustomVenueName.trim()) newErrors.CustomVenueName = "Venue name is required.";
           if (!formData.SelectedRegion) newErrors.SelectedRegion = "Region is required.";
           if (!formData.SelectedProvince && !noProvinceRegion) newErrors.SelectedProvince = "Province is required.";
           if (!formData.SelectedCity) newErrors.SelectedCity = "City is required.";
@@ -1023,6 +1026,22 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                     </div>
                   ) : (
                     <div className="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                      <div className="grid grid-cols-2 gap-3 mb-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Venue Name</label>
+                          <input type="text" name="CustomVenueName" value={formData.CustomVenueName} onChange={handleInputChange} placeholder="e.g. A. Mabini Campus" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.CustomVenueName && <span className="text-[10px] text-red-500">{errors.CustomVenueName}</span>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Venue Type</label>
+                          <select name="CustomVenueType" value={formData.CustomVenueType} onChange={handleInputChange} className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                            {['Indoor Hall', 'Outdoor Field', 'Covered Court', 'Gymnasium', 'Auditorium', 'Conference Room', 'Hotel Ballroom', 'Restaurant / Function Room', 'Open Air / Park', 'Beach / Resort', 'Rooftop', 'Standalone Building / Street Address', 'Other'].map(t => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">

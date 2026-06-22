@@ -1,11 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Clock, AlertTriangle, CheckCircle, Search, ChevronLeft, MapPin, Shield } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import { BarChart3, Users, Clock, AlertTriangle, CheckCircle, Search, ChevronLeft, MapPin, Shield, QrCode, X, XCircle } from 'lucide-react';
+
+// ── Inline scanner modal — shown when "Scan QR Code" is clicked ──────────────
+function InlineScannerModal({ onScan, onClose }) {
+    useEffect(() => {
+        const scannerId = 'hub-qr-reader';
+        const timer = setTimeout(() => {
+            if (!document.getElementById(scannerId)) return;
+            const scanner = new Html5QrcodeScanner(
+                scannerId,
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                false
+            );
+            scanner.render((text) => {
+                scanner.clear().catch(() => {});
+                onScan(text);
+            }, () => {});
+            return () => scanner.clear().catch(() => {});
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [onScan]);
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <QrCode size={20} className="text-purple-600" /> Scan Attendee QR
+                    </h3>
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+                <div id="hub-qr-reader" className="w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800" />
+                <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+                    Point camera at the attendee's ticket QR code.
+                </p>
+            </div>
+        </div>
+    );
+}
 
 export default function EventAnalyticsHub({ eventId, onBack }) {
+
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
+    const [showScanner, setShowScanner] = useState(false);
+    const [scanMsg, setScanMsg] = useState(null);
 
     useEffect(() => {
         if (!eventId) return;
@@ -36,6 +80,29 @@ export default function EventAnalyticsHub({ eventId, onBack }) {
         }
     };
 
+    // Inline QR scan handler — called by the scanner modal
+    const handleInlineScan = useCallback(async (decodedText) => {
+        setShowScanner(false);
+        setScanMsg({ status: 'loading', text: 'Validating...' });
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/checkin/scan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ token: decodedText })
+            });
+            const d = await res.json();
+            setScanMsg({
+                status: res.ok ? 'success' : res.status === 409 ? 'warn' : 'error',
+                text: `${d.attendeeName || ''} — ${d.message}`
+            });
+            if (res.ok) setTimeout(fetchAnalytics, 600); // refresh ledger
+        } catch {
+            setScanMsg({ status: 'error', text: 'Network error. Try again.' });
+        }
+        setTimeout(() => setScanMsg(null), 5000);
+    }, [eventId]);
+
     if (loading && !data) {
         return (
             <div className="flex justify-center items-center py-20 min-h-[500px]">
@@ -59,6 +126,14 @@ export default function EventAnalyticsHub({ eventId, onBack }) {
 
     return (
         <div className="animate-fade-in space-y-8 relative min-h-[calc(100vh-4rem)]">
+            {/* Inline QR Scanner Modal */}
+            {showScanner && (
+                <InlineScannerModal
+                    onScan={handleInlineScan}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
+
             {/* Header Area */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
                 <div>
@@ -72,7 +147,28 @@ export default function EventAnalyticsHub({ eventId, onBack }) {
                         <MapPin size={14} /> Analytics & Secure Attendee Ledger
                     </p>
                 </div>
+                {/* QR Scanner Button */}
+                <button
+                    onClick={() => { setScanMsg(null); setShowScanner(true); }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold text-sm transition-colors shadow-lg shadow-purple-600/20"
+                >
+                    <QrCode size={16} /> Scan QR Code
+                </button>
             </div>
+
+            {/* Scan Result Banner */}
+            {scanMsg && (
+                <div className={`flex items-center gap-3 px-5 py-3 rounded-xl border text-sm font-semibold animate-fade-in ${
+                    scanMsg.status === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300'
+                    : scanMsg.status === 'warn' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-300'
+                    : scanMsg.status === 'loading' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-300'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300'
+                }`}>
+                    {scanMsg.status === 'success' ? <CheckCircle size={16} /> : scanMsg.status === 'warn' ? <AlertTriangle size={16} /> : <XCircle size={16} />}
+                    {scanMsg.text}
+                    <button onClick={() => setScanMsg(null)} className="ml-auto opacity-60 hover:opacity-100"><X size={14} /></button>
+                </div>
+            )}
 
             {/* Executive Summary Ribbon */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
