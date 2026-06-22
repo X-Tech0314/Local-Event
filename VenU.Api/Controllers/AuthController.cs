@@ -104,6 +104,7 @@ namespace VenU.Api.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("AuthStrict")]
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
