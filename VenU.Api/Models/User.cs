@@ -9,6 +9,8 @@ namespace VenU.Api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
 
+        public string? ProfilePicture { get; set; } // Newly Added for Persistent Profile Images
+
         [Required]
         [MaxLength(20)]
         public string Role { get; set; }

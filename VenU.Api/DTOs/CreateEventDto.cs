@@ -56,6 +56,27 @@ namespace VenU.Api.DTOs
         
         // Relational Nested Structure Loop Collection
         public List<TicketTierDto> TicketTiers { get; set; } = new List<TicketTierDto>();
+        // --- Additional Venue Alignment Fields ---
+        public decimal FloorArea { get; set; }
+        public decimal? CeilingHeight { get; set; }
+        public string? RepresentativeName { get; set; }
+        public string? MobileNumber { get; set; }
+        public string? Landline { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public int CapacityTheater { get; set; }
+        public int CapacityBanquet { get; set; }
+        public int CapacityStanding { get; set; }
+        public int ParkingSlots { get; set; }
+        public string? OperatingHours { get; set; }
+        public bool HasAircon { get; set; }
+        public bool HasSoundSystem { get; set; }
+        public bool HasBackupGenerator { get; set; }
+        public bool HasHoldingRooms { get; set; }
+        public string? FsicNumber { get; set; }
+        public string? BusinessPermitNumber { get; set; }
+        public bool HasBirForm2303 { get; set; }
+        public bool HasSmokeDetectors { get; set; }
+        public bool HasFireExits { get; set; }
     }
 
     public class TicketTierDto

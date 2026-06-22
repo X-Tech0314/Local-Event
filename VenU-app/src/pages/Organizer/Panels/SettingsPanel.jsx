@@ -40,6 +40,7 @@ export default function SettingsPanel({ currentUser }) {
         if (res.data.idBackPath) setIdBack(res.data.idBackPath);
         if (res.data.selfiePath) setIdSelfie(res.data.selfiePath);
         if (res.data.orgDocumentPath) setOathDoc(res.data.orgDocumentPath);
+        if (res.data.profilePicture) setProfileImage(res.data.profilePicture);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
       }
@@ -54,7 +55,7 @@ export default function SettingsPanel({ currentUser }) {
   };
 
   // Profile state
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(currentUser?.profileImage || currentUser?.profilePicture || null);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -114,6 +115,7 @@ export default function SettingsPanel({ currentUser }) {
       try {
         const url = await uploadFile(file);
         setProfileImage(url);
+        setForm(prev => ({ ...prev, profilePicture: url }));
       } catch (err) {
         alert("Failed to upload profile image: " + err.message);
       }
@@ -155,7 +157,8 @@ export default function SettingsPanel({ currentUser }) {
         Region: form.region,
         Province: form.province,
         City: form.city,
-        Barangay: form.barangay
+        Barangay: form.barangay,
+        ProfilePicture: form.profilePicture
       }));
       setIsEditing(false);
 
@@ -451,10 +454,10 @@ export default function SettingsPanel({ currentUser }) {
                         <UploadCloud size={32} className="text-slate-800 dark:text-slate-200 " />
                       </div>
                       <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Upload Document</p>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">PDF, JPG, or PNG under 5MB</p>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Accepted: .jpg, .png, .pdf (Under 5MB)</p>
                     </>
                   )}
-                  <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc, 'orgDocumentPath')} className="hidden" accept="image/*,.pdf" />
+                  <input type="file" ref={oathRef} onChange={(e) => handleFileChange(e, setOathDoc, 'orgDocumentPath')} className="hidden" accept=".jpg,.jpeg,.png,.pdf" />
                 </div>
               </div>
               {isEditing && <SaveBtn label="Update Organization" onClick={() => handleSave('profile')} isLoading={isSavingProfile} loadingText="Updating..." />}
@@ -482,19 +485,19 @@ export default function SettingsPanel({ currentUser }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                 <div onClick={() => isEditing && frontRef.current.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
-                  {idFront ? <img src={idFront} alt="Front ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Front Side</p>}
-                  <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront, 'idFrontPath')} className="hidden" accept="image/*" />
+                  {idFront ? <img src={idFront} alt="Front ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <div><p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Front Side</p><p className="text-[10px] font-bold text-slate-400 mt-1">.jpg, .png</p></div>}
+                  <input type="file" ref={frontRef} onChange={(e) => handleFileChange(e, setIdFront, 'idFrontPath')} className="hidden" accept=".jpg,.jpeg,.png" />
                 </div>
                 <div onClick={() => isEditing && backRef.current.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
-                  {idBack ? <img src={idBack} alt="Back ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Back Side</p>}
-                  <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack, 'idBackPath')} className="hidden" accept="image/*" />
+                  {idBack ? <img src={idBack} alt="Back ID" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <div><p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Back Side</p><p className="text-[10px] font-bold text-slate-400 mt-1">.jpg, .png</p></div>}
+                  <input type="file" ref={backRef} onChange={(e) => handleFileChange(e, setIdBack, 'idBackPath')} className="hidden" accept=".jpg,.jpeg,.png" />
                 </div>
               </div>
 
               <div className="mb-6">
                 <div onClick={() => isEditing && selfieRef.current.click()} className={`h-48 border-2 border-dashed ${isEditing ? 'border-purple-700/50 dark:border-purple-400/50 bg-slate-50/50 dark:bg-slate-700/50 cursor-pointer hover:border-purple-700 dark:hover:border-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700' : 'border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'} rounded flex flex-col items-center justify-center text-center transition-all overflow-hidden p-2`}>
-                  {idSelfie ? <img src={idSelfie} alt="Selfie" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Selfie with ID</p>}
-                  <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie, 'selfiePath')} className="hidden" accept="image/*" />
+                  {idSelfie ? <img src={idSelfie} alt="Selfie" className={`w-full h-full object-contain rounded ${!isEditing && 'opacity-70 grayscale-[0.2]'}`} /> : <div><p className={`text-sm font-bold ${isEditing ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>Upload Selfie with ID</p><p className="text-[10px] font-bold text-slate-400 mt-1">.jpg, .png</p></div>}
+                  <input type="file" ref={selfieRef} onChange={(e) => handleFileChange(e, setIdSelfie, 'selfiePath')} className="hidden" accept=".jpg,.jpeg,.png" />
                 </div>
               </div>
               <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">

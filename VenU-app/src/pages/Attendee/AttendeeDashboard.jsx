@@ -238,7 +238,20 @@ function EventCard({ event, onSelect, onPrivateEvent, onLocationClick, isSaved, 
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{event.ticketTiers.length} Tier{event.ticketTiers.length > 1 ? 's' : ''} Available</span>
 
           {event.status === 'Published' ? (
-            <span className="text-sm font-black text-purple-700 dark:text-purple-500 flex items-center gap-1 group-hover:gap-2">
+            <span 
+              onClick={(e) => {
+                if (!currentUser?.isVerified) {
+                  e.stopPropagation();
+                  alert("Admin verification is required to buy tickets.");
+                }
+              }}
+              title={!currentUser?.isVerified ? "Admin verification required" : ""}
+              className={`text-sm font-black flex items-center gap-1 group-hover:gap-2 ${
+                currentUser?.isVerified 
+                  ? 'text-purple-700 dark:text-purple-500' 
+                  : 'text-slate-400 cursor-not-allowed'
+              }`}
+            >
               Get Tickets <ChevronRight size={16} strokeWidth={3} />
             </span>
           ) : (
@@ -653,7 +666,10 @@ export default function AttendeeDashboard() {
     province: loggedInUser?.Province || loggedInUser?.province || '',
     city: loggedInUser?.City || loggedInUser?.city || '',
     barangay: loggedInUser?.Barangay || loggedInUser?.barangay || '',
-    preferredCategories: []
+    preferredCategories: [],
+    isVerified: loggedInUser?.IsVerified || loggedInUser?.isVerified || false,
+    profileImage: loggedInUser?.ProfilePicture || loggedInUser?.profilePicture || null,
+    name: `${loggedInUser?.FirstName || loggedInUser?.firstName || 'Guest'} ${loggedInUser?.LastName || loggedInUser?.lastName || 'User'}`.trim()
   };
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -732,24 +748,19 @@ export default function AttendeeDashboard() {
         if (response.ok) {
           const data = await response.json();
 
-          const processedEvents = await Promise.all(data.map(async (event, index) => {
-            if (!event.latitude || event.latitude === 0 || !event.longitude || event.longitude === 0) {
-              await new Promise(r => setTimeout(r, index * 600));
-
-              const coords = await dynamicGeocode(event.address);
-              if (coords) {
-                event.latitude = coords.lat;
-                event.longitude = coords.lon;
-                event.isRecommended = true;
-              } else {
-                const baseCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
-                event.latitude = baseCoords[0] + (index * 0.002);
-                event.longitude = baseCoords[1] - (index * 0.002);
-                event.isRecommended = true;
-              }
+          const processedEvents = data.map((event) => {
+            // Use precise database coordinates
+            if (event.latitude && event.longitude && event.latitude !== 0 && event.longitude !== 0) {
+              event.isRecommended = true;
+            } else {
+              // Fallback to city center only if the database missed the coordinates
+              const baseCoords = cityCoordinates[currentUser.city] || cityCoordinates['Default'];
+              event.latitude = baseCoords[0] + (Math.random() * 0.005);
+              event.longitude = baseCoords[1] - (Math.random() * 0.005);
+              event.isRecommended = true;
             }
             return event;
-          }));
+          });
 
           setMapEvents(processedEvents);
         }
@@ -1142,9 +1153,12 @@ export default function AttendeeDashboard() {
 
         <button
           onClick={() => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/');
+            const handleLogout = () => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              window.location.href = '/';
+            };
+            handleLogout();
           }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-none text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
         >
@@ -1589,7 +1603,13 @@ export default function AttendeeDashboard() {
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-100/50 dark:bg-slate-900/50 p-4 space-y-3">
                   {mapEvents
-                    .filter(e => e.title.toLowerCase().includes(mapSearchQuery.toLowerCase()) || e.address.toLowerCase().includes(mapSearchQuery.toLowerCase()) || e.venueName.toLowerCase().includes(mapSearchQuery.toLowerCase()))
+                    .filter(e => {
+                      const q = mapSearchQuery.toLowerCase();
+                      const titleMatch = e.title?.toLowerCase().includes(q);
+                      const addressMatch = e.address?.toLowerCase().includes(q);
+                      const venueMatch = e.venueName?.toLowerCase().includes(q);
+                      return titleMatch || addressMatch || venueMatch;
+                    })
                     .map((event) => (
                       <div
                         key={event.eventId}
@@ -1669,7 +1689,16 @@ export default function AttendeeDashboard() {
                                 <p><span className="font-black text-slate-800">Best for:</span> <span className="capitalize">{event.recommendedFor || 'All events'}</span></p>
                               </div>
 
-                              <button onClick={() => handleSelectEvent(event)} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2 uppercase tracking-widest transition-colors shadow-sm">
+                              <button 
+                                onClick={() => handleSelectEvent(event)} 
+                                disabled={!currentUser?.isVerified}
+                                title={!currentUser?.isVerified ? "Admin verification required to buy tickets" : ""}
+                                className={`w-full font-black text-xs py-2 uppercase tracking-widest transition-colors shadow-sm 
+                                  ${currentUser?.isVerified 
+                                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                                    : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                  }`}
+                              >
                                 Buy Tickets
                               </button>
                             </div>

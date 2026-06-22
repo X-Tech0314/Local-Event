@@ -568,7 +568,7 @@ export default function AddVenueForm({ setViewMode }) {
                 <input
                   type="file"
                   multiple
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png"
                   onChange={e => {
                     const filesArray = Array.from(e.target.files);
                     const oversized = filesArray.some(f => f.size > 5 * 1024 * 1024);
@@ -585,6 +585,7 @@ export default function AddVenueForm({ setViewMode }) {
                 {files.galleryImages.length > 0 && (
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{files.galleryImages.length} file(s) selected</p>
                 )}
+                <p className="text-[10px] font-bold text-slate-400 mt-1">Accepted: .jpg, .png</p>
                 {errors.galleryImages && <p className="text-[10px] text-red-400 mt-1">{errors.galleryImages}</p>}
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
@@ -597,7 +598,8 @@ export default function AddVenueForm({ setViewMode }) {
                   }
                   setFiles(f => ({ ...f, floorPlanFile: e.target.files[0] }));
                 }}
-                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" />
+                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" accept=".jpg,.jpeg,.png,.pdf" />
+                <p className="text-[10px] font-bold text-slate-400 mt-1">Accepted: .jpg, .png, .pdf</p>
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Legal Permits Package (Zip/PDF)</label>
@@ -609,7 +611,8 @@ export default function AddVenueForm({ setViewMode }) {
                   }
                   setFiles(f => ({ ...f, legalPermitsFile: e.target.files[0] }));
                 }}
-                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" />
+                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" accept=".pdf,.zip" />
+                <p className="text-[10px] font-bold text-slate-400 mt-1">Accepted: .pdf, .zip</p>
               </div>
             </div>
           </div>

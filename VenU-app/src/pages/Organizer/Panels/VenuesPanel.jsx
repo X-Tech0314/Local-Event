@@ -167,7 +167,16 @@ export default function VenuesPanel({ currentUser }) {
             Manage physical spaces and coordinates for your event deployments.
           </p>
         </div>
-        <button onClick={() => setViewMode('add')} className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
+        <button 
+          onClick={() => setViewMode('add')} 
+          disabled={!currentUser?.isVerified}
+          title={!currentUser?.isVerified ? "Admin verification required to add venues" : ""}
+          className={`px-6 py-3 rounded font-bold transition-all flex items-center gap-2 
+            ${currentUser?.isVerified 
+              ? 'bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 active:scale-95' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700'
+            }`}
+        >
           <Plus size={18} strokeWidth={3} /> Add New Venue
         </button>
       </div>

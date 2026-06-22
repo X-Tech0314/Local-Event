@@ -172,7 +172,9 @@ namespace VenU.Api.Controllers
                     user.Role,
                     user.FirstName,
                     user.LastName,
-                    user.Barangay
+                    user.Barangay,
+                    user.IsVerified,
+                    user.ProfilePicture
                 }
             });
         }
@@ -188,7 +190,9 @@ namespace VenU.Api.Controllers
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim("role", user.Role),
-                new Claim("FirstName", user.FirstName ?? "")
+                new Claim("FirstName", user.FirstName ?? ""),
+                new Claim("IsVerified", user.IsVerified.ToString()),
+                new Claim("ProfilePicture", user.ProfilePicture ?? "")
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

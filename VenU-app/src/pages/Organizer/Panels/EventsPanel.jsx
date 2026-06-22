@@ -339,34 +339,14 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
     const geocode = async () => {
       const coded = [];
       for (const evt of filteredEvents) {
-        // 1. Use exact coordinates from the database if provided
+        // Use exact coordinates from the database if provided
         if (evt.latitude && evt.longitude && evt.latitude !== 0 && evt.longitude !== 0) {
           coded.push({ ...evt, lat: evt.latitude, lon: evt.longitude });
-          continue;
-        }
-
-        // 2. Fallback to OpenStreetMap text search if no coords exist
-        const addressQuery = [evt.streetAddress, evt.barangay, evt.city].filter(v => v && v !== 'N/A').join(', ');
-        if (!addressQuery) continue;
-
-        const cacheKey = `geo_${addressQuery}`;
-        const cached = sessionStorage.getItem(cacheKey);
-        if (cached) {
-          coded.push({ ...evt, ...JSON.parse(cached) });
-          continue;
-        }
-
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressQuery)}`);
-          const data = await res.json();
-          if (data && data.length > 0) {
-            const coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-            sessionStorage.setItem(cacheKey, JSON.stringify(coords));
-            coded.push({ ...evt, ...coords });
-          }
-          await new Promise(r => setTimeout(r, 600)); // be nice to nominatim
-        } catch (e) {
-          console.warn('Geocoding failed for', addressQuery);
+        } else {
+          // If the event has no exact coordinates, assign a slight random offset from the city center
+          const fallbackLat = 14.5995 + (Math.random() * 0.05); // Default to Manila center
+          const fallbackLon = 120.9842 + (Math.random() * 0.05);
+          coded.push({ ...evt, lat: fallbackLat, lon: fallbackLon });
         }
       }
       setGeocodedEvents(coded);
@@ -433,7 +413,16 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Events Directory</h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage and track your published and drafted events.</p>
         </div>
-        <button onClick={() => setActivePanel('create-event')} className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-6 py-3 rounded font-bold transition-all flex items-center gap-2 active:scale-95">
+        <button 
+          onClick={() => setActivePanel('create-event')} 
+          disabled={!currentUser?.isVerified}
+          title={!currentUser?.isVerified ? "Admin verification required to create events" : ""}
+          className={`w-full md:w-auto px-6 py-3 rounded font-bold transition-all flex items-center justify-center gap-2 
+            ${currentUser?.isVerified 
+              ? 'bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-700 dark:hover:bg-purple-600 hover:text-white text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 active:scale-95' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700'
+            }`}
+        >
           <Plus size={18} strokeWidth={3} /> Create New Event
         </button>
       </div>
@@ -448,7 +437,7 @@ export default function EventsPanel({ currentUser, setActivePanel, setEditEvent 
                 {geocodedEvents.length} Mapped Event{geocodedEvents.length !== 1 ? 's' : ''}
               </span>
             </div>
-            <div className="h-[350px] w-full rounded overflow-hidden relative border border-slate-200 dark:border-slate-700 z-0">
+            <div className="h-[350px] w-full rounded relative border border-slate-200 dark:border-slate-700 z-10">
               <MapContainer
                 center={mapCenter}
                 zoom={14}

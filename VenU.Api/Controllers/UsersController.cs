@@ -105,6 +105,11 @@ namespace VenU.Api.Controllers
             user.IdBackPath = request.IdBackPath ?? "";
             user.SelfiePath = request.SelfiePath ?? "";
             user.OrgDocumentPath = request.OrgDocumentPath ?? "";
+            
+            if (!string.IsNullOrEmpty(request.ProfilePicture))
+            {
+                user.ProfilePicture = request.ProfilePicture;
+            }
 
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Profile updated successfully." });
@@ -179,6 +184,7 @@ namespace VenU.Api.Controllers
         public string? IdBackPath { get; set; }
         public string? SelfiePath { get; set; }
         public string? OrgDocumentPath { get; set; }
+        public string? ProfilePicture { get; set; }
     }
 
     public class UpdatePasswordDto

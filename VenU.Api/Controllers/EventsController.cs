@@ -132,6 +132,12 @@ namespace VenU.Api.Controllers
                 return Unauthorized(new { message = "Invalid user token." });
             }
 
+            var isVerifiedClaim = User.Claims.FirstOrDefault(c => c.Type == "IsVerified")?.Value;
+            if (isVerifiedClaim != "True")
+            {
+                return Forbid(); // Return 403 Forbidden
+            }
+
             // Handle Venue Sourcing Logic
             Guid? finalVenueId = dto.VenueId;
             
@@ -154,10 +160,28 @@ namespace VenU.Api.Controllers
                     ContactEmail = dto.ContactEmail,
                     MapUrl = dto.MapUrl,
                     SquareFootage = dto.SquareFootage,
-                    NumberOfFloors = dto.NumberOfFloors,
-                    HasFireExit = dto.HasFireExit,
+                    FloorArea = dto.FloorArea,
+                    CeilingHeight = dto.CeilingHeight,
+                    RepresentativeName = dto.RepresentativeName,
+                    MobileNumber = dto.MobileNumber,
+                    Landline = dto.Landline,
+                    WebsiteUrl = dto.WebsiteUrl,
+                    CapacityTheater = dto.CapacityTheater,
+                    CapacityBanquet = dto.CapacityBanquet,
+                    CapacityStanding = dto.CapacityStanding,
+                    ParkingSlots = dto.ParkingSlots,
+                    OperatingHours = dto.OperatingHours,
+                    HasAircon = dto.HasAircon,
+                    HasSoundSystem = dto.HasSoundSystem,
+                    HasBackupGenerator = dto.HasBackupGenerator,
+                    HasHoldingRooms = dto.HasHoldingRooms,
+                    FsicNumber = dto.FsicNumber,
+                    BusinessPermitNumber = dto.BusinessPermitNumber,
+                    HasBirForm2303 = dto.HasBirForm2303,
+                    HasSmokeDetectors = dto.HasSmokeDetectors,
+                    NumberOfFloors = dto.NumberOfFloors > 0 ? dto.NumberOfFloors : 1,
+                    HasFireExit = dto.HasFireExit || dto.HasFireExits,
                     HasFireExtinguishers = dto.HasFireExtinguishers,
-                    MaxCapacity = dto.MaxCapacity,
                     VenueImages = dto.VenueImages != null && dto.VenueImages.Count > 0
                         ? System.Text.Json.JsonSerializer.Serialize(dto.VenueImages)
                         : null,

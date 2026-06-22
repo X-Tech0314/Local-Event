@@ -43,6 +43,13 @@ namespace VenU.Api.Data
                 .WithMany(v => v.Images)
                 .HasForeignKey(vi => vi.VenueId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Nullify foreign key on Event when Venue is deleted
+            modelBuilder.Entity<Event>()
+                .HasOne(e => e.Venue)
+                .WithMany()
+                .HasForeignKey(e => e.VenueId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

@@ -45,6 +45,12 @@ export default function AdminDashboard() {
     ];
 
     // Fetch Pending Events
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    };
+
     useEffect(() => {
         let cancelled = false;
         const fetchEvents = async () => {
@@ -141,7 +147,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <button
-                    onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/'); }}
+                    onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-none text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
                 >
                     <LogOut size={16} strokeWidth={2.5} /> Log Out

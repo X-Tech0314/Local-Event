@@ -107,6 +107,12 @@ namespace VenU.Api.Controllers
                 return Unauthorized(new { message = "Invalid user token." });
             }
 
+            var isVerifiedClaim = User.Claims.FirstOrDefault(c => c.Type == "IsVerified")?.Value;
+            if (isVerifiedClaim != "True")
+            {
+                return Forbid(); // Return 403 Forbidden
+            }
+
             // 1. Handle file uploads to Cloudinary + Moderation
             List<string> legacyImageUrls = new List<string>();
             List<VenueImage> processedImages = new List<VenueImage>();
