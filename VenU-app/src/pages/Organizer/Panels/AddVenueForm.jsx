@@ -207,6 +207,18 @@ export default function AddVenueForm({ setViewMode }) {
       if (!psgcSel.regionCode) tempErrors.region = "Region is required.";
       if (!psgcSel.cityMunCode) tempErrors.city = "City/Municipality is required.";
       if (!formData.streetAddress.trim()) tempErrors.streetAddress = "Street address is required.";
+
+      if (formData.latitude || formData.longitude) {
+        const lat = parseFloat(formData.latitude);
+        const lon = parseFloat(formData.longitude);
+
+        if (formData.latitude && (isNaN(lat) || lat < 4.0 || lat > 22.0)) {
+          tempErrors.latitude = "Must be a valid PH Latitude (4.0° to 22.0°). Did you swap with Longitude?";
+        }
+        if (formData.longitude && (isNaN(lon) || lon < 116.0 || lon > 127.0)) {
+          tempErrors.longitude = "Must be a valid PH Longitude (116.0° to 127.0°). Did you swap with Latitude?";
+        }
+      }
     }
 
     if (currentStep === 3) {
@@ -218,8 +230,12 @@ export default function AddVenueForm({ setViewMode }) {
 
     if (currentStep === 4) {
       if (files.galleryImages.length < 3) tempErrors.galleryImages = "Please upload at least 3 gallery images.";
-      if (formData.fsicNumber && formData.fsicNumber.length < 5) tempErrors.fsicNumber = "FSIC Number is too short to be valid.";
-      if (formData.businessPermitNumber && formData.businessPermitNumber.length < 5) tempErrors.businessPermitNumber = "Permit Number is too short.";
+      
+      if (!formData.fsicNumber || formData.fsicNumber.length < 5) tempErrors.fsicNumber = "FSIC Number is required and must be valid.";
+      if (!formData.businessPermitNumber || formData.businessPermitNumber.length < 5) tempErrors.businessPermitNumber = "Permit Number is required.";
+      
+      if (!files.floorPlanFile) tempErrors.floorPlanFile = "Floor Plan / Blueprint is required.";
+      if (!files.legalPermitsFile) tempErrors.legalPermitsFile = "Legal Permits Package is required.";
     }
 
     setErrors(tempErrors);
@@ -243,12 +259,36 @@ export default function AddVenueForm({ setViewMode }) {
     // Force a 500ms delay so the spinner has time to render and spin visually
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    let lat = formData.latitude ? parseFloat(formData.latitude) : 0;
+    let lon = formData.longitude ? parseFloat(formData.longitude) : 0;
+
+    if (lat === 0 && lon === 0) {
+      const addressString = `${formData.streetAddress}, ${getBarangayName(psgcSel.barangayCode) || ''}, ${getCityName(psgcSel.cityMunCode) || ''}, Philippines`;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}&limit=1`;
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        const data = await res.json();
+        if (data && data.length > 0) {
+          lat = parseFloat(data[0].lat);
+          lon = parseFloat(data[0].lon);
+        }
+      } catch (err) {
+        console.error("Automatic geocoding failed:", err);
+      }
+    }
+
     const payload = new FormData();
     Object.keys(formData).forEach(key => {
-      if (formData[key] !== '') {
+      if (key !== 'latitude' && key !== 'longitude' && formData[key] !== '') {
         payload.append(key, formData[key]);
       }
     });
+
+    payload.append('latitude', lat || '');
+    payload.append('longitude', lon || '');
 
     // PSGC names + codes
     payload.append('region', getRegionName(psgcSel.regionCode));
@@ -457,6 +497,19 @@ export default function AddVenueForm({ setViewMode }) {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-5 border-t border-slate-100 dark:border-slate-800 pt-5">
+              <div>
+                <label className={labelCls}>Latitude <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
+                <input type="number" step="any" className={inputCls('latitude')} value={formData.latitude} onChange={e => set('latitude', e.target.value)} placeholder="e.g. 14.5995" />
+                {errors.latitude && <p className="text-[10px] text-red-400 mt-1">{errors.latitude}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>Longitude <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
+                <input type="number" step="any" className={inputCls('longitude')} value={formData.longitude} onChange={e => set('longitude', e.target.value)} placeholder="e.g. 120.9842" />
+                {errors.longitude && <p className="text-[10px] text-red-400 mt-1">{errors.longitude}</p>}
+              </div>
+            </div>
+
             {/* Location preview */}
             {(psgcSel.regionCode || psgcSel.cityMunCode) && (
               <div className="bg-slate-50 dark:bg-slate-800/60 rounded-lg p-4 border border-slate-200 dark:border-slate-700 text-sm space-y-1">
@@ -536,13 +589,13 @@ export default function AddVenueForm({ setViewMode }) {
             </h3>
             <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className={labelCls}>FSIC Number (Fire Safety)</label>
-                <input maxLength={50} className={inputCls('fsicNumber')} value={formData.fsicNumber} onChange={e => set('fsicNumber', e.target.value)} placeholder="e.g. FSIC-2023-01234" />
+                <label className={labelCls}>FSIC Number (Fire Safety) *</label>
+                <input required maxLength={50} className={inputCls('fsicNumber')} value={formData.fsicNumber} onChange={e => set('fsicNumber', e.target.value)} placeholder="e.g. FSIC-2023-01234" />
                 {errors.fsicNumber && <p className="text-[10px] text-red-400 mt-1">{errors.fsicNumber}</p>}
               </div>
               <div>
-                <label className={labelCls}>Mayor's Permit / Business Permit No.</label>
-                <input maxLength={50} className={inputCls('businessPermitNumber')} value={formData.businessPermitNumber} onChange={e => set('businessPermitNumber', e.target.value)} placeholder="e.g. BP-2023-012345" />
+                <label className={labelCls}>Mayor's Permit / Business Permit No. *</label>
+                <input required maxLength={50} className={inputCls('businessPermitNumber')} value={formData.businessPermitNumber} onChange={e => set('businessPermitNumber', e.target.value)} placeholder="e.g. BP-2023-012345" />
                 {errors.businessPermitNumber && <p className="text-[10px] text-red-400 mt-1">{errors.businessPermitNumber}</p>}
               </div>
             </div>
@@ -589,7 +642,7 @@ export default function AddVenueForm({ setViewMode }) {
                 {errors.galleryImages && <p className="text-[10px] text-red-400 mt-1">{errors.galleryImages}</p>}
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Floor Plan / Blueprint (PDF/IMG)</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Floor Plan / Blueprint (PDF/IMG) *</label>
                 <input type="file" onChange={e => {
                   if (e.target.files[0] && e.target.files[0].size > 5 * 1024 * 1024) {
                     alert("File must be under 5MB.");
@@ -598,11 +651,12 @@ export default function AddVenueForm({ setViewMode }) {
                   }
                   setFiles(f => ({ ...f, floorPlanFile: e.target.files[0] }));
                 }}
-                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" accept=".jpg,.jpeg,.png,.pdf" />
+                  className={`text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer ${errors.floorPlanFile ? 'border border-red-400 rounded-lg p-2' : ''}`} accept=".jpg,.jpeg,.png,.pdf" />
+                {errors.floorPlanFile && <p className="text-[10px] text-red-400 mt-1">{errors.floorPlanFile}</p>}
                 <p className="text-[10px] font-bold text-slate-400 mt-1">Accepted: .jpg, .png, .pdf</p>
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Legal Permits Package (Zip/PDF)</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Legal Permits Package (Zip/PDF) *</label>
                 <input type="file" onChange={e => {
                   if (e.target.files[0] && e.target.files[0].size > 10 * 1024 * 1024) {
                     alert("Permit package must be under 10MB.");
@@ -611,7 +665,8 @@ export default function AddVenueForm({ setViewMode }) {
                   }
                   setFiles(f => ({ ...f, legalPermitsFile: e.target.files[0] }));
                 }}
-                  className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer" accept=".pdf,.zip" />
+                  className={`text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-200 file:text-slate-700 dark:file:bg-slate-700 dark:file:text-slate-300 cursor-pointer ${errors.legalPermitsFile ? 'border border-red-400 rounded-lg p-2' : ''}`} accept=".pdf,.zip" />
+                {errors.legalPermitsFile && <p className="text-[10px] text-red-400 mt-1">{errors.legalPermitsFile}</p>}
                 <p className="text-[10px] font-bold text-slate-400 mt-1">Accepted: .pdf, .zip</p>
               </div>
             </div>

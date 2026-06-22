@@ -68,9 +68,20 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
     Latitude: '',
     Longitude: '',
     SquareFootage: '',
+    CeilingHeight: '',
+    CapacityTheater: '',
+    CapacityBanquet: '',
+    CapacityStanding: '',
+    ParkingSlots: '',
     NumberOfFloors: '1',
     HasFireExit: false,
     HasFireExtinguishers: false,
+    FsicNumber: '',
+    BusinessPermitNumber: '',
+    HasBirForm2303: false,
+    HasSmokeDetectors: false,
+    FloorPlanFile: null,
+    LegalPermitsFile: null,
     VenueImages: [],
     TicketTiers: [
       { Name: 'General Admission', Price: '', Capacity: '', ValidityScope: 'Full Event Access' }
@@ -300,17 +311,37 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         Latitude: lat,
         Longitude: lon,
         ContactPerson: formData.ContactPerson,
+        RepresentativeName: formData.ContactPerson,
         ContactNumber: formData.ContactNumber,
+        MobileNumber: formData.ContactNumber,
         ContactEmail: formData.ContactEmail,
         SquareFootage: formData.SquareFootage ? parseInt(formData.SquareFootage) : 0,
+        FloorArea: formData.SquareFootage ? parseFloat(formData.SquareFootage) : 0,
+        CeilingHeight: formData.CeilingHeight ? parseFloat(formData.CeilingHeight) : 0,
+        CapacityTheater: formData.CapacityTheater ? parseInt(formData.CapacityTheater) : 0,
+        CapacityBanquet: formData.CapacityBanquet ? parseInt(formData.CapacityBanquet) : 0,
+        CapacityStanding: formData.CapacityStanding ? parseInt(formData.CapacityStanding) : 0,
+        ParkingSlots: formData.ParkingSlots ? parseInt(formData.ParkingSlots) : 0,
         NumberOfFloors: formData.NumberOfFloors ? parseInt(formData.NumberOfFloors) : 1,
-        HasFireExit: formData.HasFireExit,
+        HasFireExit: formData.HasFireExit || formData.HasFireExits,
         HasFireExtinguishers: formData.HasFireExtinguishers,
         MapUrl: formData.MapUrl,
         VenueImages: formData.VenueImages || [],
+        FsicNumber: formData.FsicNumber,
+        BusinessPermitNumber: formData.BusinessPermitNumber,
+        HasBirForm2303: formData.HasBirForm2303,
+        HasSmokeDetectors: formData.HasSmokeDetectors,
+        HasFireExits: formData.HasFireExits,
+        FloorPlanUrl: formData.FloorPlanFile ? `https://cloudinary.com/venues/fp_mock_${Date.now()}.pdf` : null,
+        LegalPermitsUrl: formData.LegalPermitsFile ? `https://cloudinary.com/venues/legal_mock_${Date.now()}.pdf` : null,
         AccessType: formData.Privacy,
         VerificationCode: formData.Privacy === 'Private' ? formData.VerificationCode : '',
-        MaxCapacity: formData.Capacity ? parseInt(formData.Capacity) : 0,
+        MaxCapacity: Math.max(
+          formData.CapacityTheater ? parseInt(formData.CapacityTheater) : 0,
+          formData.CapacityBanquet ? parseInt(formData.CapacityBanquet) : 0,
+          formData.CapacityStanding ? parseInt(formData.CapacityStanding) : 0,
+          1 // fallback minimum if none provided
+        ),
         TicketTiers: enableTicketing ? formData.TicketTiers.map(t => ({
           TierName: t.Name,
           Price: parseFloat(t.Price || 0),
@@ -453,8 +484,28 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
           }
           if (!formData.ContactEmail.trim()) newErrors.ContactEmail = "Contact email is required.";
           if (!formData.SquareFootage || parseInt(formData.SquareFootage) <= 0) newErrors.SquareFootage = "Valid square footage is required.";
-          if (!formData.Latitude) newErrors.Latitude = "Latitude is required.";
-          if (!formData.Longitude) newErrors.Longitude = "Longitude is required.";
+          if (!formData.Latitude) {
+            newErrors.Latitude = "Latitude is required.";
+          } else {
+            const lat = parseFloat(formData.Latitude);
+            if (isNaN(lat) || lat < 4.0 || lat > 22.0) {
+              newErrors.Latitude = "Must be a valid PH Latitude (4.0° to 22.0°). Did you swap with Longitude?";
+            }
+          }
+
+          if (!formData.Longitude) {
+            newErrors.Longitude = "Longitude is required.";
+          } else {
+            const lon = parseFloat(formData.Longitude);
+            if (isNaN(lon) || lon < 116.0 || lon > 127.0) {
+              newErrors.Longitude = "Must be a valid PH Longitude (116.0° to 127.0°). Did you swap with Latitude?";
+            }
+          }
+          
+          if (!formData.FsicNumber || formData.FsicNumber.length < 5) newErrors.FsicNumber = "FSIC Number is required and must be valid.";
+          if (!formData.BusinessPermitNumber || formData.BusinessPermitNumber.length < 5) newErrors.BusinessPermitNumber = "Permit Number is required.";
+          if (!formData.FloorPlanFile) newErrors.FloorPlanFile = "Floor Plan / Blueprint is required.";
+          if (!formData.LegalPermitsFile) newErrors.LegalPermitsFile = "Legal Permits Package is required.";
         }
       }
       if (venueSource === 'custom') {
@@ -1249,10 +1300,15 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div className="grid grid-cols-3 gap-3 mt-2">
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Square Footage (sqm)</label>
-                          <input type="number" name="FloorArea" value={formData.FloorArea} onChange={handleInputChange} placeholder="e.g., 5000" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          <input type="number" name="SquareFootage" value={formData.SquareFootage} onChange={handleInputChange} placeholder="e.g., 5000" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                          {errors.SquareFootage && <span className="text-[10px] text-red-500">{errors.SquareFootage}</span>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Ceiling Height (m)</label>
+                          <input type="number" name="CeilingHeight" value={formData.CeilingHeight} onChange={handleInputChange} placeholder="e.g., 5.5" className="w-full p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Parking Slots</label>
@@ -1325,6 +1381,94 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                           </label>
                         </div>
                         {errors.VenueImages && <span className="text-[10px] text-red-500">{errors.VenueImages}</span>}
+                      </div>
+                      
+                      <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4 animate-fade-in">
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Legal & Compliance Documents</label>
+                        
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">FSIC Number (Fire Safety) <span className="text-red-500">*</span></label>
+                            <input 
+                              type="text" 
+                              name="FsicNumber" 
+                              value={formData.FsicNumber} 
+                              onChange={handleInputChange} 
+                              placeholder="e.g. FSIC-2023-01234" 
+                              className={`w-full p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${errors.FsicNumber ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 dark:border-slate-800'}`} 
+                            />
+                            {errors.FsicNumber && <span className="text-[10px] text-red-500">{errors.FsicNumber}</span>}
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Mayor's Permit / Business No. <span className="text-red-500">*</span></label>
+                            <input 
+                              type="text" 
+                              name="BusinessPermitNumber" 
+                              value={formData.BusinessPermitNumber} 
+                              onChange={handleInputChange} 
+                              placeholder="e.g. BP-2023-012345" 
+                              className={`w-full p-2 border rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${errors.BusinessPermitNumber ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 dark:border-slate-800'}`} 
+                            />
+                            {errors.BusinessPermitNumber && <span className="text-[10px] text-red-500">{errors.BusinessPermitNumber}</span>}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4 mt-2 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex-wrap mb-4">
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" checked={formData.HasBirForm2303} onChange={(e) => setFormData(prev => ({ ...prev, HasBirForm2303: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">BIR Form 2303</span>
+                          </label>
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" checked={formData.HasSmokeDetectors} onChange={(e) => setFormData(prev => ({ ...prev, HasSmokeDetectors: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Smoke Detectors</span>
+                          </label>
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" checked={formData.HasFireExits} onChange={(e) => setFormData(prev => ({ ...prev, HasFireExits: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded" />
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Verified Fire Exits</span>
+                          </label>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Floor Plan / Blueprint (PDF/IMG) <span className="text-red-500">*</span></label>
+                            <input 
+                              type="file" 
+                              onChange={e => {
+                                if (e.target.files[0] && e.target.files[0].size > 5 * 1024 * 1024) {
+                                  alert("File must be under 5MB.");
+                                  e.target.value = '';
+                                  return;
+                                }
+                                setFormData(f => ({ ...f, FloorPlanFile: e.target.files[0] }));
+                                if (errors.FloorPlanFile) setErrors(prev => ({ ...prev, FloorPlanFile: null }));
+                              }}
+                              className={`text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:font-semibold file:bg-purple-50 file:text-purple-700 dark:file:bg-purple-900/30 dark:file:text-purple-300 cursor-pointer w-full ${errors.FloorPlanFile ? 'border border-red-400 rounded-lg p-2' : ''}`} 
+                              accept=".jpg,.jpeg,.png,.pdf" 
+                            />
+                            {errors.FloorPlanFile && <p className="text-[10px] text-red-500 mt-1">{errors.FloorPlanFile}</p>}
+                            <p className="text-[10px] font-medium text-slate-400 mt-1">Accepted: .jpg, .png, .pdf (Max 5MB)</p>
+                          </div>
+                          
+                          <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Legal Permits Package (Zip/PDF) <span className="text-red-500">*</span></label>
+                            <input 
+                              type="file" 
+                              onChange={e => {
+                                if (e.target.files[0] && e.target.files[0].size > 10 * 1024 * 1024) {
+                                  alert("Permit package must be under 10MB.");
+                                  e.target.value = '';
+                                  return;
+                                }
+                                setFormData(f => ({ ...f, LegalPermitsFile: e.target.files[0] }));
+                                if (errors.LegalPermitsFile) setErrors(prev => ({ ...prev, LegalPermitsFile: null }));
+                              }}
+                              className={`text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:font-semibold file:bg-purple-50 file:text-purple-700 dark:file:bg-purple-900/30 dark:file:text-purple-300 cursor-pointer w-full ${errors.LegalPermitsFile ? 'border border-red-400 rounded-lg p-2' : ''}`} 
+                              accept=".pdf,.zip" 
+                            />
+                            {errors.LegalPermitsFile && <p className="text-[10px] text-red-500 mt-1">{errors.LegalPermitsFile}</p>}
+                            <p className="text-[10px] font-medium text-slate-400 mt-1">Accepted: .pdf, .zip (Max 10MB)</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

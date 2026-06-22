@@ -116,7 +116,8 @@ namespace VenU.Api.Controllers
                     firstName = u.FirstName,
                     lastName = u.LastName,
                     role = u.Role,
-                    status = u.Status
+                    status = u.Status,
+                    isVerified = u.IsVerified
                 })
                 .ToListAsync();
 

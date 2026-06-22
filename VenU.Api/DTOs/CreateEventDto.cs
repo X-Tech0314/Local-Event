@@ -77,6 +77,9 @@ namespace VenU.Api.DTOs
         public bool HasBirForm2303 { get; set; }
         public bool HasSmokeDetectors { get; set; }
         public bool HasFireExits { get; set; }
+        
+        public string? FloorPlanUrl { get; set; }
+        public string? LegalPermitsUrl { get; set; }
     }
 
     public class TicketTierDto

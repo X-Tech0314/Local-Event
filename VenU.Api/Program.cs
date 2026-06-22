@@ -171,7 +171,9 @@ using (var scope = app.Services.CreateScope())
                 SquareFootage = 226000,
                 NumberOfFloors = 4,
                 HasFireExit = true,
-                HasFireExtinguishers = true
+                HasFireExtinguishers = true,
+                Latitude = 14.5317M,
+                Longitude = 120.9818M
             },
             new VenU.Api.Models.Venue
             {
@@ -195,7 +197,9 @@ using (var scope = app.Services.CreateScope())
                 SquareFootage = 1000000,
                 NumberOfFloors = 6,
                 HasFireExit = true,
-                HasFireExtinguishers = true
+                HasFireExtinguishers = true,
+                Latitude = 14.7936M,
+                Longitude = 120.9575M
             },
             new VenU.Api.Models.Venue
             {
@@ -219,16 +223,25 @@ using (var scope = app.Services.CreateScope())
                 SquareFootage = 7000,
                 NumberOfFloors = 1,
                 HasFireExit = true,
-                HasFireExtinguishers = true
+                HasFireExtinguishers = true,
+                Latitude = 14.5422M,
+                Longitude = 121.0183M
             }
         };
 
         bool modified = false;
         foreach (var mv in mockVenues)
         {
-            if (!context.Venues.Any(v => v.Id == mv.Id))
+            var existing = context.Venues.FirstOrDefault(v => v.Id == mv.Id);
+            if (existing == null)
             {
                 context.Venues.Add(mv);
+                modified = true;
+            }
+            else if (existing.Latitude == null || existing.Latitude == 0 || existing.Longitude == null || existing.Longitude == 0)
+            {
+                existing.Latitude = mv.Latitude;
+                existing.Longitude = mv.Longitude;
                 modified = true;
             }
         }

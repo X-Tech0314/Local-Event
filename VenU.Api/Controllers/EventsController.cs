@@ -185,6 +185,8 @@ namespace VenU.Api.Controllers
                     VenueImages = dto.VenueImages != null && dto.VenueImages.Count > 0
                         ? System.Text.Json.JsonSerializer.Serialize(dto.VenueImages)
                         : null,
+                    FloorPlanUrl = dto.FloorPlanUrl,
+                    LegalPermitsUrl = dto.LegalPermitsUrl,
                     IsVerified = false, // Require admin approval before publishing to public directory
                     CreatedByOrganizerId = organizerId
                 };

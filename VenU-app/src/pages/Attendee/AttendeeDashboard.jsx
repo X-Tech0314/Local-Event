@@ -11,6 +11,7 @@ import html2canvas from 'html2canvas';
 
 import UserSettings from './Panels/UserSettings';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import QRCode from 'react-qr-code';
 
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -156,18 +157,9 @@ function generateTicketId() {
   return 'VNU-' + Math.random().toString(36).toUpperCase().slice(2, 8) + '-' + Date.now().toString().slice(-4);
 }
 
-function QrMockup() {
-  const grid = Array.from({ length: 64 }, (_, i) => Math.random() > 0.5);
-  return (
-    <div className="grid grid-cols-8 gap-0.5 w-full h-full">
-      {grid.map((filled, i) => (
-        <div key={i} className={`rounded-none ${filled ? 'bg-slate-900' : 'bg-transparent'}`} />
-      ))}
-    </div>
-  );
-}
 
-function EventCard({ event, onSelect, onPrivateEvent, onLocationClick, isSaved, onToggleSave }) {
+
+function EventCard({ event, onSelect, onPrivateEvent, onLocationClick, isSaved, onToggleSave, currentUser }) {
   const eventId = event.eventId || event.id;
   return (
     <div
@@ -472,9 +464,8 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
                 <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-2xl pointer-events-none"></div>
 
                 <div className="flex gap-4 items-center mb-5">
-                  <div className="w-20 h-20 bg-white border-2 border-slate-200 p-1 shrink-0 shadow-sm relative group-hover:border-purple-300 transition-colors">
-                    <div className="w-full h-full bg-[linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a),linear-gradient(45deg,#0f172a_25%,transparent_25%,transparent_75%,#0f172a_75%,#0f172a)]" style={{ backgroundSize: '10px 10px', backgroundPosition: '0 0, 5px 5px' }}></div>
-                    <div className="absolute inset-2 border-[3px] border-white pointer-events-none"></div>
+                  <div className="w-20 h-20 bg-white border-2 border-slate-200 p-1 shrink-0 shadow-sm relative group-hover:border-purple-300 transition-colors flex items-center justify-center">
+                    <QRCode value={paymentMethod === 'gcash' ? '09123456789' : '102391848102'} size={60} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent flex items-end justify-center pb-1 pointer-events-none">
                       <span className="text-[6px] font-black uppercase text-slate-800 tracking-widest bg-white/50 px-1 backdrop-blur-sm">Scan to Pay</span>
                     </div>
@@ -610,8 +601,8 @@ function TicketModal({ ticket, onClose }) {
           <div className="p-8 pt-6 flex flex-col items-center bg-white relative">
             <div className="w-40 h-40 bg-white border border-slate-200 shadow-sm rounded-none p-4 mb-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-slate-50"></div>
-              <div className="relative z-10 w-full h-full">
-                <QrMockup />
+              <div className="relative z-10 w-full h-full flex items-center justify-center">
+                <QRCode value={ticket.ticketId} size={160} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
               </div>
             </div>
 
@@ -1317,6 +1308,7 @@ export default function AttendeeDashboard() {
                       onLocationClick={() => handleLocationClick(event, index)}
                       isSaved={savedEvents.includes(event.eventId || event.id)}
                       onToggleSave={toggleSaveEvent}
+                      currentUser={currentUser}
                     />
                   ))}
                 </div>
