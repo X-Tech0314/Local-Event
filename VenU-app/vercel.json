@@ -24,7 +24,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://res.cloudinary.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://psgc.cloud https://*.onrender.com http://localhost:5242 wss://localhost:5242; frame-ancestors 'none';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://res.cloudinary.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' data: https://psgc.cloud https://*.onrender.com http://localhost:5242 wss://localhost:5242; frame-ancestors 'none';"
         }
       ]
     }
