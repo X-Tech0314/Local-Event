@@ -172,7 +172,6 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
     setIsAllocating(true);
 
-    // Small timeout to show spinner
     setTimeout(() => {
       let sumAssigned = 0;
       let unassignedIndices = [];
@@ -186,36 +185,39 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         }
       });
 
+      // All tiers already have values — nothing to allocate, exit silently
       if (unassignedIndices.length === 0) {
-        const baseAmount = Math.floor(totalCapacity / formData.TicketTiers.length);
-        const remainder = totalCapacity % formData.TicketTiers.length;
-        const updatedTiers = formData.TicketTiers.map((tier, index) => ({
-          ...tier,
-          Capacity: (index === formData.TicketTiers.length - 1 ? baseAmount + remainder : baseAmount).toString()
-        }));
-        setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
         setIsAllocating(false);
         return;
       }
 
       const remainingCapacity = totalCapacity - sumAssigned;
+
+      // Over-allocated: manually entered values already exceed total capacity
       if (remainingCapacity < 0) {
+        alert(`⚠️ Over-allocated! Your tiers already sum to ${sumAssigned} which exceeds the total capacity of ${totalCapacity}. Please reduce some tier values first.`);
         setIsAllocating(false);
         return;
       }
 
+      // Distribute the remaining capacity evenly among unassigned tiers
       const baseAmount = Math.floor(remainingCapacity / unassignedIndices.length);
-      const remainder = remainingCapacity % unassignedIndices.length;
+      const leftover = remainingCapacity % unassignedIndices.length;
 
       const updatedTiers = [...formData.TicketTiers];
       unassignedIndices.forEach((tierIndex, i) => {
-        updatedTiers[tierIndex].Capacity = (i === unassignedIndices.length - 1 ? baseAmount + remainder : baseAmount).toString();
+        // Give the leftover slot(s) to the last unassigned tier
+        updatedTiers[tierIndex] = {
+          ...updatedTiers[tierIndex],
+          Capacity: (i === unassignedIndices.length - 1 ? baseAmount + leftover : baseAmount).toString()
+        };
       });
 
       setFormData(prev => ({ ...prev, TicketTiers: updatedTiers }));
       setIsAllocating(false);
     }, 500);
   };
+
 
   const removeTicketTier = (index) => {
     if (formData.TicketTiers.length > 1) {
@@ -226,14 +228,19 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
   const geocodeAddress = async (addressString) => {
     try {
+      // 5-second timeout — don't block the publish on slow geocoding
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}&limit=1`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
       const data = await res.json();
       if (data && data.length > 0) {
         return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
       }
     } catch (err) {
-      console.error("Geocoding failed:", err);
+      // AbortError just means timeout — silently continue with 0,0
+      if (err.name !== 'AbortError') console.error("Geocoding failed:", err);
     }
     return { lat: 0, lon: 0 };
   };
@@ -263,7 +270,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
       const payload = {
         Title: formData.EventTitle,
-        Description: formData.EventTitle,
+        Description: formData.Description || formData.EventTitle,
         Category: formData.Category,
         BannerUrl: formData.EventBannerUrl,
         StartDateTime: `${formData.StartDate}T${formData.StartTime}:00Z`,
@@ -311,14 +318,20 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         })) : []
       };
 
+      // 15-second timeout on the event POST — prevents infinite spinner on Render cold start
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+      clearTimeout(timeout);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -333,10 +346,15 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         setActivePanel('events');
       }, 3000);
     } catch (err) {
-      alert("Error submitting event: " + err.message);
+      if (err.name === 'AbortError') {
+        alert("⏱️ The server took too long to respond. The Render backend may be waking up from sleep — please wait 30 seconds and try again.");
+      } else {
+        alert("Error submitting event: " + err.message);
+      }
       setIsSubmitting(false);
     }
   };
+
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -1260,7 +1278,6 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                         name="Capacity"
                         value={formData.Capacity}
                         onChange={handleInputChange}
-                        onBlur={handleSmartAllocate}
                         placeholder="e.g., 500"
                         className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm"
                       />
@@ -1352,7 +1369,6 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                             type="number"
                             value={tier.Capacity}
                             onChange={(e) => handleTierChange(index, 'Capacity', e.target.value)}
-                            onBlur={handleSmartAllocate}
                             placeholder="Max allocations allowed"
                             className="w-full p-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs text-slate-900 dark:text-white"
                           />
@@ -1444,7 +1460,7 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                 accessType: formData.Privacy,
                 verificationCode: formData.Privacy === 'Private' ? formData.VerificationCode : '',
                 ticketType: enableTicketing && formData.TicketTiers.length > 0 ? formData.TicketTiers[0].ValidityScope : null,
-                ticketTiers: enableTicketing ? formData.TicketTiers : [],
+                ticketTiers: enableTicketing ? formData.TicketTiers.map(t => ({ ...t, TierName: t.Name || t.TierName || 'Standard' })) : [],
                 venueType: formData.VenueType,
                 floorLevel: formData.FloorLevel,
                 wingSection: formData.WingSection,
