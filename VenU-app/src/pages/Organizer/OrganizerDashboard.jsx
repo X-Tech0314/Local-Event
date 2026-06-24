@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as signalR from '@microsoft/signalr';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Calendar, MapPin, Users, BarChart3, Settings, Plus, LogOut, Bell, Moon, Sun, QrCode } from 'lucide-react';
 import { useTheme } from '../../ThemeContext.jsx';
@@ -30,35 +31,6 @@ export default function OrganizerDashboard() {
     const { darkMode, toggleDarkMode } = useTheme();
     const [activePanel, setActivePanel] = useState('dashboard');
     const [editEvent, setEditEvent] = useState(null);
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState(() => {
-        const saved = localStorage.getItem('vnu_organizer_notifications');
-        if (saved) return JSON.parse(saved);
-        return [
-            { id: 1, title: 'Welcome to VenU Organizer!', message: 'Start creating your first event today.', read: false, time: 'Just now' },
-            { id: 2, title: 'Profile Setup', message: 'Please complete your organizer profile and verification.', read: false, time: '1h ago' }
-        ];
-    });
-
-    React.useEffect(() => {
-        localStorage.setItem('vnu_organizer_notifications', JSON.stringify(notifications));
-    }, [notifications]);
-
-    const addNotification = (title, message) => {
-        setNotifications(prev => [
-            { id: Date.now(), title, message, read: false, time: 'Just now' },
-            ...prev
-        ]);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/';
-    };
-
-    const unreadCount = notifications.filter(n => !n.read).length;
-    const markAllRead = () => setNotifications(notifications.map(n => ({ ...n, read: true })));
 
     // Load user from localStorage
     const savedUserStr = localStorage.getItem('user');
@@ -79,6 +51,76 @@ export default function OrganizerDashboard() {
         isVerified: loggedInUser?.IsVerified || loggedInUser?.isVerified || false,
         profileImage: loggedInUser?.ProfilePicture || loggedInUser?.profilePicture || null,
         name: `${loggedInUser?.FirstName || loggedInUser?.firstName || 'Guest'} ${loggedInUser?.LastName || loggedInUser?.lastName || 'User'}`.trim()
+    };
+
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Notifications`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    setNotifications(await res.json());
+                }
+            } catch (err) {
+                console.error("Failed to load notifications: ", err);
+            }
+        };
+        if (currentUser?.id) {
+            fetchNotifications();
+        }
+    }, [currentUser.id]);
+
+    useEffect(() => {
+        if (!currentUser?.id) return;
+        const token = localStorage.getItem('token');
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${import.meta.env.VITE_API_URL}/hub/notifications`, {
+                accessTokenFactory: () => token
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveNotification", (notif) => {
+            setNotifications(prev => [notif, ...prev]);
+        });
+
+        connection.start().catch(err => console.error("SignalR Hub connection error: ", err));
+
+        return () => {
+            connection.stop();
+        };
+    }, [currentUser.id]);
+
+    const addNotification = (title, message) => {
+        setNotifications(prev => [
+            { id: Date.now(), title, message, read: false, time: 'Just now' },
+            ...prev
+        ]);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    };
+
+    const unreadCount = notifications.filter(n => !n.read).length;
+    const markAllRead = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${import.meta.env.VITE_API_URL}/api/Notifications/read-all`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        } catch (err) {
+            console.error("Failed to mark notifications read: ", err);
+        }
     };
 
     const renderPanel = () => {
@@ -211,7 +253,24 @@ export default function OrganizerDashboard() {
                                       </div>
                                     ) : (
                                       notifications.map(notif => (
-                                        <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                                        <div 
+                                          key={notif.id} 
+                                          onClick={async () => {
+                                            if (!notif.read) {
+                                              try {
+                                                const token = localStorage.getItem('token');
+                                                await fetch(`${import.meta.env.VITE_API_URL}/api/Notifications/${notif.id}/read`, {
+                                                  method: 'PUT',
+                                                  headers: { 'Authorization': `Bearer ${token}` }
+                                                });
+                                                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                                              } catch (err) {
+                                                console.error("Failed to mark notification read: ", err);
+                                              }
+                                            }
+                                          }}
+                                          className={`p-5 border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}
+                                        >
                                           {!notif.read && (
                                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r-md"></div>
                                           )}

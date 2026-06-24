@@ -55,6 +55,16 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddHttpClient<VenU.Api.Services.IImageModerationService, VenU.Api.Services.ImageModerationService>();
 builder.Services.AddScoped<VenU.Api.Services.IImageModerationService, VenU.Api.Services.ImageModerationService>();
 
+// Register SignalR
+builder.Services.AddSignalR();
+
+// Register Email Service
+builder.Services.AddHttpClient<VenU.Api.Services.IEmailService, VenU.Api.Services.EmailService>();
+builder.Services.AddScoped<VenU.Api.Services.IEmailService, VenU.Api.Services.EmailService>();
+
+// Register Notification Service
+builder.Services.AddScoped<VenU.Api.Services.INotificationService, VenU.Api.Services.NotificationService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -106,6 +116,20 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
         RoleClaimType = ClaimTypes.Role
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hub"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -287,6 +311,7 @@ app.UseAuthorization();
 app.UseMiddleware<SuspensionCheckMiddleware>();
 
 app.MapControllers();
+app.MapHub<VenU.Api.Hubs.NotificationHub>("/hub/notifications");
 
 // --- ADD THIS RIGHT ABOVE app.Run(); ---
 

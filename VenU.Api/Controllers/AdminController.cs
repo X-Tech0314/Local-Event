@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VenU.Api.Data;
 using VenU.Api.Models;
+using VenU.Api.Services;
 
 namespace VenU.Api.Controllers
 {
@@ -12,10 +13,12 @@ namespace VenU.Api.Controllers
     public class AdminController : ControllerBase
     {
         private readonly VenUDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public AdminController(VenUDbContext context)
+        public AdminController(VenUDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         // ==========================================
@@ -75,6 +78,13 @@ namespace VenU.Api.Controllers
 
             evt.Status = status;
             await _context.SaveChangesAsync();
+
+            // Trigger notification to Organizer
+            var title = status == "Published" ? "🎉 Event Approved" : "❌ Event Rejected";
+            var msg = status == "Published" 
+                ? $"Your event \"{evt.Title}\" has been approved and published to the public directory!" 
+                : $"Your event \"{evt.Title}\" has been rejected by the admin.";
+            await _notificationService.SendNotificationAsync(evt.OrganizerId, title, msg, sendEmail: true);
             
             return Ok(new { message = $"Event {status} successfully." });
         }
@@ -343,6 +353,10 @@ namespace VenU.Api.Controllers
             user.VerificationMessage = null;
             await _context.SaveChangesAsync();
 
+            var title = "✓ Profile Verification Approved";
+            var msg = "Your identity documents have been approved. You now have full access to verified platform features!";
+            await _notificationService.SendNotificationAsync(id, title, msg, sendEmail: true);
+
             return Ok(new { message = "Identity approved successfully." });
         }
 
@@ -355,6 +369,10 @@ namespace VenU.Api.Controllers
             user.IsVerified = false;
             user.VerificationMessage = dto.Reason;
             await _context.SaveChangesAsync();
+
+            var title = "⚠ Profile Verification Rejected";
+            var msg = $"Your profile verification request was rejected. Reason: {dto.Reason}";
+            await _notificationService.SendNotificationAsync(id, title, msg, sendEmail: true);
 
             return Ok(new { message = "Identity rejected successfully." });
         }

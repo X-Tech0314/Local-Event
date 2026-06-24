@@ -10,6 +10,7 @@ using CloudinaryDotNet.Actions;
 using VenU.Api.Data;
 using VenU.Api.DTOs;
 using VenU.Api.Models;
+using VenU.Api.Services;
 
 namespace VenU.Api.Controllers
 {
@@ -20,12 +21,14 @@ namespace VenU.Api.Controllers
         private readonly VenUDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _config;
+        private readonly INotificationService _notificationService;
 
-        public EventsController(VenUDbContext context, IWebHostEnvironment env, IConfiguration config)
+        public EventsController(VenUDbContext context, IWebHostEnvironment env, IConfiguration config, INotificationService notificationService)
         {
             _context = context;
             _env = env;
             _config = config;
+            _notificationService = notificationService;
         }
 
         [HttpPost("upload")]
@@ -257,6 +260,19 @@ namespace VenU.Api.Controllers
             _context.Events.Add(newEvent);
             await _context.SaveChangesAsync();
 
+            // Trigger Event Submission Notification
+            var notifTitle = "Event Submitted for Review";
+            var notifMsg = $"\"{newEvent.Title}\" has been submitted and is pending admin approval.";
+            await _notificationService.SendNotificationAsync(organizerId, notifTitle, notifMsg, sendEmail: true);
+
+            // Trigger Custom Venue Registration Notification (if applicable)
+            if (dto.VenueSourcingMode == "custom" && dto.RegisterVenueToDB)
+            {
+                var venueTitle = "Venue Registration Pending";
+                var venueMsg = $"Your custom venue \"{dto.VenueName}\" has been submitted and is pending admin validation.";
+                await _notificationService.SendNotificationAsync(organizerId, venueTitle, venueMsg, sendEmail: true);
+            }
+
             return CreatedAtAction(nameof(GetEvent), new { id = newEvent.Id }, newEvent);
         }
 
@@ -282,7 +298,7 @@ namespace VenU.Api.Controllers
             var events = await _context.Events
                 .Include(e => e.TicketTiers)
                 .Include(e => e.Organizer)
-                .Where(e => e.Status != "Draft")
+                .Where(e => e.Status != "Draft" && e.Status != "Pending" && e.Status != "Rejected")
                 .OrderBy(e => e.StartDateTime)
                 .ToListAsync();
 

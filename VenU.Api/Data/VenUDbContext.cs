@@ -17,9 +17,17 @@ namespace VenU.Api.Data
         public DbSet<VenueImage> VenueImages { get; set; }
         public DbSet<EventAttendee> EventAttendees { get; set; }
         public DbSet<EventReview> EventReviews { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Cascade delete User -> Notifications
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             
             // Unique Constraints
             modelBuilder.Entity<User>()

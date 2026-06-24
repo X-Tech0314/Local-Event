@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as signalR from '@microsoft/signalr';
 import {
   LayoutDashboard, MapPin, Ticket, Settings, Search, Lock,
   Tag, CheckCircle2, X, ChevronRight, Calendar, Clock,
@@ -44,16 +45,46 @@ function QRScannerModal({ onScan, onClose }) {
   }, [onScan]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <X size={24} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+      <div className="bg-slate-900 border border-slate-800/80 rounded-none w-full max-w-md p-6 relative overflow-hidden shadow-2xl animate-scale-in">
+        {/* Top gradient bar */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
+        
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+          <X size={20} />
         </button>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <QrCode className="text-purple-600" /> Scan Access Code
+        
+        <h2 className="text-lg font-black uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+          <QrCode className="text-white" size={28} /> Scan Access Code
         </h2>
-        <div id="reader" className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden"></div>
-        <p className="text-center text-xs text-slate-500 mt-4">Point your camera at an event QR code to securely log the access code automatically.</p>
+        
+        <div className="relative w-full rounded-none overflow-hidden bg-slate-950 border border-slate-800/60 shadow-inner">
+          <div id="reader" className="w-full overflow-hidden"></div>
+          
+          {/* Custom QR Scan Frame Overlay (shows only when camera is active) */}
+          <div className="scan-overlay absolute inset-0 pointer-events-none z-20 flex flex-col items-center justify-center bg-slate-950/40">
+            <div className="relative w-48 h-48 sm:w-56 sm:h-56">
+              {/* Target brackets */}
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-purple-500 rounded-tl-sm" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-purple-500 rounded-tr-sm" />
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-purple-500 rounded-bl-sm" />
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-purple-500 rounded-br-sm" />
+              
+              {/* Scan laser line */}
+              <div className="absolute left-1 right-1 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent shadow-[0_0_8px_#a78bfa] animate-[scanline_2.5s_ease-in-out_infinite]" />
+            </div>
+            
+            {/* Live indicator text */}
+            <div className="mt-4 px-3 py-1 rounded-full bg-purple-950/90 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-purple-300 border border-purple-500/20 flex items-center gap-1.5 animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              Align Access QR Code
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-6 leading-relaxed">
+          Point your camera at a private event QR code to unlock it automatically.
+        </p>
       </div>
     </div>
   );
@@ -288,21 +319,46 @@ function TicketingDrawer({ event, onClose, onSuccess }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Tickets/purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          tierName: selectedTier,
+          quantity: quantity,
+          paymentMethod: isPaid ? paymentMethod : null,
+          accountNumber: isPaid ? accountNumber : null
+        })
+      });
 
-    setTimeout(() => {
+      if (!response.ok) {
+        const errMsg = await response.text();
+        throw new Error(errMsg || "Failed to purchase ticket.");
+      }
+
+      const resData = await response.json();
+
       onSuccess({
         event,
-        ticketId: generateTicketId(),
+        ticketId: resData.bookingReference || generateTicketId(),
         tier: selectedTier,
         quantity,
         paymentMethod: isPaid ? paymentMethod : null,
         accountNumber: isPaid ? accountNumber : null,
         claimedAt: new Date().toLocaleString()
       });
+    } catch (err) {
+      alert("Checkout error: " + err.message);
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -573,70 +629,114 @@ function SparklesIcon() {
 }
 
 function TicketModal({ ticket, onClose }) {
+  const [isQREnlarged, setIsQREnlarged] = useState(false);
+
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm animate-scale-in relative group perspective-1000">
-        <div className="bg-white rounded-none overflow-hidden shadow-2xl relative z-10 transform transition-transform preserve-3d">
-          <div className="relative p-6 pb-12 text-white text-center overflow-hidden">
-            <div className="absolute inset-0 bg-slate-900">
-              {ticket.event?.image && (
-                <img src={ticket.event.image} alt="Event Banner" className="w-full h-full object-cover opacity-70 mix-blend-overlay" />
-              )}
-              <div className={`absolute inset-0 bg-gradient-to-br ${ticket.event?.color || 'from-purple-500 to-indigo-600'} opacity-80 mix-blend-multiply`}></div>
-            </div>
-            <div className="relative z-10">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest mb-4 border border-white/20 shadow-inner">
-                <CheckCircle2 size={12} /> Confirmed
-              </span>
-              <h2 className="text-2xl font-black leading-tight drop-shadow-md">{ticket.event.title}</h2>
-            </div>
-          </div>
-
-          <div className="relative flex justify-between items-center -mt-4 z-20">
-            <div className="w-8 h-8 rounded-full bg-slate-900/80 backdrop-blur-md -ml-4 shadow-inner"></div>
-            <div className="flex-1 border-t-2 border-dashed border-slate-300 mx-2"></div>
-            <div className="w-8 h-8 rounded-full bg-slate-900/80 backdrop-blur-md -mr-4 shadow-inner"></div>
-          </div>
-
-          <div className="p-8 pt-6 flex flex-col items-center bg-white relative">
-            <div className="w-40 h-40 bg-white border border-slate-200 shadow-sm rounded-none p-4 mb-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-slate-50"></div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center">
-                <QRCode value={ticket.ticketId} size={160} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+    <>
+      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div className="w-full max-w-sm animate-scale-in relative group perspective-1000">
+          <div className="bg-white rounded-none overflow-hidden shadow-2xl relative z-10 transform transition-transform preserve-3d">
+            <div className="relative p-6 pb-12 text-white text-center overflow-hidden">
+              <div className="absolute inset-0 bg-slate-900">
+                {ticket.event?.image && (
+                  <img src={ticket.event.image} alt="Event Banner" className="w-full h-full object-cover opacity-70 mix-blend-overlay" />
+                )}
+                <div className={`absolute inset-0 bg-gradient-to-br ${ticket.event?.color || 'from-purple-500 to-indigo-600'} opacity-80 mix-blend-multiply`}></div>
+              </div>
+              <div className="relative z-10">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest mb-4 border border-white/20 shadow-inner">
+                  <CheckCircle2 size={12} /> Confirmed
+                </span>
+                <h2 className="text-2xl font-black leading-tight drop-shadow-md">{ticket.event.title}</h2>
               </div>
             </div>
 
-            <div className="text-center w-full mb-6">
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Ticket ID</p>
-              <div className="bg-slate-50 border border-slate-100 rounded-none py-2 px-4 font-mono font-black text-slate-900 tracking-widest text-sm shadow-inner">
-                {ticket.ticketId}
+            <div className="relative flex justify-between items-center -mt-4 z-20">
+              <div className="w-8 h-8 rounded-full bg-slate-900/80 backdrop-blur-md -ml-4 shadow-inner"></div>
+              <div className="flex-1 border-t-2 border-dashed border-slate-300 mx-2"></div>
+              <div className="w-8 h-8 rounded-full bg-slate-900/80 backdrop-blur-md -mr-4 shadow-inner"></div>
+            </div>
+
+            <div className="p-8 pt-6 flex flex-col items-center bg-white relative">
+              <div 
+                onClick={() => setIsQREnlarged(true)}
+                className="w-40 h-40 bg-white border border-slate-200 shadow-sm rounded-none p-4 mb-6 relative overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 group/qr"
+                title="Click to enlarge"
+              >
+                <div className="absolute inset-0 bg-slate-50 group-hover/qr:bg-purple-50/30 transition-colors"></div>
+                <div className="relative z-10 w-full h-full flex items-center justify-center">
+                  <QRCode value={ticket.ticketId} size={160} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+                </div>
+              </div>
+
+              <div className="text-center w-full mb-6">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Ticket ID (Click QR to Enlarge)</p>
+                <div className="bg-slate-50 border border-slate-100 rounded-none py-2 px-4 font-mono font-black text-slate-900 tracking-widest text-sm shadow-inner">
+                  {ticket.ticketId}
+                </div>
+              </div>
+
+              <div className="w-full grid grid-cols-2 gap-y-4 gap-x-6 text-left">
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-0.5">Tier</p>
+                  <p className="font-bold text-slate-900 leading-tight text-sm">{ticket.tier}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-0.5">Date</p>
+                  <p className="font-bold text-slate-900 leading-tight text-sm">{ticket.event.date}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-0.5">Venue</p>
+                  <p className="font-bold text-slate-900 leading-tight text-sm">{ticket.event.barangay}</p>
+                </div>
               </div>
             </div>
 
-            <div className="w-full grid grid-cols-2 gap-y-4 gap-x-6 text-left">
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-0.5">Tier</p>
-                <p className="font-bold text-slate-900 leading-tight text-sm">{ticket.tier}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-0.5">Date</p>
-                <p className="font-bold text-slate-900 leading-tight text-sm">{ticket.event.date}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-0.5">Venue</p>
-                <p className="font-bold text-slate-900 leading-tight text-sm">{ticket.event.barangay}</p>
-              </div>
+            <div className="bg-slate-50 border-t border-slate-100 p-4 text-center">
+              <button onClick={onClose} className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-500 hover:text-purple-900">
+                Close Pass
+              </button>
             </div>
-          </div>
-
-          <div className="bg-slate-50 border-t border-slate-100 p-4 text-center">
-            <button onClick={onClose} className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-500 hover:text-purple-900">
-              Close Pass
-            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      {isQREnlarged && (
+        <div 
+          className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 cursor-pointer"
+          onClick={() => setIsQREnlarged(false)}
+        >
+          <div 
+            className="bg-white p-8 rounded-none border border-slate-200 shadow-2xl flex flex-col items-center max-w-sm w-full relative animate-scale-in cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-black text-slate-900 uppercase tracking-widest pr-6">{ticket.event.title}</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">{ticket.tier} Pass</p>
+            </div>
+            
+            <div className="w-72 h-72 bg-white p-6 border border-slate-200 shadow-sm flex items-center justify-center mb-6">
+              <QRCode value={ticket.ticketId} size={256} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+            </div>
+
+            <div className="w-full text-center">
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Ticket ID</p>
+              <p className="font-mono font-black text-slate-900 tracking-widest text-base bg-slate-50 py-2 border border-slate-100 shadow-inner">
+                {ticket.ticketId}
+              </p>
+            </div>
+
+            <button 
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+              onClick={() => setIsQREnlarged(false)}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-4 animate-pulse">Tap anywhere to close</p>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -799,21 +899,60 @@ export default function AttendeeDashboard() {
     fetchEvents();
   }, []);
 
-  const [tickets, setTickets] = useState(() => {
-    const savedTickets = localStorage.getItem(`vnu_user_tickets_${currentUser.id}`);
-    return savedTickets ? JSON.parse(savedTickets) : [];
-  });
+  const [tickets, setTickets] = useState([]);
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem(`vnu_user_notifications_${currentUser.id}`);
-    if (saved) return JSON.parse(saved);
-    return [{ id: Date.now(), title: 'Welcome to VenU!', message: 'Explore local premium events in your area.', read: false, time: 'Just now' }];
-  });
+  const [notifications, setNotifications] = useState([]);
 
-  React.useEffect(() => {
-    localStorage.setItem(`vnu_user_notifications_${currentUser.id}`, JSON.stringify(notifications));
-  }, [notifications, currentUser.id]);
+  useEffect(() => {
+    const fetchTicketsAndNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        // 1. Fetch tickets
+        const ticketsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/Tickets/my-tickets`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (ticketsRes.ok) {
+          setTickets(await ticketsRes.json());
+        }
+
+        // 2. Fetch notifications
+        const notifRes = await fetch(`${import.meta.env.VITE_API_URL}/api/Notifications`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (notifRes.ok) {
+          setNotifications(await notifRes.json());
+        }
+      } catch (err) {
+        console.error("Failed to load tickets/notifications: ", err);
+      }
+    };
+    if (currentUser?.id) {
+      fetchTicketsAndNotifications();
+    }
+  }, [currentUser.id]);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    const token = localStorage.getItem('token');
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${import.meta.env.VITE_API_URL}/hub/notifications`, {
+        accessTokenFactory: () => token
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveNotification", (notif) => {
+      setNotifications(prev => [notif, ...prev]);
+    });
+
+    connection.start().catch(err => console.error("SignalR Hub connection error: ", err));
+
+    return () => {
+      connection.stop();
+    };
+  }, [currentUser.id]);
 
   const addNotification = (title, message) => {
     setNotifications(prev => [
@@ -851,7 +990,18 @@ export default function AttendeeDashboard() {
   // --------------------------------------------
 
   const unreadCount = notifications.filter(n => !n.read).length;
-  const markAllRead = () => setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const markAllRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL}/api/Notifications/read-all`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Failed to mark notifications read: ", err);
+    }
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Discovery', icon: LayoutDashboard },
@@ -1200,7 +1350,24 @@ export default function AttendeeDashboard() {
                       </div>
                     ) : (
                       notifications.map(notif => (
-                        <div key={notif.id} className={`p-5 border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}>
+                        <div 
+                          key={notif.id} 
+                          onClick={async () => {
+                            if (!notif.read) {
+                              try {
+                                const token = localStorage.getItem('token');
+                                await fetch(`${import.meta.env.VITE_API_URL}/api/Notifications/${notif.id}/read`, {
+                                  method: 'PUT',
+                                  headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                              } catch (err) {
+                                console.error("Failed to mark notification read: ", err);
+                              }
+                            }
+                          }}
+                          className={`p-5 border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 cursor-pointer relative group ${notif.read ? 'opacity-60' : ''}`}
+                        >
                           {!notif.read && (
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-700 dark:bg-purple-500 rounded-r-md"></div>
                           )}

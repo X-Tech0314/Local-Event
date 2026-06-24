@@ -25,7 +25,7 @@ namespace VenU.Api.Controllers
         {
             // Only fetch non-draft active events
             var query = _context.Events
-                .Where(e => e.Status != "Draft")
+                .Where(e => e.Status != "Draft" && e.Status != "Pending" && e.Status != "Rejected")
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
