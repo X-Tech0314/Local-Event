@@ -52,9 +52,9 @@ namespace VenU.Api.Controllers
                 query = query.Where(v => v.Name.Contains(search) || v.City.Contains(search));
             }
 
-            // Return verified venues OR unverified venues created by this organizer
+            // Return verified venues OR unverified venues created by this organizer, excluding hidden ones
             var venues = await query
-                .Where(v => v.IsVerified || v.CreatedByOrganizerId == organizerId)
+                .Where(v => (v.IsVerified || v.CreatedByOrganizerId == organizerId) && !v.IsHidden)
                 .OrderByDescending(v => v.OrganizersUsedCount)
                 .ThenByDescending(v => v.Rating)
                 .ToListAsync();
@@ -67,7 +67,7 @@ namespace VenU.Api.Controllers
         public async Task<IActionResult> GetVenuesWithEventsCount()
         {
             var venuesWithCount = await _context.Venues
-                .Where(v => v.IsVerified) // Usually map should only show verified
+                .Where(v => v.IsVerified && !v.IsHidden) // Usually map should only show verified
                 .Select(v => new
                 {
                     v.Id,

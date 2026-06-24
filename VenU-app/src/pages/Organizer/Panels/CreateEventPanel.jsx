@@ -87,6 +87,95 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       { Name: 'General Admission', Price: '', Capacity: '', ValidityScope: 'Full Event Access' }
     ]
   });
+  
+  useEffect(() => {
+    if (editEvent) {
+      console.log("Loading editEvent into form state:", editEvent);
+
+      const sd = editEvent.startDateTime ? new Date(editEvent.startDateTime) : null;
+      const ed = editEvent.endDateTime ? new Date(editEvent.endDateTime) : null;
+
+      const formatDate = (dateObj) => {
+        if (!dateObj) return '';
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+
+      const formatTime = (dateObj) => {
+        if (!dateObj) return '';
+        const hrs = String(dateObj.getHours()).padStart(2, '0');
+        const mins = String(dateObj.getMinutes()).padStart(2, '0');
+        return `${hrs}:${mins}`;
+      };
+
+      setFormData({
+        EventTitle: editEvent.title || '',
+        Description: editEvent.description || '',
+        Category: editEvent.category || '',
+        Privacy: editEvent.accessType || 'Public',
+        VerificationCode: editEvent.verificationCode || '',
+        StartDate: sd ? formatDate(sd) : '',
+        StartTime: sd ? formatTime(sd) : '',
+        EndDate: ed ? formatDate(ed) : '',
+        EndTime: ed ? formatTime(ed) : '',
+        TicketSaleStart: editEvent.ticketSalesStart ? formatDate(new Date(editEvent.ticketSalesStart)) : '',
+        TicketSaleEnd: editEvent.ticketSalesEnd ? formatDate(new Date(editEvent.ticketSalesEnd)) : '',
+        VenueType: editEvent.venueType || 'Physical',
+        SelectedRegion: editEvent.region || '',
+        SelectedProvince: editEvent.province || '',
+        SelectedCity: editEvent.city || '',
+        SelectedBarangay: editEvent.barangay || '',
+        StreetAddress: editEvent.streetAddress || '',
+        FloorLevel: editEvent.floorLevel || '',
+        WingSection: editEvent.wingSection || '',
+        ProximityAnchor: editEvent.proximityAnchor || '',
+        RegisteredVenueId: editEvent.venueId || '',
+        RegisteredVenueName: editEvent.venueName || '',
+        CustomVenueName: editEvent.venueId ? '' : (editEvent.venueName || ''),
+        CustomVenueType: editEvent.venueId ? 'Indoor Hall' : (editEvent.venueType || 'Indoor Hall'),
+        Capacity: editEvent.maxCapacity || '',
+        ContactPerson: editEvent.contactPerson || '',
+        ContactNumber: editEvent.contactNumber || '',
+        ContactEmail: editEvent.contactEmail || '',
+        MapUrl: editEvent.mapUrl || '',
+        Latitude: editEvent.latitude || '',
+        Longitude: editEvent.longitude || '',
+        SquareFootage: editEvent.squareFootage || '',
+        CeilingHeight: editEvent.ceilingHeight || '',
+        CapacityTheater: editEvent.capacityTheater || '',
+        CapacityBanquet: editEvent.capacityBanquet || '',
+        CapacityStanding: editEvent.capacityStanding || '',
+        ParkingSlots: editEvent.parkingSlots || '',
+        NumberOfFloors: editEvent.numberOfFloors || '1',
+        HasFireExit: editEvent.hasFireExit || false,
+        HasFireExtinguishers: editEvent.hasFireExtinguishers || false,
+        FsicNumber: editEvent.fsicNumber || '',
+        BusinessPermitNumber: editEvent.businessPermitNumber || '',
+        HasBirForm2303: editEvent.hasBirForm2303 || false,
+        HasSmokeDetectors: editEvent.hasSmokeDetectors || false,
+        FloorPlanFile: null,
+        LegalPermitsFile: null,
+        VenueImages: editEvent.venueImages || [],
+        TicketTiers: editEvent.ticketTiers && editEvent.ticketTiers.length > 0
+          ? editEvent.ticketTiers.map(t => ({
+              Name: t.tierName || t.Name || '',
+              Price: t.price !== undefined ? t.price.toString() : (t.Price !== undefined ? t.Price.toString() : ''),
+              Capacity: t.onlineSlots !== undefined ? t.onlineSlots.toString() : (t.OnlineSlots !== undefined ? t.OnlineSlots.toString() : ''),
+              ValidityScope: t.validityScope || t.ValidityScope || 'Full Event Access'
+            }))
+          : [{ Name: 'General Admission', Price: '', Capacity: '', ValidityScope: 'Full Event Access' }]
+      });
+
+      setVenueSource(editEvent.venueId ? 'registered' : 'custom');
+      setEnableTicketing(editEvent.requiresTicket);
+      if (editEvent.bannerUrl) {
+        setImagePreview(editEvent.bannerUrl);
+        setFormData(prev => ({ ...prev, EventBannerUrl: editEvent.bannerUrl }));
+      }
+    }
+  }, [editEvent]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -115,7 +204,15 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
             id: venue.id || venue.Id || venue.ID,
             name: venue.name || venue.Name || "Unnamed Venue",
             city: venue.city || venue.City || "",
-            maxCapacity: venue.maxCapacity || venue.Capacity || venue.capacity || 100
+            maxCapacity: venue.maxCapacity || venue.Capacity || venue.capacity || 100,
+            streetAddress: venue.streetAddress || venue.StreetAddress || "",
+            barangay: venue.barangay || venue.Barangay || "",
+            province: venue.province || venue.Province || "",
+            region: venue.region || venue.Region || "",
+            latitude: venue.latitude || venue.Latitude || "",
+            longitude: venue.longitude || venue.Longitude || "",
+            mapUrl: venue.mapUrl || venue.MapUrl || "",
+            type: venue.type || venue.Type || ""
           })) : [];
 
           setVenueResults(normalizedData);
@@ -351,12 +448,22 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
         })) : []
       };
 
-      // 15-second timeout on the event POST — prevents infinite spinner on Render cold start
+      // 15-second timeout on the event POST/PUT — prevents infinite spinner on Render cold start
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events`, {
-        method: 'POST',
+      const url = editEvent 
+        ? `${import.meta.env.VITE_API_URL}/api/events/${editEvent.id}`
+        : `${import.meta.env.VITE_API_URL}/api/events`;
+      
+      const method = editEvent ? 'PUT' : 'POST';
+
+      if (editEvent) {
+        payload.Status = editEvent.status;
+      }
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -368,14 +475,19 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to create event: ${errorText}`);
+        throw new Error(`Failed to submit event: ${errorText}`);
       }
 
       setShowSuccessModal(true);
       if (addNotification) {
-        addNotification('Event Submitted for Review', `"${formData.EventTitle}" has been submitted and is pending admin approval.`);
+        const notifTitle = editEvent ? 'Event Updated' : 'Event Submitted for Review';
+        const notifText = editEvent 
+          ? `"${formData.EventTitle}" has been updated successfully.` 
+          : `"${formData.EventTitle}" has been submitted and is pending admin approval.`;
+        addNotification(notifTitle, notifText);
       }
       setTimeout(() => {
+        if (setEditEvent) setEditEvent(null);
         setActivePanel('events');
       }, 3000);
     } catch (err) {
@@ -696,7 +808,9 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
       <div className="w-1/2 p-8 overflow-y-auto border-r border-slate-200 dark:border-slate-800">
         <div className="max-w-xl mx-auto space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create New Event Blueprint</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              {editEvent ? "Edit Event Blueprint" : "Create New Event Blueprint"}
+            </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">Step {currentStep} of 4</p>
           </div>
 
@@ -1076,7 +1190,16 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
                                     ...prev,
                                     RegisteredVenueId: venue.id,
                                     RegisteredVenueName: venue.name,
-                                    Capacity: venue.maxCapacity
+                                    Capacity: venue.maxCapacity,
+                                    StreetAddress: venue.streetAddress || '',
+                                    SelectedBarangay: venue.barangay || '',
+                                    SelectedCity: venue.city || '',
+                                    SelectedProvince: venue.province || '',
+                                    SelectedRegion: venue.region || '',
+                                    Latitude: venue.latitude ? venue.latitude.toString() : '',
+                                    Longitude: venue.longitude ? venue.longitude.toString() : '',
+                                    MapUrl: venue.mapUrl || '',
+                                    VenueType: venue.type || 'Physical'
                                   }));
                                   setSearchQuery('');
                                   setVenueResults([]);
@@ -1701,9 +1824,13 @@ export default function CreateEventPanel({ currentUser, setActivePanel, editEven
             <div className="w-20 h-20 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
               <CheckCircle className="w-10 h-10 text-green-500" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Event Published!</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              {editEvent ? "Event Updated!" : "Event Published!"}
+            </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-8">
-              Congratulations and good luck to your event! Your blueprint has been successfully dispatched to the global network.
+              {editEvent 
+                ? "Your event blueprint has been successfully updated in the global network."
+                : "Congratulations and good luck to your event! Your blueprint has been successfully dispatched to the global network."}
             </p>
             <button
               onClick={() => {

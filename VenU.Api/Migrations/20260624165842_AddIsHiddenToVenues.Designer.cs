@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VenU.Api.Data;
 
@@ -10,9 +11,11 @@ using VenU.Api.Data;
 namespace VenU.Api.Migrations
 {
     [DbContext(typeof(VenUDbContext))]
-    partial class VenUDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624165842_AddIsHiddenToVenues")]
+    partial class AddIsHiddenToVenues
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -608,12 +611,6 @@ namespace VenU.Api.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("HasSoundSystem")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsHidden")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsVerified")

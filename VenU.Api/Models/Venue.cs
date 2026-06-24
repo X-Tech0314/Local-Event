@@ -129,6 +129,8 @@ namespace VenU.Api.Models
         public int OrganizersUsedCount { get; set; } = 0;
         
         public bool IsVerified { get; set; } = false;
+        public bool IsHidden { get; set; } = false;
+        public bool IsDeleted { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public Guid? CreatedByOrganizerId { get; set; }

@@ -13,7 +13,8 @@ import LocationEventFilter from '../../../components/LocationEventFilter';
 // ── Status config ────────────────────────────────────────────────
 const STATUS_CONFIG = {
   Published: { label: 'Published', dot: 'bg-emerald-500 animate-pulse', badge: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' },
-  Pending: { label: 'Pending Verify', dot: 'bg-amber-500 animate-pulse', badge: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+  Pending: { label: 'Pending Event', dot: 'bg-amber-500 animate-pulse', badge: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+  Rejected: { label: 'Event Rejected', dot: 'bg-red-500', badge: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30' },
   Done: { label: 'Done', dot: 'bg-slate-400', badge: 'bg-slate-100 dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-600' },
   Full: { label: 'Full', dot: 'bg-amber-500', badge: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30' },
   Discontinued: { label: 'Discontinued', dot: 'bg-red-500', badge: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30' },

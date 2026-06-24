@@ -30,7 +30,27 @@ namespace VenU.Api.Controllers
             var totalUsers = await _context.Users.CountAsync();
             var activeEvents = await _context.Events.CountAsync(e => e.Status == "Published");
             
-            decimal totalSales = 0;
+            var allEvents = await _context.Events
+                .Include(e => e.TicketTiers)
+                .ToListAsync();
+
+            var attendees = await _context.EventAttendees.ToListAsync();
+
+            var tierLookup = allEvents
+                .SelectMany(e => e.TicketTiers.Select(t => new { e.Id, t.TierName, t.Price }))
+                .ToList();
+
+            decimal totalSales = 0m;
+            foreach (var attendee in attendees)
+            {
+                var tier = tierLookup.FirstOrDefault(t =>
+                    t.Id == attendee.EventId &&
+                    string.Equals(t.TierName, attendee.TicketType, StringComparison.OrdinalIgnoreCase));
+                if (tier != null)
+                {
+                    totalSales += tier.Price;
+                }
+            }
 
             return Ok(new {
                 totalUsers,
@@ -52,7 +72,12 @@ namespace VenU.Api.Controllers
                     id = e.Id,
                     name = e.Title,
                     organizer = e.Organizer.OrgName ?? (e.Organizer.FirstName + " " + e.Organizer.LastName),
-                    date = e.StartDateTime.ToString("MMM dd, yyyy")
+                    date = e.StartDateTime.ToString("MMM dd, yyyy"),
+                    bannerUrl = e.BannerUrl,
+                    description = e.Description,
+                    category = e.Category,
+                    location = $"{e.StreetAddress}, {e.Barangay}, {e.City}, {e.Province}",
+                    maxCapacity = e.MaxCapacity
                 })
                 .ToListAsync();
 
@@ -87,6 +112,106 @@ namespace VenU.Api.Controllers
             await _notificationService.SendNotificationAsync(evt.OrganizerId, title, msg, sendEmail: true);
             
             return Ok(new { message = $"Event {status} successfully." });
+        }
+
+        [HttpGet("events")]
+        public async Task<IActionResult> GetAllEvents([FromQuery] bool deleted = false)
+        {
+            var query = _context.Events.AsQueryable();
+            if (deleted)
+            {
+                query = query.Where(e => e.Status == "Deleted");
+            }
+            else
+            {
+                query = query.Where(e => e.Status != "Deleted");
+            }
+
+            var events = await query
+                .Include(e => e.Organizer)
+                .OrderByDescending(e => e.StartDateTime)
+                .Select(e => new {
+                    id = e.Id,
+                    name = e.Title,
+                    organizer = e.Organizer.OrgName ?? (e.Organizer.FirstName + " " + e.Organizer.LastName),
+                    date = e.StartDateTime.ToString("MMM dd, yyyy"),
+                    startDateTime = e.StartDateTime,
+                    endDateTime = e.EndDateTime,
+                    bannerUrl = e.BannerUrl,
+                    description = e.Description,
+                    category = e.Category,
+                    location = $"{e.StreetAddress}, {e.Barangay}, {e.City}, {e.Province}",
+                    maxCapacity = e.MaxCapacity,
+                    status = e.Status
+                })
+                .ToListAsync();
+
+            return Ok(events);
+        }
+
+        [HttpPut("events/{id}/done")]
+        public async Task<IActionResult> MarkEventAsDone(Guid id)
+        {
+            var evt = await _context.Events.FindAsync(id);
+            if (evt == null) return NotFound(new { message = "Event not found." });
+
+            evt.Status = "Done";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Event marked as Done successfully." });
+        }
+
+        [HttpDelete("events/{id}")]
+        public async Task<IActionResult> SoftDeleteEvent(Guid id)
+        {
+            var evt = await _context.Events.FindAsync(id);
+            if (evt == null) return NotFound(new { message = "Event not found." });
+
+            evt.Status = "Deleted";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Event moved to Recycle Bin." });
+        }
+
+        [HttpPut("events/{id}/restore")]
+        public async Task<IActionResult> RestoreEvent(Guid id)
+        {
+            var evt = await _context.Events.FindAsync(id);
+            if (evt == null) return NotFound(new { message = "Event not found." });
+
+            evt.Status = "Published";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Event restored successfully." });
+        }
+
+        [HttpDelete("events/{id}/permanent")]
+        public async Task<IActionResult> PermanentDeleteEvent(Guid id)
+        {
+            var evt = await _context.Events.FindAsync(id);
+            if (evt == null) return NotFound(new { message = "Event not found." });
+
+            // 1. Delete associated Tickets
+            var tickets = _context.Tickets.Where(t => t.EventId == id);
+            _context.Tickets.RemoveRange(tickets);
+
+            // 2. Delete associated EventAttendees
+            var attendees = _context.EventAttendees.Where(ea => ea.EventId == id);
+            _context.EventAttendees.RemoveRange(attendees);
+
+            // 3. Delete associated EventReviews
+            var reviews = _context.EventReviews.Where(er => er.EventId == id);
+            _context.EventReviews.RemoveRange(reviews);
+
+            // 4. Delete associated TicketTiers
+            var tiers = _context.EventTicketTiers.Where(ett => ett.EventId == id);
+            _context.EventTicketTiers.RemoveRange(tiers);
+
+            // 5. Remove event itself
+            _context.Events.Remove(evt);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Event permanently deleted from database." });
         }
 
         // ==========================================

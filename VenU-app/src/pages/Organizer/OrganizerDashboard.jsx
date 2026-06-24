@@ -106,7 +106,7 @@ export default function OrganizerDashboard() {
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/';
+        navigate('/');
     };
 
     const unreadCount = notifications.filter(n => !n.read).length;

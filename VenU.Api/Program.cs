@@ -57,6 +57,7 @@ builder.Services.AddScoped<VenU.Api.Services.IImageModerationService, VenU.Api.S
 
 // Register SignalR
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, CustomUserIdProvider>();
 
 // Register Email Service
 builder.Services.AddHttpClient<VenU.Api.Services.IEmailService, VenU.Api.Services.EmailService>();
@@ -197,7 +198,16 @@ using (var scope = app.Services.CreateScope())
                 HasFireExit = true,
                 HasFireExtinguishers = true,
                 Latitude = 14.5317M,
-                Longitude = 120.9818M
+                Longitude = 120.9818M,
+                FsicNumber = "FSIC-2026-008931",
+                BusinessPermitNumber = "BP-2026-004312",
+                FloorPlanUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                LegalPermitsUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                VenueImages = System.Text.Json.JsonSerializer.Serialize(new List<string> {
+                    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&q=80",
+                    "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=800&q=80",
+                    "https://images.unsplash.com/photo-1431540015161-0bf868a2d407?w=800&q=80"
+                })
             },
             new VenU.Api.Models.Venue
             {
@@ -223,7 +233,16 @@ using (var scope = app.Services.CreateScope())
                 HasFireExit = true,
                 HasFireExtinguishers = true,
                 Latitude = 14.7936M,
-                Longitude = 120.9575M
+                Longitude = 120.9575M,
+                FsicNumber = "FSIC-2026-009124",
+                BusinessPermitNumber = "BP-2026-008761",
+                FloorPlanUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                LegalPermitsUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                VenueImages = System.Text.Json.JsonSerializer.Serialize(new List<string> {
+                    "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=800&q=80",
+                    "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80",
+                    "https://images.unsplash.com/photo-1522158673376-3c85b1c833d7?w=800&q=80"
+                })
             },
             new VenU.Api.Models.Venue
             {
@@ -249,7 +268,16 @@ using (var scope = app.Services.CreateScope())
                 HasFireExit = true,
                 HasFireExtinguishers = true,
                 Latitude = 14.5422M,
-                Longitude = 121.0183M
+                Longitude = 121.0183M,
+                FsicNumber = "FSIC-2026-003412",
+                BusinessPermitNumber = "BP-2026-005612",
+                FloorPlanUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                LegalPermitsUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                VenueImages = System.Text.Json.JsonSerializer.Serialize(new List<string> {
+                    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+                    "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80",
+                    "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&q=80"
+                })
             }
         };
 
@@ -262,11 +290,63 @@ using (var scope = app.Services.CreateScope())
                 context.Venues.Add(mv);
                 modified = true;
             }
-            else if (existing.Latitude == null || existing.Latitude == 0 || existing.Longitude == null || existing.Longitude == 0)
+            else
             {
-                existing.Latitude = mv.Latitude;
-                existing.Longitude = mv.Longitude;
-                modified = true;
+                // Update missing fields
+                if (string.IsNullOrEmpty(existing.FsicNumber))
+                {
+                    existing.FsicNumber = mv.FsicNumber;
+                    modified = true;
+                }
+                if (string.IsNullOrEmpty(existing.BusinessPermitNumber))
+                {
+                    existing.BusinessPermitNumber = mv.BusinessPermitNumber;
+                    modified = true;
+                }
+                if (string.IsNullOrEmpty(existing.FloorPlanUrl))
+                {
+                    existing.FloorPlanUrl = mv.FloorPlanUrl;
+                    modified = true;
+                }
+                if (string.IsNullOrEmpty(existing.LegalPermitsUrl))
+                {
+                    existing.LegalPermitsUrl = mv.LegalPermitsUrl;
+                    modified = true;
+                }
+                if (string.IsNullOrEmpty(existing.VenueImages))
+                {
+                    existing.VenueImages = mv.VenueImages;
+                    modified = true;
+                }
+                if (existing.Latitude == null || existing.Latitude == 0 || existing.Longitude == null || existing.Longitude == 0)
+                {
+                    existing.Latitude = mv.Latitude;
+                    existing.Longitude = mv.Longitude;
+                    modified = true;
+                }
+            }
+
+            // Seed related images for navigation property
+            var hasImages = context.VenueImages.Any(vi => vi.VenueId == mv.Id);
+            if (!hasImages)
+            {
+                var imgs = System.Text.Json.JsonSerializer.Deserialize<List<string>>(mv.VenueImages ?? "[]");
+                if (imgs != null)
+                {
+                    foreach (var imgUrl in imgs)
+                    {
+                        context.VenueImages.Add(new VenU.Api.Models.VenueImage
+                        {
+                            VenueId = mv.Id,
+                            CloudinaryUrl = imgUrl,
+                            CloudinaryPublicId = $"mock_{Guid.NewGuid()}",
+                            AiScore = 0.0M,
+                            Status = "APPROVED",
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                    modified = true;
+                }
             }
         }
 
@@ -358,4 +438,30 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Auto-verify all users for testing/development verified badges
+await VenU.Api.Scripts.FixUsers.Run(app.Services);
+
+// Check if database sanitation was requested
+if (args.Contains("--sanitize"))
+{
+    await VenU.Api.Scripts.SanitizeDb.Run(app.Services);
+    return;
+}
+
+// Seed sample revenue data for validation only when requested
+if (args.Contains("--seed-revenue"))
+{
+    await VenU.Api.Scripts.SeedTestData.Run(app.Services);
+}
+
 app.Run();
+
+public class CustomUserIdProvider : Microsoft.AspNetCore.SignalR.IUserIdProvider
+{
+    public string? GetUserId(Microsoft.AspNetCore.SignalR.HubConnectionContext connection)
+    {
+        return connection.User?.FindFirst("sub")?.Value 
+            ?? connection.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}
+

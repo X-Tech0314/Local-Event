@@ -24,7 +24,7 @@ namespace VenU.Api.Controllers
 
         [HttpGet("overview")]
         [Authorize]
-        public async Task<IActionResult> GetAnalyticsOverview([FromQuery] string range, [FromQuery] DateTime? start, [FromQuery] DateTime? end)
+        public async Task<IActionResult> GetAnalyticsOverview([FromQuery] string? range, [FromQuery] DateTime? start, [FromQuery] DateTime? end)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c =>
                 c.Type == JwtRegisteredClaimNames.Sub ||

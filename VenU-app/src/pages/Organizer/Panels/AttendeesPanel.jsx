@@ -225,7 +225,14 @@ export default function AttendeesPanel({ currentUser }) {
                             {attendee.attendeeName.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 dark:text-white">{attendee.attendeeName}</p>
+                            <p className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                              {attendee.attendeeName}
+                              {attendee.isVerified && (
+                                <span className="inline-flex items-center justify-center text-purple-600 dark:text-purple-400" title="Verified Profile">
+                                  <CheckCircle size={14} className="fill-purple-500/10" strokeWidth={2.5} />
+                                </span>
+                              )}
+                            </p>
                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{attendee.maskedEmail}</p>
                           </div>
                         </div>

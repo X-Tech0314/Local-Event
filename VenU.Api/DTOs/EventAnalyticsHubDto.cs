@@ -23,5 +23,6 @@ namespace VenU.Api.DTOs
         public string TicketType { get; set; }
         public bool IsPresent { get; set; }
         public DateTime? ArrivalTime { get; set; }
+        public bool IsVerified { get; set; }
     }
 }

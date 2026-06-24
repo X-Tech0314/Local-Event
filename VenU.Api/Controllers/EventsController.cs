@@ -203,6 +203,19 @@ namespace VenU.Api.Controllers
                 if (existingVenue != null)
                 {
                     existingVenue.OrganizersUsedCount += 1;
+                    
+                    // Copy coordinates and address details from registered venue to event DTO
+                    dto.StreetAddress = existingVenue.StreetAddress ?? dto.StreetAddress;
+                    dto.Barangay = existingVenue.Barangay ?? dto.Barangay;
+                    dto.City = existingVenue.City ?? dto.City;
+                    dto.Province = existingVenue.Province ?? dto.Province;
+                    dto.Region = existingVenue.Region ?? dto.Region;
+                    dto.ZipCode = existingVenue.ZipCode ?? dto.ZipCode;
+                    dto.Latitude = existingVenue.Latitude ?? dto.Latitude;
+                    dto.Longitude = existingVenue.Longitude ?? dto.Longitude;
+                    dto.MapUrl = existingVenue.MapUrl ?? dto.MapUrl;
+                    dto.VenueName = existingVenue.Name ?? dto.VenueName;
+                    dto.VenueType = existingVenue.Type ?? dto.VenueType;
                 }
                 else
                 {
@@ -298,7 +311,7 @@ namespace VenU.Api.Controllers
             var events = await _context.Events
                 .Include(e => e.TicketTiers)
                 .Include(e => e.Organizer)
-                .Where(e => e.Status != "Draft" && e.Status != "Pending" && e.Status != "Rejected")
+                .Where(e => e.Status == "Published")
                 .OrderBy(e => e.StartDateTime)
                 .ToListAsync();
 
@@ -371,6 +384,92 @@ namespace VenU.Api.Controllers
                 return NotFound("Event not found or you do not have permission to edit it.");
             }
 
+            // Handle Venue Sourcing Logic for Update
+            Guid? finalVenueId = dto.VenueId;
+            
+            if (dto.VenueSourcingMode == "custom" && dto.RegisterVenueToDB)
+            {
+                var newVenue = new Venue
+                {
+                    Name = dto.VenueName ?? "Custom Venue",
+                    Type = dto.VenueType ?? "Standalone Building / Street Address",
+                    StreetAddress = dto.StreetAddress,
+                    Barangay = dto.Barangay,
+                    City = dto.City,
+                    Province = dto.Province,
+                    Region = dto.Region,
+                    ZipCode = dto.ZipCode,
+                    Latitude = dto.Latitude,
+                    Longitude = dto.Longitude,
+                    ContactPerson = dto.ContactPerson,
+                    ContactNumber = dto.ContactNumber,
+                    ContactEmail = dto.ContactEmail,
+                    MapUrl = dto.MapUrl,
+                    SquareFootage = dto.SquareFootage,
+                    FloorArea = dto.FloorArea,
+                    CeilingHeight = dto.CeilingHeight,
+                    RepresentativeName = dto.RepresentativeName,
+                    MobileNumber = dto.MobileNumber,
+                    Landline = dto.Landline,
+                    WebsiteUrl = dto.WebsiteUrl,
+                    CapacityTheater = dto.CapacityTheater,
+                    CapacityBanquet = dto.CapacityBanquet,
+                    CapacityStanding = dto.CapacityStanding,
+                    ParkingSlots = dto.ParkingSlots,
+                    OperatingHours = dto.OperatingHours,
+                    HasAircon = dto.HasAircon,
+                    HasSoundSystem = dto.HasSoundSystem,
+                    HasBackupGenerator = dto.HasBackupGenerator,
+                    HasHoldingRooms = dto.HasHoldingRooms,
+                    FsicNumber = dto.FsicNumber,
+                    BusinessPermitNumber = dto.BusinessPermitNumber,
+                    HasBirForm2303 = dto.HasBirForm2303,
+                    HasSmokeDetectors = dto.HasSmokeDetectors,
+                    NumberOfFloors = dto.NumberOfFloors > 0 ? dto.NumberOfFloors : 1,
+                    HasFireExit = dto.HasFireExit || dto.HasFireExits,
+                    HasFireExtinguishers = dto.HasFireExtinguishers,
+                    VenueImages = dto.VenueImages != null && dto.VenueImages.Count > 0
+                        ? System.Text.Json.JsonSerializer.Serialize(dto.VenueImages)
+                        : null,
+                    FloorPlanUrl = dto.FloorPlanUrl,
+                    LegalPermitsUrl = dto.LegalPermitsUrl,
+                    IsVerified = false,
+                    CreatedByOrganizerId = organizerId
+                };
+                _context.Venues.Add(newVenue);
+                await _context.SaveChangesAsync();
+                finalVenueId = newVenue.Id;
+            }
+            else if (dto.VenueSourcingMode == "registered" && finalVenueId.HasValue)
+            {
+                var existingVenue = await _context.Venues.FindAsync(finalVenueId.Value);
+                if (existingVenue != null)
+                {
+                    if (evt.VenueId != finalVenueId)
+                    {
+                        existingVenue.OrganizersUsedCount += 1;
+                    }
+                    
+                    // Copy coordinates and address details from registered venue to event DTO
+                    dto.StreetAddress = existingVenue.StreetAddress ?? dto.StreetAddress;
+                    dto.Barangay = existingVenue.Barangay ?? dto.Barangay;
+                    dto.City = existingVenue.City ?? dto.City;
+                    dto.Province = existingVenue.Province ?? dto.Province;
+                    dto.Region = existingVenue.Region ?? dto.Region;
+                    dto.ZipCode = existingVenue.ZipCode ?? dto.ZipCode;
+                    dto.Latitude = existingVenue.Latitude ?? dto.Latitude;
+                    dto.Longitude = existingVenue.Longitude ?? dto.Longitude;
+                    dto.MapUrl = existingVenue.MapUrl ?? dto.MapUrl;
+                    dto.VenueName = existingVenue.Name ?? dto.VenueName;
+                    dto.VenueType = existingVenue.Type ?? dto.VenueType;
+                }
+                else
+                {
+                    finalVenueId = null;
+                }
+            }
+
+            evt.VenueId = finalVenueId;
             evt.Title = dto.Title ?? evt.Title;
             evt.Description = dto.Description ?? evt.Description;
             evt.Category = dto.Category ?? evt.Category;
@@ -500,6 +599,12 @@ namespace VenU.Api.Controllers
 
             var attendees = await attendeesQuery.OrderByDescending(a => a.CreatedAt).ToListAsync();
 
+            var emails = attendees.Select(a => a.AttendeeEmail).Distinct().ToList();
+            var verifiedUsers = await _context.Users
+                .Where(u => emails.Contains(u.Email))
+                .Select(u => new { u.Email, u.IsVerified })
+                .ToDictionaryAsync(u => u.Email.ToLower(), u => u.IsVerified);
+
             var totalRegistered = attendees.Count;
             var checkedInCount = attendees.Count(a => a.IsPresent);
             var arrivalRate = totalRegistered > 0 ? ((decimal)checkedInCount / totalRegistered) * 100 : 0;
@@ -514,14 +619,19 @@ namespace VenU.Api.Controllers
                 CheckedInCount = checkedInCount,
                 ArrivalRatePercentage = arrivalRate,
                 IsOverCapacity = isOverCapacity,
-                Attendees = attendees.Select(a => new VenU.Api.DTOs.AttendeeDto
-                {
-                    Id = a.Id,
-                    AttendeeName = a.AttendeeName,
-                    MaskedEmail = MaskEmail(a.AttendeeEmail),
-                    TicketType = a.TicketType,
-                    IsPresent = a.IsPresent,
-                    ArrivalTime = a.ArrivalTime
+                Attendees = attendees.Select(a => {
+                    var emailKey = a.AttendeeEmail.ToLower();
+                    var isVerified = verifiedUsers.ContainsKey(emailKey) && verifiedUsers[emailKey];
+                    return new VenU.Api.DTOs.AttendeeDto
+                    {
+                        Id = a.Id,
+                        AttendeeName = a.AttendeeName,
+                        MaskedEmail = MaskEmail(a.AttendeeEmail),
+                        TicketType = a.TicketType,
+                        IsPresent = a.IsPresent,
+                        ArrivalTime = a.ArrivalTime,
+                        IsVerified = isVerified
+                    };
                 })
             };
 
@@ -548,6 +658,12 @@ namespace VenU.Api.Controllers
 
             var attendees = await _context.EventAttendees.Where(a => a.EventId == id).ToListAsync();
             var reviews = await _context.EventReviews.Where(r => r.EventId == id).OrderByDescending(r => r.DateSubmitted).ToListAsync();
+
+            var emails = attendees.Select(a => a.AttendeeEmail).Distinct().ToList();
+            var verifiedUsers = await _context.Users
+                .Where(u => emails.Contains(u.Email))
+                .Select(u => new { u.Email, u.IsVerified })
+                .ToDictionaryAsync(u => u.Email.ToLower(), u => u.IsVerified);
 
             var totalRegistered = attendees.Count;
             var checkedInCount = attendees.Count(a => a.IsPresent);
@@ -577,14 +693,19 @@ namespace VenU.Api.Controllers
                     FeedbackText = r.FeedbackText,
                     DateSubmitted = r.DateSubmitted
                 }),
-                Attendees = attendees.Select(a => new VenU.Api.DTOs.AttendeeDto
-                {
-                    Id = a.Id,
-                    AttendeeName = MaskName(a.AttendeeName),
-                    MaskedEmail = MaskEmail(a.AttendeeEmail),
-                    TicketType = a.TicketType,
-                    IsPresent = a.IsPresent,
-                    ArrivalTime = a.ArrivalTime
+                Attendees = attendees.Select(a => {
+                    var emailKey = a.AttendeeEmail.ToLower();
+                    var isVerified = verifiedUsers.ContainsKey(emailKey) && verifiedUsers[emailKey];
+                    return new VenU.Api.DTOs.AttendeeDto
+                    {
+                        Id = a.Id,
+                        AttendeeName = MaskName(a.AttendeeName),
+                        MaskedEmail = MaskEmail(a.AttendeeEmail),
+                        TicketType = a.TicketType,
+                        IsPresent = a.IsPresent,
+                        ArrivalTime = a.ArrivalTime,
+                        IsVerified = isVerified
+                    };
                 })
             };
 

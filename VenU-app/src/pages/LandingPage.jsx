@@ -97,6 +97,30 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Auto-redirect if user already has an active session
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    if (!token || !userStr) return;
+
+    try {
+      const user = JSON.parse(userStr);
+      const role = String(user?.Role || user?.role || '').trim().toLowerCase();
+      if (role === 'admin' || role === 'superadmin') {
+        navigate('/admin-dashboard');
+      } else if (role === 'organizer') {
+        navigate('/organizer-dashboard');
+      } else if (role === 'attendee') {
+        navigate('/attendee-dashboard');
+      }
+    } catch {
+      // Malformed user object — clear storage and stay on landing page
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+  }, [navigate]);
+
+
   function handleCloseAuth() {
     setShowAuth(false);
     setLoginError(''); // Clear errors when closing the modal

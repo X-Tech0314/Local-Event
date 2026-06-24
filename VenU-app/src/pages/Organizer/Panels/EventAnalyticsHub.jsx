@@ -256,7 +256,14 @@ export default function EventAnalyticsHub({ eventId, onBack }) {
                                 data.attendees.map((a) => (
                                     <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors">
                                         <td className="px-6 py-4">
-                                            <div className="font-bold text-slate-900 dark:text-white">{a.attendeeName}</div>
+                                            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                {a.attendeeName}
+                                                {a.isVerified && (
+                                                    <span className="inline-flex items-center justify-center text-purple-600 dark:text-purple-400" title="Verified Profile">
+                                                        <CheckCircle size={14} className="fill-purple-500/10" strokeWidth={2.5} />
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="text-xs text-slate-500">{a.maskedEmail}</div>
                                         </td>
                                         <td className="px-6 py-4">
