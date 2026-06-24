@@ -252,7 +252,7 @@ export default function EventApprovals() {
                                                 )}
                                             </td>
                                             <td className="p-4 text-sm font-semibold text-slate-500">{event.organizer}</td>
-                                            <td className="p-4 text-sm text-slate-555 dark:text-slate-355">{event.date}</td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{event.date}</td>
                                             <td className="p-4 text-sm">
                                                 <span className={`inline-block px-2.5 py-0.5 rounded-none text-xs font-black uppercase tracking-widest border ${
                                                     event.status === 'Published' ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/20' :
@@ -376,8 +376,8 @@ export default function EventApprovals() {
                                                                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                                                                     <MapPin size={12} /> Address / Venue Location
                                                                 </h4>
-                                                                <p className="text-sm font-semibold text-slate-750 dark:text-slate-355">
-                                                                    {event.location || 'No location specified'}
+                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                                                     {event.location || 'No location specified'}
                                                                 </p>
                                                             </div>
 
@@ -385,8 +385,8 @@ export default function EventApprovals() {
                                                                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                                                                     <Info size={12} /> Event Description
                                                                 </h4>
-                                                                <p className="text-sm text-slate-650 dark:text-slate-350 whitespace-pre-wrap leading-relaxed bg-white dark:bg-slate-850 p-4 border border-slate-200 dark:border-slate-700/50 rounded shadow-inner">
-                                                                    {event.description || 'No description provided.'}
+                                                                <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600 rounded-none shadow-inner">
+                                                                     {event.description || 'No description provided.'}
                                                                 </p>
                                                             </div>
                                                         </div>
