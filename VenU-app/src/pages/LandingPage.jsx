@@ -306,7 +306,7 @@ export default function LandingPage() {
                 }
               } catch (err) {
                 // Capture the exact message from the backend (e.g., "You have 4 attempts left...")
-                const errorMsg = err.response?.data?.message || err.message;
+                const errorMsg = err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : err.message);
                 setLoginError(errorMsg);
 
                 if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
@@ -392,7 +392,7 @@ export default function LandingPage() {
                   setShowSuccessAnim(true);
                   return setTimeout(() => { setShowSuccessAnim(false); setAuthView('login'); }, 3500);
                 }
-                alert('Registration failed: ' + (err.response?.data?.message || err.message));
+                alert('Registration failed: ' + (err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : err.message)));
               }
             }}
           />
