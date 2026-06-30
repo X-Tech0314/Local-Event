@@ -512,14 +512,14 @@ export default function LandingPage() {
             <div className="space-y-3">
               <div className="text-white font-bold text-lg flex items-center gap-2">
                 <span className="h-7 w-7 rounded bg-purple-600 flex items-center justify-center text-xs font-black text-white">V</span>
-                VENU
+                VenU
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Navigate community milestones. Connect hyper-locally.
               </p>
               <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-2">
                 <MapPin className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-                <span>Quezon City, Philippines</span>
+                <span>NDC Compound, Pureza St., Sta. Mesa, Manila, Philippines 1016</span>
               </div>
             </div>
 
@@ -571,7 +571,7 @@ export default function LandingPage() {
           {/* Bottom Bar Compliance Line */}
           <div className="border-t border-slate-900 pt-6 mt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
             <div>
-              © 2026 VENU Technologies Inc. All rights reserved.
+              © 2026 VenU Technologies Inc. All rights reserved.
             </div>
             <div className="flex items-center gap-1">
               <span>In strict compliance with the Philippine Data Privacy Act of 2012.</span>
