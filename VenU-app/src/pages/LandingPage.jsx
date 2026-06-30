@@ -107,11 +107,11 @@ export default function LandingPage() {
       const user = JSON.parse(userStr);
       const role = String(user?.Role || user?.role || '').trim().toLowerCase();
       if (role === 'admin' || role === 'superadmin') {
-        navigate('/admin-dashboard');
+        navigate('/admin');
       } else if (role === 'organizer') {
-        navigate('/organizer-dashboard');
+        navigate('/dashboard');
       } else if (role === 'attendee') {
-        navigate('/attendee-dashboard');
+        navigate('/attendee');
       }
     } catch {
       // Malformed user object — clear storage and stay on landing page
